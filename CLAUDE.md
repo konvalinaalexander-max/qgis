@@ -100,7 +100,7 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   `.github/workflows/website.yml` baut mit `06_online.py --url <Pages-Adresse>` den Ordner `_site` aus der
   committeten `output/*.html` (baut die Daten nicht neu!) und veröffentlicht ihn. Von Hand: Actions →
   «Website veröffentlichen» → Run workflow. Adresse: https://konvalinaalexander-max.github.io/qgis/
-  (einmalig nötig: Settings → Pages → Source «GitHub Actions»).
+  (Pages ist eingeschaltet, Quelle «GitHub Actions»).
 - **Betrieb hinzufügen / ändern:** Eintrag in `config/projekt.json` → `betriebe` (key, name, sub,
   nrs, color, note). Betriebsnummern exakt mit Leerzeichen übernehmen (`ZH0197/ 1/  1`).
   Dann `./run_all.sh` und Schritt 5. Dateinamen mit «4_Betriebe» ggf. unter `dateinamen` anpassen.
@@ -149,6 +149,10 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   - Link zu einer Fläche: `#flaeche=<Breite>,<Länge>` (WGS84-Bezugspunkt `la`/`lo` je Fläche, liegt sicher
     in der Fläche). Beim Öffnen: exakter Punkt, sonst Fläche, die den Punkt enthält, sonst nächster Punkt
     < 50 m. Auswahl schreibt den Hash per `history.pushState`, damit die Zurück-Taste die Details schliesst.
+  - Wem gehört die Fläche: Details beginnen mit einem Band in Betriebsfarbe (Name, Ort, Betriebsnummer).
+    Bei einer Auswahl treten die Flächen der übrigen Betriebe zurück (`focus` im JS), die gewählte Fläche
+    hat einen Rand in Betriebsfarbe; im Panel steht der Name zusätzlich als Schild auf der Fläche, und
+    Kopf/Tabs sind ausgeblendet (Klasse `detail` an `#side`). Mit Maus: Betrieb schon beim Darüberfahren.
   - Standort-Knopf (`map.locate`, braucht https oder localhost), Route-Link (Apple Maps auf Apple-Geräten,
     sonst Google Maps), Teilen (Web Share API, sonst Zwischenablage; nur online sichtbar).
   - «Kultur»-Modus: Legenden-Schaltflächen filtern Kulturgruppen (gilt nur in diesem Modus); weit
@@ -179,7 +183,8 @@ Erledigt:
 - Website für Handy optimiert (Panel unten, Tabs, Details, Standort, Route, Teilen-Link, Zurück-Taste),
   Schriften eingebettet, Online-Fassung + GitHub-Pages-Workflow vorbereitet; getestet mit Playwright
   (Desktop 1440/1280, iPhone 390/375, Android 360, iPad 768, Handy quer 844×390, Dunkelmodus).
-  Offen: GitHub Pages einschalten (Settings → Pages → «GitHub Actions») und Branch nach main mergen.
+  Online seit 5.10.2026: https://konvalinaalexander-max.github.io/qgis/ (Pages-Quelle «GitHub Actions»).
+- Details zeigen zuoberst den Betrieb (Band in Betriebsfarbe), übrige Betriebe treten bei Auswahl zurück.
 - 4 Betriebe identifiziert, Daten ZH (Sitz aller 4) plus TG/SH geprüft. In TG kam die
   BioFresh AG (TG39621, Tägerwilen, Gewächshäuser, Bio) zu Rathgeb dazu, in SH nichts.
 - Website, Excel, GeoPackage und QGIS-Projekt mit ZH + TG + SH gebaut und geprüft.

@@ -14,21 +14,20 @@ Landwirtschaftsdaten der Kantone Zürich, Thurgau und Schaffhausen (Bezugsjahr 2
 
 ## Website online
 
-Adresse (sobald GitHub Pages eingeschaltet ist): **https://konvalinaalexander-max.github.io/qgis/**
+Adresse: **https://konvalinaalexander-max.github.io/qgis/** (GitHub Pages, seit 5.10.2026)
 
 Die Website läuft auf Laptop und Handy. Auf dem Handy füllt die Karte den Bildschirm, unten liegt ein
 Bereich mit *Betriebe · Kulturen · Flächen · Info*, den man mit dem Griff hochziehen oder antippen kann.
-Eine Fläche antippen zeigt die Details mit *Route* (Apple/Google Maps), *map.geo.admin.ch* und *Teilen*
-(Link, der genau diese Fläche öffnet). Der Standort-Knopf zeigt die eigene Position und nennt die Fläche,
+Eine Fläche antippen zeigt zuoberst den Betrieb (farbig, mit Ort und Betriebsnummer), darunter Kultur,
+Fläche, *Route* (Apple/Google Maps), *map.geo.admin.ch* und *Teilen* (Link, der genau diese Fläche öffnet).
+Die Flächen der übrigen Betriebe treten dabei zurück; am Computer erscheint der Betrieb schon beim
+Darüberfahren mit der Maus. Der Standort-Knopf zeigt die eigene Position und nennt die Fläche,
 auf der man steht. Über *Teilen → Zum Home-Bildschirm* (iPhone) bzw. *⋮ → Zum Startbildschirm*
 (Android) lässt sich die Karte wie eine App starten.
 
-### Einmalig einschalten
-
-1. Auf GitHub im Repository: **Settings → Pages → Build and deployment → Source: «GitHub Actions»**.
-2. Die Änderungen auf den Branch `main` bringen (Pull Request mergen).
-3. Unter **Actions** erscheint «Website veröffentlichen»; nach etwa einer Minute ist die Seite online.
-   Falls der erste Lauf vor Schritt 1 gestartet ist: im Lauf **Re-run jobs** wählen.
+GitHub Pages ist eingeschaltet (Settings → Pages → Source: «GitHub Actions»). Bei einem neuen
+Repository wäre das der einzige Schritt von Hand; danach einen Push auf `main` machen oder den Workflow
+von Hand starten.
 
 ### Aktualisieren
 

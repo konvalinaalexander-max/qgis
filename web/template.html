@@ -119,6 +119,7 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 .row .rt{min-width:0}
 .row .k{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .g{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .g b{color:var(--ink)}
 .row .a{font:12.5px var(--f-mono);font-variant-numeric:tabular-nums}
 .dot{width:10px;height:10px;border-radius:50%}
 /* Info */
@@ -144,6 +145,25 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 .act:focus-visible{outline:2px solid var(--focus)}
 .act svg{width:15px;height:15px;flex:none}
 .dtop{display:flex;justify-content:space-between;align-items:center;margin:-4px 0 0}
+/* Betrieb zuoberst in den Details: farbiges Band mit Name, Ort, Betriebsnummer */
+.fband{display:grid;gap:1px;padding:9px 12px 10px 13px;border-radius:10px;border-left:6px solid var(--fc);
+  background:var(--soft);background:color-mix(in srgb,var(--fc) 16%,var(--panel))}
+.fband .fb-l{font:600 10.5px/1.2 var(--f-body);font-stretch:85%;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fband .fb-n{display:flex;align-items:center;gap:8px;font:600 19px/1.25 var(--f-body);color:var(--ink)}
+.fband .fb-n .sw{width:14px;height:14px}
+.fband .fb-s{font-size:12.5px;color:var(--muted)}
+.fband .fb-nr{font:12px/1.4 var(--f-mono);color:var(--muted);white-space:pre-wrap}
+.leaflet-popup-content .fband{margin:-13px -15px 10px;border-radius:12px 12px 0 0;border-left:0;border-top:6px solid var(--fc);padding:8px 40px 10px 15px}
+.dhead{position:sticky;top:0;z-index:2;background:var(--panel);display:grid;gap:8px;padding-bottom:12px}
+#side.detail header.top,#side.detail .tabs{display:none}   /* Detailansicht im Panel: nur die Fläche */
+/* Betriebsname beim Darüberfahren (Desktop) und als Schild auf der gewählten Fläche (Handy) */
+.leaflet-tooltip.ftip{background:var(--panel);color:var(--ink);border:0;border-radius:8px;box-shadow:var(--shadow);padding:6px 10px;font:13px/1.3 var(--f-body)}
+.leaflet-tooltip-top.ftip::before{border-top-color:var(--panel)}
+.ftip .tn{display:flex;align-items:center;gap:6px;font-weight:600}
+.ftip .tk{display:block;color:var(--muted);font-size:12px}
+.leaflet-tooltip.flabel{display:flex;align-items:center;gap:6px;background:var(--panel);color:var(--ink);border:2px solid var(--fc,#888);border-radius:999px;
+  box-shadow:var(--shadow);padding:3px 11px 3px 7px;font:600 14px/1.3 var(--f-body)}
+.leaflet-tooltip-top.flabel::before{border-top-color:var(--fc,#888)}
 #d-body .acts{order:-1;margin:0 0 12px}   /* im Panel: Knöpfe gleich unter dem Titel */
 #d-body .pp h3,#d-body .pp .grp{order:-2}
 /* Kartenbedienung */
@@ -194,8 +214,9 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
   .lh{display:none}
   .chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;scrollbar-width:none;margin:8px -16px 0;padding:1px 16px 2px}
   .chips::-webkit-scrollbar{display:none}
-  .tabs{touch-action:none;user-select:none;-webkit-user-select:none}
+  .tabs,.dhead{touch-action:none;user-select:none;-webkit-user-select:none}
   .tabs button{padding:12px 2px;font-size:14px}
+  .fband .fb-n{font-size:21px}
   .panels{padding-bottom:calc(var(--hidden,0px) + env(safe-area-inset-bottom))}
   .panel{padding:12px 16px 20px}
   .leaflet-control-zoom{display:none}
@@ -289,13 +310,13 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
       <p>Hintergrundkarten © swisstopo · Parzellen © Kanton Zürich (amtliche Vermessung, erst bei starkem Hineinzoomen sichtbar).</p>
       <h2>Bedienung</h2>
       <ul class="tips">
-        <li>Fläche antippen oder anklicken: Details, Route, Link zum Teilen.</li>
+        <li>Fläche antippen oder anklicken: Zuoberst steht der Betrieb, darunter Kultur, Fläche, Route und Link zum Teilen. Die Flächen der übrigen Betriebe treten so lange zurück.</li>
         <li>«Betrieb» / «Kultur» wechselt die Einfärbung. Die Schaltflächen daneben blenden Betriebe bzw. Kulturgruppen ein und aus.</li>
         <li>Standort-Knopf: eigene Position anzeigen. Liegt sie auf einer der Flächen, wird diese genannt.</li>
       </ul>
     </section>
     <section class="panel" id="p-detail" aria-label="Details zur Fläche" hidden>
-      <div class="dtop"><button type="button" class="btn" id="d-close">‹ Zurück</button></div>
+      <div class="dhead" id="d-head"><div class="dtop"><button type="button" class="btn" id="d-close">‹ Zurück</button></div><div id="d-farm"></div></div>
       <div id="d-body"></div>
     </section>
   </div>
@@ -323,7 +344,7 @@ const sum=ps=>ps.reduce((a,p)=>a+p.m2,0);
 const fold=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const mqMobile=matchMedia('(max-width:760px)'), mobile=()=>mqMobile.matches;
 const mqCompact=matchMedia('(max-width:760px), (max-height:540px)'), compact=()=>mqCompact.matches;
-const coarse=matchMedia('(pointer:coarse)').matches;
+const coarse=matchMedia('(pointer:coarse)').matches, hover=matchMedia('(hover:hover) and (pointer:fine)').matches;
 const online=/^https?:$/.test(location.protocol);
 const apple=/Mac|iPhone|iPad|iPod/.test(navigator.platform||navigator.userAgent);
 const jahr=M.stand.split(' · ')[0];
@@ -388,13 +409,20 @@ new Layers().addTo(map); new Tools().addTo(map);
 
 // Linienbreite nach Zoomstufe: in der Übersicht dicker, damit auch kleine Flächen sichtbar bleiben
 function lineW(){const z=map.getZoom();return z<=10?3:z<=12?2.2:z<=14?1.6:1.4;}
+let focus=null;   // Betrieb der ausgewählten Fläche: Flächen der übrigen Betriebe treten zurück
 function style(f){
-  const p=f.properties, fc=FK[p.f].color, w=lineW();
-  if(mode==='farm') return {color:darker(fc,.75),weight:w,fillColor:fc,fillOpacity:.45};
-  const gc=GC[p.g];   // nah gezoomt: Rand in Betriebsfarbe, weiter weg in Kulturfarbe
-  return {color:darker(w>=2.2?gc:fc,.75),weight:w+.2,fillColor:gc,fillOpacity:.65};
+  const p=f.properties, fc=FK[p.f].color, w=lineW(), gc=GC[p.g];
+  const s=mode==='farm'?{color:darker(fc,.75),weight:w,fillColor:fc,fillOpacity:.45}
+    :{color:darker(w>=2.2?gc:fc,.75),weight:w+.2,fillColor:gc,fillOpacity:.65};   // Kultur: nah gezoomt Rand in Betriebsfarbe
+  if(focus&&p.f!==focus){s.fillOpacity*=.3;s.opacity=.35;} else s.opacity=1;
+  return s;
 }
-const layer=L.geoJSON(D,{style,bubblingMouseEvents:false,onEachFeature(f,l){l.on('click',e=>select(l,{latlng:e.latlng}));}});
+function setFocus(k){if(focus!==k){focus=k;layer.setStyle(style);}}
+const tipHtml=p=>`<span class="tn">${sw(FK[p.f].color)}${esc(FK[p.f].name)}</span><span class="tk">${esc(p.g)} · ${ha(p.m2)} ha</span>`;
+const layer=L.geoJSON(D,{style,bubblingMouseEvents:false,onEachFeature(f,l){
+  l.on('click',e=>select(l,{latlng:e.latlng}));
+  if(hover) l.bindTooltip(()=>tipHtml(f.properties),{sticky:true,direction:'top',offset:[0,-10],opacity:1,className:'ftip'});   // Maus: Betrieb schon vor dem Klick
+}});
 const all=[], byId={};
 layer.eachLayer(l=>{all.push(l);byId[l.feature.properties.id]=l;});
 layer.addTo(map);
@@ -428,7 +456,11 @@ function findAt(la,lo){
 const Sheet=(()=>{
   const side=$('#side'), grip=$('#grip'), head=$('#head'), tabs=$('#tabs'), panels=$('#panels');
   let H=0, pk=0, hf=0, vis=0, st='peek', active=false, d=null, lastDrag=0;
-  function measure(){H=side.offsetHeight;pk=Math.min(H,grip.offsetHeight+head.offsetHeight+tabs.offsetHeight+safe().b);hf=Math.min(H,Math.max(pk+150,Math.round(innerHeight*.5)));}
+  function measure(){
+    H=side.offsetHeight;
+    if(!pk||!side.classList.contains('detail')) pk=Math.min(H,grip.offsetHeight+head.offsetHeight+tabs.offsetHeight+safe().b);  // in der Detailansicht sind Kopf und Tabs ausgeblendet
+    hf=Math.min(H,Math.max(pk+150,Math.round(innerHeight*.5)));
+  }
   function place(v,anim){
     vis=Math.round(Math.max(pk,Math.min(H,v)));
     side.classList.toggle('drag',!anim); root.classList.toggle('sheet-drag',!anim);
@@ -444,7 +476,7 @@ const Sheet=(()=>{
   }
   function fitTo(px){snap(Math.max(hf,Math.min(Math.round(px),Math.round(innerHeight*.66))));}
   side.addEventListener('pointerdown',e=>{
-    if(!active||e.button>0||!e.target.closest('#grip,#head,#tabs')) return;
+    if(!active||e.button>0||!e.target.closest('#grip,#head,#tabs,#d-head')) return;
     d={id:e.pointerId,y0:e.clientY,v0:vis,moved:false,pts:[[e.timeStamp,e.clientY]]};
   });
   addEventListener('pointermove',e=>{
@@ -566,7 +598,7 @@ function filtered(){
 function renderList(){
   const rows=filtered();
   $('#count').textContent=`${nf0.format(rows.length)} Flächen · ${ha(sum(rows))} ha`;
-  $('#list').innerHTML=rows.map(p=>`<button type="button" class="row" data-id="${p.id}"><span class="dot" style="background:${mode==='farm'?FK[p.f].color:GC[p.g]}"></span><span class="rt"><span class="k">${esc(p.k)}</span><span class="g">${esc(FK[p.f].name)} · ${esc(p.gm)}</span></span><span class="a">${ar(p.m2)} a</span></button>`).join('')||'<p class="hint">Keine Flächen gefunden.</p>';
+  $('#list').innerHTML=rows.map(p=>`<button type="button" class="row" data-id="${p.id}"><span class="dot" style="background:${mode==='farm'?FK[p.f].color:GC[p.g]}"></span><span class="rt"><span class="k">${esc(p.k)}</span><span class="g"><b>${esc(FK[p.f].name)}</b> · ${esc(p.gm)}</span></span><span class="a">${ar(p.m2)} a</span></button>`).join('')||'<p class="hint">Keine Flächen gefunden.</p>';
 }
 let qT=0; q.addEventListener('input',()=>{cancelAnimationFrame(qT);qT=requestAnimationFrame(renderList);});
 q.addEventListener('focus',()=>{if(mobile())Sheet.snap('full');});
@@ -592,17 +624,20 @@ $('#tabs').addEventListener('keydown',e=>{
 });
 
 // ---------- Details einer Fläche ----------
-function detailHtml(p){
+function farmBand(p){
   const f=FK[p.f];
+  return `<div class="fband" style="--fc:${f.color}"><span class="fb-l">Betrieb</span><span class="fb-n">${sw(f.color)}${esc(f.name)}</span>`+
+    `<span class="fb-s">${esc(f.sub)}</span><span class="fb-nr">${esc(p.nr)}</span></div>`;
+}
+function detailHtml(p,band=true){
   const prog=p.p.length?'<ul>'+p.p.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'–';
   const gem=p.gm+(p.kt&&!p.gm.endsWith('('+p.kt+')')?' ('+p.kt+')':'');
   const geo=`https://map.geo.admin.ch/#/map?lang=de&center=${p.x},${p.y}&z=10&bgLayer=ch.swisstopo.swissimage`;
   const route=apple?`https://maps.apple.com/?daddr=${p.la},${p.lo}&dirflg=d`:`https://www.google.com/maps/dir/?api=1&destination=${p.la},${p.lo}`;
-  return `<div class="pp"><h3>${esc(p.k)}</h3>
+  return `<div class="pp">${band?farmBand(p):''}<h3>${esc(p.k)}</h3>
    <div class="grp"><span class="gsw" style="background:${GC[p.g]}"></span>${esc(p.g)} · Code ${p.c}</div>
    <dl>
     <dt>Fläche</dt><dd><b>${ar(p.m2)} a</b> · ${ha(p.m2)} ha</dd>
-    <dt>Betrieb</dt><dd>${sw(f.color)}${esc(f.name)}<br><span class="mono">${esc(p.nr)}</span></dd>
     <dt>Gemeinde</dt><dd>${esc(gem)}</dd>
     <dt>Programme</dt><dd>${prog}</dd>
     <dt>Beiträge</dt><dd>${p.bb?'beitragsberechtigt':'nicht beitragsberechtigt'}${p.bg!==null&&p.bg<100?' · bewirtschaftet zu '+p.bg+'%':''}</dd>
@@ -622,17 +657,25 @@ function highlight(l){
   if(hl) map.removeLayer(hl);
   const f=l.feature;
   hl=L.layerGroup([L.geoJSON(f,{renderer:topR,interactive:false,style:{color:'#FFFFFF',weight:7,opacity:.95,fill:false}}),
-                   L.geoJSON(f,{renderer:topR,interactive:false,style:{color:'#14201A',weight:2.4,opacity:1,fill:false}})]).addTo(map);
+                   L.geoJSON(f,{renderer:topR,interactive:false,style:{color:darker(FK[f.properties.f].color,.6),weight:3,opacity:1,fill:false}})]).addTo(map);
 }
+let flabel=null;
+function showLabel(p){   // Handy/Panel: Betriebsname als Schild auf der gewählten Fläche
+  hideLabel(); const f=FK[p.f];
+  flabel=L.tooltip({direction:'top',offset:[0,-4],opacity:1,className:'flabel'}).setLatLng([p.la,p.lo]).setContent(sw(f.color)+esc(f.name)).addTo(map);
+  const el=flabel.getElement(); if(el) el.style.setProperty('--fc',f.color);
+}
+function hideLabel(){if(flabel){map.removeLayer(flabel);flabel=null;}}
 function showDetail(p){
-  $('#d-body').innerHTML=detailHtml(p);
+  $('#d-farm').innerHTML=farmBand(p);
+  $('#d-body').innerHTML=detailHtml(p,false);
   if(!detailOpen) before={state:Sheet.state(),scroll:$('#panels').scrollTop};
-  detailOpen=true; markTabs(null); $('#p-detail').hidden=false; $('#panels').scrollTop=0;
-  Sheet.fitTo(Sheet.heightOf('peek')+$('#p-detail').offsetHeight+4);
+  detailOpen=true; $('#side').classList.add('detail'); markTabs(null); $('#p-detail').hidden=false; $('#panels').scrollTop=0;
+  Sheet.fitTo($('#grip').offsetHeight+$('#p-detail').offsetHeight+safe().b+4);
 }
 function hideDetail(){
   if(!detailOpen) return;
-  detailOpen=false; $('#p-detail').hidden=true; markTabs(tab);
+  detailOpen=false; $('#side').classList.remove('detail'); $('#p-detail').hidden=true; markTabs(tab);
   if(before){if(mobile())Sheet.snap(before.state);$('#panels').scrollTop=before.scroll;}
   before=null;
 }
@@ -645,13 +688,14 @@ function select(l,o={}){
   if(!l) return;
   const p=l.feature.properties;
   if(!shown(p)){farmOn[p.f]=true;groupOn[p.g]=true;$('#v-'+p.f).checked=true;applyVisibility();}
-  sel=l; highlight(l);
+  sel=l; highlight(l); setFocus(p.f);
   if(!o.fromHash) setHash(p);
   if(compact()){   // Handy und kleine Fenster: Details im Panel statt im Popup (das die Karte verdecken würde)
     if(map.hasLayer(popup)){switching=true;map.closePopup(popup);switching=false;}
-    showDetail(p);
+    showDetail(p); showLabel(p);
     if(o.zoom) fit(l.getBounds(),{maxZoom:18}); else ensureVisible(l);
   }else{
+    l.closeTooltip();
     const open=()=>{if(sel!==l)return;switching=true;popup.setLatLng(o.latlng||L.latLng(p.la,p.lo)).setContent(detailHtml(p)).openOn(map);switching=false;};
     if(o.zoom){afterMove(open);fit(l.getBounds(),{maxZoom:18});}else open();
   }
@@ -659,6 +703,7 @@ function select(l,o={}){
 function deselect(o={}){
   if(!sel) return;
   sel=null; if(hl){map.removeLayer(hl);hl=null;}
+  hideLabel(); setFocus(null);
   if(map.hasLayer(popup)){switching=true;map.closePopup(popup);switching=false;}
   hideDetail();
   if(!o.fromHash) clearHash();
@@ -678,7 +723,7 @@ addEventListener('hashchange',()=>{
   if(l){if(l!==sel)select(l,{fromHash:true,zoom:true});}else deselect({fromHash:true});
 });
 async function share(p){
-  const url=location.href.split('#')[0]+hashOf(p), title=p.k+' – '+FK[p.f].name;
+  const url=location.href.split('#')[0]+hashOf(p), title='Fläche von '+FK[p.f].name+': '+p.k;
   if(navigator.share){try{await navigator.share({title,url});}catch(_){}return;}
   try{await navigator.clipboard.writeText(url);toast('Link kopiert.');}catch(_){window.prompt('Link zum Kopieren:',url);}
 }
@@ -698,7 +743,7 @@ map.on('locationfound',e=>{
     L.circleMarker(e.latlng,{renderer:topR,radius:7,interactive:false,weight:2.5,color:'#FFFFFF',fillColor:'#1A73E8',fillOpacity:1})]).addTo(map);
   fit(e.latlng.toBounds(Math.max(2*e.accuracy,250)),{maxZoom:17});
   const hit=all.find(l=>map.hasLayer(l)&&inside(l.feature.geometry,e.latlng.lng,e.latlng.lat));
-  if(hit){const p=hit.feature.properties;toast(`Hier: ${p.k} (${FK[p.f].name})`,{label:'Details',fn:()=>select(hit)});}
+  if(hit){const p=hit.feature.properties;toast(`Hier: Fläche von ${FK[p.f].name} – ${p.k}`,{label:'Details',fn:()=>select(hit)});}
   else toast(`Standort gefunden (± ${nf0.format(e.accuracy)} m), nicht auf einer der Flächen.`);
 });
 map.on('locationerror',e=>{
