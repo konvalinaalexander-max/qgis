@@ -1,0 +1,66 @@
+{
+  "titel": "Feldkarte Gemüsebetriebe",
+  "stand": "Bezugsjahr 2025 · publiziert Jan. 2026",
+  "kantone": {
+    "ZH": "v2_0",
+    "TG": "v3_0",
+    "SH": "v3_0"
+  },
+  "kantonsnamen": {
+    "ZH": "Zürich",
+    "TG": "Thurgau",
+    "SH": "Schaffhausen"
+  },
+  "dateinamen": {
+    "website": "Feldkarte_Gemuesebetriebe.html",
+    "excel": "Feldkarte_Flaechen_4_Betriebe.xlsx",
+    "gpkg": "Feldkarte_Auswahl_4_Betriebe.gpkg",
+    "qgis": "QGIS_Feldkarte_lokal.qgz"
+  },
+  "qgis_startbetrieb": "ZH0197/ 1/  1",
+  "betriebe": [
+    {
+      "key": "imhof",
+      "name": "Imhof",
+      "sub": "Eichhof, Schwerzenbach",
+      "nrs": ["ZH0197/ 1/  1", "ZH0197/ 1/702"],
+      "color": "#3E9BD6",
+      "note": ""
+    },
+    {
+      "key": "beerstecher",
+      "name": "Beerstecher",
+      "sub": "Dübendorf",
+      "nrs": ["ZH0191/ 1/ 55"],
+      "color": "#E68A00",
+      "note": ""
+    },
+    {
+      "key": "gerber",
+      "name": "Gerber",
+      "sub": "Fehraltorf · Felben-Wellhausen",
+      "nrs": ["ZH0172/ 1/700"],
+      "color": "#C4569E",
+      "note": "Zuordnung über die Standorte, nicht über den Namen"
+    },
+    {
+      "key": "rathgeb",
+      "name": "Rathgeb",
+      "sub": "Unterstammheim · Tägerwilen (BioFresh AG)",
+      "nrs": ["ZH0042/ 1/850", "TG39621"],
+      "color": "#D8C21A",
+      "note": ""
+    }
+  ],
+  "kulturgruppen": [
+    ["Freilandgemüse", "#E4572E"],
+    ["Gewächshaus / geschützt", "#1F6FB2"],
+    ["Kartoffeln", "#9C6B2E"],
+    ["Ackerkulturen", "#E8C547"],
+    ["Beeren & Spezialkulturen", "#A23B72"],
+    ["Kunstwiese", "#A6D36F"],
+    ["Dauerwiese / Weide", "#4F8A3C"],
+    ["Biodiversitätsfläche", "#9584CF"],
+    ["Wald & übrige Flächen", "#8A8F8B"]
+  ]
+}

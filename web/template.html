@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>__TITEL__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Layout: Karte füllt das Fenster, Seitenleiste links (Desktop) bzw. unten (Handy) */
+:root{
+  --paper:#F5F6F2; --panel:#FFFFFF; --ink:#1E2722; --muted:#5D6A62; --line:#DCE1DA; --soft:#EEF1EC;
+  --accent:#2C5B45; --accent-ink:#FFFFFF; --warn:#9A5B0B; --warn-bg:#FBF0DD; --focus:#2C5B45;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-label:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --shadow:0 1px 2px rgba(20,30,25,.08),0 4px 16px rgba(20,30,25,.10);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141A17; --panel:#1B2420; --ink:#E6ECE7; --muted:#9BA9A1; --line:#2E3A34; --soft:#232E29;
+  --accent:#7FC2A0; --accent-ink:#10201A; --warn:#E9B36A; --warn-bg:#33281A; --focus:#7FC2A0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141A17; --panel:#1B2420; --ink:#E6ECE7; --muted:#9BA9A1; --line:#2E3A34; --soft:#232E29;
+  --accent:#7FC2A0; --accent-ink:#10201A; --warn:#E9B36A; --warn-bg:#33281A; --focus:#7FC2A0; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:14px/1.45 var(--f-body);display:grid;grid-template-columns:380px 1fr;grid-template-rows:100%}
+#side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;min-width:0;display:flex;flex-direction:column}
+#map{min-width:0;height:100%;background:var(--soft)}
+header.top{padding:18px 18px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:5}
+h1{font:600 19px/1.2 var(--f-body);margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);font-size:12.5px}
+section{padding:14px 18px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+h2{font:600 11.5px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.seg{display:inline-grid;grid-auto-flow:column;border:1px solid var(--line);border-radius:7px;overflow:hidden;width:max-content}
+.seg button{all:unset;cursor:pointer;padding:6px 12px;font:500 13px var(--f-body);color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.farm{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:start;padding:10px 10px 10px 8px;border:1px solid var(--line);border-radius:9px}
+.farm.off{opacity:.5}
+.farm input{margin:3px 0 0;width:16px;height:16px;accent-color:var(--accent)}
+.fname{font-weight:600;display:flex;align-items:center;gap:7px}
+.sw{width:12px;height:12px;border-radius:3px;border:2px solid;flex:none}
+.fnr{font:12px var(--f-mono);color:var(--muted)}
+.stats{grid-column:2/4;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.stat{display:grid}
+.stat b{font:600 15px var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 10.5px var(--f-label);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.chip{grid-column:2/4;justify-self:start;font:500 11.5px var(--f-label);color:var(--warn);background:var(--warn-bg);padding:2px 7px;border-radius:5px}
+.btn{all:unset;cursor:pointer;font:500 12.5px var(--f-body);color:var(--accent);padding:3px 6px;border-radius:5px}
+.btn:hover{background:var(--soft)}
+.btn:focus-visible{outline:2px solid var(--focus)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:4px 3px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{font:600 11px var(--f-label);color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+tfoot td{font-weight:600;border-bottom:0}
+.gsw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:0}
+.controls{display:grid;grid-template-columns:1fr auto;gap:8px}
+input[type=search],select{font:13px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:0;width:100%}
+input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:0}
+#list{display:grid;gap:2px;max-height:420px;overflow-y:auto}
+.row{all:unset;cursor:pointer;display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;padding:6px 6px;border-radius:6px}
+.row:hover,.row:focus-visible{background:var(--soft)}
+.row .k{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .g{color:var(--muted);font-size:12px}
+.row .a{font:500 12.5px var(--f-mono);font-variant-numeric:tabular-nums}
+.dot{width:10px;height:10px;border-radius:50%}
+.count{color:var(--muted);font-size:12px}
+footer{padding:14px 18px 22px;color:var(--muted);font-size:12px;display:grid;gap:6px}
+footer p{margin:0}
+/* Kartenbedienung */
+.mapbox{background:var(--panel);color:var(--ink);border-radius:9px;box-shadow:var(--shadow);padding:8px 10px;font:13px var(--f-body);display:grid;gap:6px}
+.mapbox label{display:flex;gap:7px;align-items:center;cursor:pointer}
+.mapbox input{accent-color:var(--accent)}
+.mapbox summary{list-style:none}.mapbox summary::-webkit-details-marker{display:none}.mapbox summary::after{content:" ▾"}
+.mapbox .h{font:600 10.5px var(--f-label);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.leaflet-container{font:13px var(--f-body)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel);color:var(--ink)}
+.leaflet-popup-content{margin:12px 14px;min-width:240px}
+.pp h3{font:600 15px/1.25 var(--f-body);margin:0 0 3px}
+.pp .grp{display:inline-flex;align-items:center;gap:6px;font:500 11.5px var(--f-label);color:var(--muted);margin-bottom:8px}
+.pp dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}
+.pp dt{color:var(--muted);font-size:12px}
+.pp dd{margin:0;font-variant-numeric:tabular-nums}
+.pp .mono{font-family:var(--f-mono);font-size:12px}
+.pp ul{margin:0;padding-left:16px}
+.pp a{color:var(--accent)}
+.leaflet-control-attribution{font-size:10.5px}
+#toggle{display:none}
+@media (max-width:760px){.leaflet-bottom.leaflet-right .mapbox{font-size:11.5px;padding:6px 8px;gap:2px}}
+@media (max-width:760px){
+  body{grid-template-columns:100%;grid-template-rows:58% 42%}
+  #map{grid-row:1}
+  #side{grid-row:2;border-right:0;border-top:1px solid var(--line)}
+  header.top{position:static}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<aside id="side" aria-label="Betriebe und Flächen">
+  <header class="top">
+    <h1>__TITEL__</h1>
+    <div class="sub" id="stand"></div>
+  </header>
+
+  <section>
+    <h2>Einfärben nach</h2>
+    <div class="seg" role="group" aria-label="Einfärben nach">
+      <button id="m-farm" aria-pressed="true">Betrieb</button>
+      <button id="m-kultur" aria-pressed="false">Kultur</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Betriebe</h2>
+    <div id="farms" style="display:grid;gap:8px"></div>
+  </section>
+
+  <section>
+    <h2>Fläche nach Kultur (ha)</h2>
+    <div class="tbl-wrap"><table id="cmp"></table></div>
+  </section>
+
+  <section>
+    <h2>Alle Flächen</h2>
+    <div class="controls">
+      <input id="q" type="search" placeholder="Suchen: Kultur, Gemeinde, Code…" aria-label="Flächen durchsuchen">
+      <button class="btn" id="csv" title="Sichtbare Flächen als CSV speichern">CSV</button>
+    </div>
+    <select id="gsel" aria-label="Nach Kulturgruppe filtern"></select>
+    <div class="count" id="count"></div>
+    <div id="list" role="list"></div>
+  </section>
+
+  <footer>
+    <p id="quelle"></p>
+    <p>Die Kultur ist die deklarierte Hauptkultur gemäss Bundeskatalog. Gemüse wird darin nicht nach Art unterschieden («Einjährige Freilandgemüse»). Überlagernde Elemente (z.&nbsp;B. Hochstammbäume) sind nicht dargestellt.</p>
+    <p id="kantone"></p>
+    <p>Hintergrundkarten © swisstopo · Parzellen © Kanton Zürich</p>
+  </footer>
+</aside>
+<div id="map" role="region" aria-label="Karte"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>/*__DATA__*/</script>
+<script>
+(function(){
+const D=window.FELDDATEN, M=window.META;
+const FARMS=M.farms, FK=Object.fromEntries(FARMS.map(f=>[f.key,f]));
+const GROUPS=M.groups;  // aus config/projekt.json
+const GC=Object.fromEntries(GROUPS);
+const nf=new Intl.NumberFormat('de-CH',{maximumFractionDigits:1,minimumFractionDigits:1});
+const nf0=new Intl.NumberFormat('de-CH',{maximumFractionDigits:0});
+const ha=m2=>nf.format(m2/1e4), ar=m2=>nf0.format(m2/100);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+document.getElementById('stand').textContent=M.stand+' · '+FARMS.length+' Betriebe';
+document.getElementById('quelle').textContent='Daten: '+M.quelle+', '+M.stand+'.';
+document.getElementById('kantone').textContent='Daten der '+M.kantone+'. Ein Betrieb liefert alle seine Flächen an den Kanton seines Sitzes, auch Flächen in Nachbarkantonen.';
+
+let mode='farm'; const visible=Object.fromEntries(FARMS.map(f=>[f.key,true]));
+function darker(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;return '#'+[r,g,b].map(v=>Math.round(v*f).toString(16).padStart(2,'0')).join('');}
+
+// ---------- Karte ----------
+const map=L.map('map',{zoomControl:true,preferCanvas:true,minZoom:8,maxZoom:20});
+const base={
+ "Luftbild":L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg',{maxNativeZoom:20,maxZoom:20,attribution:'© swisstopo'}),
+ "Landeskarte":L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg',{maxNativeZoom:19,maxZoom:20,attribution:'© swisstopo'}),
+ "Landeskarte grau":L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg',{maxNativeZoom:19,maxZoom:20,attribution:'© swisstopo'})};
+base["Luftbild"].addTo(map);
+const parz=L.tileLayer.wms('https://wms.zh.ch/avwms',{layers:'Liegenschaften,OSNR_liegenschaften',format:'image/png',transparent:true,version:'1.3.0',minZoom:17,maxZoom:20,attribution:'Parzellen © Kanton Zürich'});
+
+const MapBox=L.Control.extend({options:{position:'topright'},onAdd(){
+  const d=L.DomUtil.create('details','mapbox');
+  if(window.matchMedia('(min-width:761px)').matches) d.open=true;
+  d.innerHTML='<summary class="h" style="cursor:pointer">Karte</summary><div style="display:grid;gap:5px;margin-top:6px"><div class="h">Hintergrund</div>'+Object.keys(base).map((k,i)=>`<label><input type="radio" name="bg" value="${k}" ${i===0?'checked':''}> ${k}</label>`).join('')+
+   '<div class="h" style="margin-top:4px">Zusatz</div><label><input type="checkbox" id="parz"> Parzellen ZH (nah hineinzoomen)</label></div>';
+  L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+  d.addEventListener('change',e=>{
+    if(e.target.name==='bg'){Object.values(base).forEach(l=>map.removeLayer(l));base[e.target.value].addTo(map).bringToBack();}
+    if(e.target.id==='parz'){e.target.checked?parz.addTo(map):map.removeLayer(parz);}
+  });
+  return d;}});
+new MapBox().addTo(map);
+
+function style(f){
+  const p=f.properties, fc=FK[p.f].color;
+  if(mode==='farm') return {color:darker(fc,.75),weight:1.4,fillColor:fc,fillOpacity:.42};
+  return {color:darker(fc,.75),weight:1.6,fillColor:GC[p.g],fillOpacity:.62};
+}
+let selected=null;
+function popupHtml(p){
+  const f=FK[p.f];
+  const prog=p.p.length?'<ul>'+p.p.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'–';
+  const geo=`https://map.geo.admin.ch/#/map?lang=de&center=${p.x},${p.y}&z=10&bgLayer=ch.swisstopo.swissimage`;
+  return `<div class="pp"><h3>${esc(p.k)}</h3>
+   <div class="grp"><span class="gsw" style="background:${GC[p.g]}"></span>${esc(p.g)} · Code ${p.c}</div>
+   <dl>
+    <dt>Fläche</dt><dd><b>${ar(p.m2)} a</b> · ${ha(p.m2)} ha</dd>
+    <dt>Betrieb</dt><dd><span class="sw" style="display:inline-block;vertical-align:-1px;margin-right:5px;background:${f.color};border-color:${darker(f.color,.75)}"></span>${esc(f.name)}<br><span class="mono">${esc(p.nr)}</span></dd>
+    <dt>Gemeinde</dt><dd>${esc(p.gm)} (${esc(p.kt)})</dd>
+    <dt>Programme</dt><dd>${prog}</dd>
+    <dt>Beiträge</dt><dd>${p.bb?'beitragsberechtigt':'nicht beitragsberechtigt'}${p.bg!==null&&p.bg<100?' · bewirtschaftet zu '+p.bg+'%':''}</dd>
+    <dt>Jahr</dt><dd>${p.j}</dd>
+    <dt>LV95</dt><dd class="mono">${nf0.format(p.x)} / ${nf0.format(p.y)}</dd>
+   </dl>
+   <p style="margin:8px 0 0"><a href="${geo}" target="_blank" rel="noopener">In map.geo.admin.ch öffnen ↗</a></p></div>`;
+}
+const layer=L.geoJSON(D,{style,onEachFeature(f,l){
+  l.bindPopup(()=>popupHtml(f.properties),{maxWidth:340,autoPanPadding:[30,30]});
+  l.on('popupopen',()=>{selected=l;l.setStyle({weight:3.5,color:'#FFFFFF'});l.bringToFront();});
+  l.on('popupclose',()=>{selected=null;layer.resetStyle(l);});
+}});
+
+const byId={}; layer.eachLayer(l=>byId[l.feature.properties.id]=l);
+layer.addTo(map);
+
+function applyVisibility(){
+  layer.eachLayer(l=>{const on=visible[l.feature.properties.f];
+    if(on&&!map.hasLayer(l)) l.addTo(map); if(!on&&map.hasLayer(l)) map.removeLayer(l);});
+  document.querySelectorAll('.farm').forEach(el=>el.classList.toggle('off',!visible[el.dataset.k]));
+  renderTable(); renderList();
+}
+function fitVisible(){
+  const b=L.latLngBounds([]); layer.eachLayer(l=>{if(visible[l.feature.properties.f]) b.extend(l.getBounds());});
+  if(b.isValid()) map.fitBounds(b,{padding:[24,24]});
+}
+
+// ---------- Betriebe ----------
+const feats=D.features.map(f=>f.properties);
+function sum(arr){return arr.reduce((a,p)=>a+p.m2,0);}
+const farmBox=document.getElementById('farms');
+FARMS.forEach(f=>{
+  const ps=feats.filter(p=>p.f===f.key);
+  const gem=sum(ps.filter(p=>p.g==='Freilandgemüse')), gh=sum(ps.filter(p=>p.g==='Gewächshaus / geschützt'));
+  const bio=sum(ps.filter(p=>p.p.some(x=>/Bioproduktion/.test(x))));
+  const el=document.createElement('div'); el.className='farm'; el.dataset.k=f.key;
+  el.innerHTML=`<input type="checkbox" id="v-${f.key}" checked aria-label="${esc(f.name)} anzeigen">
+   <label for="v-${f.key}" style="cursor:pointer"><div class="fname"><span class="sw" style="background:${f.color};border-color:${darker(f.color,.75)}"></span>${esc(f.name)}</div>
+   <div class="sub">${esc(f.sub)}</div><div class="fnr">${f.nrs.map(esc).join(' · ')}</div></label>
+   <button class="btn" data-zoom="${f.key}">Zoom</button>
+   <div class="stats">
+    <div class="stat"><b>${ha(sum(ps))}</b><span>ha total</span></div>
+    <div class="stat"><b>${ps.length}</b><span>Flächen</span></div>
+    <div class="stat"><b>${ha(gem)}</b><span>ha Gemüse</span></div>
+    <div class="stat"><b>${ha(gh)}</b><span>ha geschützt</span></div>
+   </div>
+   ${bio>0?`<div class="sub" style="grid-column:2/4">Bioproduktion: ${ha(bio)} ha</div>`:`<div class="sub" style="grid-column:2/4">Kein Bio-Programm deklariert</div>`}
+   ${f.note?`<div class="chip">${esc(f.note)}</div>`:''}`;
+  farmBox.appendChild(el);
+});
+farmBox.addEventListener('change',e=>{if(e.target.type==='checkbox'){visible[e.target.id.slice(2)]=e.target.checked;applyVisibility();}});
+farmBox.addEventListener('click',e=>{const k=e.target.dataset&&e.target.dataset.zoom;if(!k)return;
+  const b=L.latLngBounds([]);layer.eachLayer(l=>{if(l.feature.properties.f===k)b.extend(l.getBounds());});
+  if(!visible[k]){visible[k]=true;document.getElementById('v-'+k).checked=true;applyVisibility();}
+  map.fitBounds(b,{padding:[24,24]});});
+
+// ---------- Vergleichstabelle ----------
+function renderTable(){
+  const fs=FARMS.filter(f=>visible[f.key]);
+  let h='<thead><tr><th>Kultur</th>'+fs.map(f=>`<th title="${esc(f.name)}" style="text-transform:none;letter-spacing:0"><span class="gsw" style="background:${f.color};margin-right:3px"></span>${esc(f.name.slice(0,4))}</th>`).join('')+'</tr></thead><tbody>';
+  GROUPS.forEach(([g,c])=>{
+    const vals=fs.map(f=>sum(feats.filter(p=>p.f===f.key&&p.g===g)));
+    if(vals.every(v=>v===0))return;
+    h+=`<tr><td><span class="gsw" style="background:${c}"></span>${esc(g)}</td>`+vals.map(v=>`<td>${v?ha(v):'–'}</td>`).join('')+'</tr>';
+  });
+  h+='</tbody><tfoot><tr><td>Total</td>'+fs.map(f=>`<td>${ha(sum(feats.filter(p=>p.f===f.key)))}</td>`).join('')+'</tr></tfoot>';
+  document.getElementById('cmp').innerHTML=fs.length?h:'<tbody><tr><td>Kein Betrieb ausgewählt.</td></tr></tbody>';
+}
+
+// ---------- Liste ----------
+const gsel=document.getElementById('gsel');
+gsel.innerHTML='<option value="">Alle Kulturgruppen</option>'+GROUPS.map(([g])=>`<option>${esc(g)}</option>`).join('');
+const q=document.getElementById('q');
+function filtered(){
+  const t=q.value.trim().toLowerCase(), g=gsel.value;
+  return feats.filter(p=>visible[p.f]&&(!g||p.g===g)&&(!t||(p.k+' '+p.gm+' '+p.c+' '+FK[p.f].name+' '+p.nr).toLowerCase().includes(t))).sort((a,b)=>b.m2-a.m2);
+}
+function renderList(){
+  const rows=filtered();
+  document.getElementById('count').textContent=`${rows.length} Flächen · ${ha(sum(rows))} ha`;
+  document.getElementById('list').innerHTML=rows.map(p=>`<button class="row" role="listitem" data-id="${p.id}">
+    <span class="dot" style="background:${mode==='farm'?FK[p.f].color:GC[p.g]}"></span>
+    <span style="min-width:0"><div class="k">${esc(p.k)}</div><div class="g">${esc(FK[p.f].name)} · ${esc(p.gm)}</div></span>
+    <span class="a">${ar(p.m2)} a</span></button>`).join('');
+}
+q.addEventListener('input',renderList); gsel.addEventListener('change',renderList);
+document.getElementById('list').addEventListener('click',e=>{
+  const b=e.target.closest('.row'); if(!b)return; const l=byId[b.dataset.id];
+  map.fitBounds(l.getBounds(),{padding:[60,60],maxZoom:18}); setTimeout(()=>l.openPopup(),250);
+});
+document.getElementById('csv').addEventListener('click',()=>{
+  const rows=filtered(); const head=['Betrieb','Betriebsnummer','Kultur','Code','Kulturgruppe','Flaeche_a','Flaeche_ha','Gemeinde','Kanton','Programme','beitragsberechtigt','Jahr','LV95_E','LV95_N'];
+  const q2=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv=[head.join(';')].concat(rows.map(p=>[FK[p.f].name,p.nr,p.k,p.c,p.g,(p.m2/100).toFixed(1),(p.m2/1e4).toFixed(2),p.gm,p.kt,p.p.join(' | '),p.bb?'ja':'nein',p.j,p.x,p.y].map(q2).join(';'))).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'})); a.download='flaechen_auswahl.csv'; document.body.appendChild(a); a.click(); a.remove();
+});
+
+// ---------- Modus ----------
+function setMode(m){mode=m;document.getElementById('m-farm').setAttribute('aria-pressed',m==='farm');document.getElementById('m-kultur').setAttribute('aria-pressed',m==='kultur');
+  layer.setStyle(style); if(selected) selected.setStyle({weight:3.5,color:'#FFFFFF'}); renderList(); legend.update();}
+document.getElementById('m-farm').onclick=()=>setMode('farm');
+document.getElementById('m-kultur').onclick=()=>setMode('kultur');
+const Legend=L.Control.extend({options:{position:'bottomright'},onAdd(){this.d=L.DomUtil.create('div','mapbox');this.update();L.DomEvent.disableClickPropagation(this.d);return this.d;},
+  update(){if(!this.d)return; this.d.innerHTML=mode==='farm'
+    ? '<div class="h">Betrieb</div>'+FARMS.map(f=>`<div><span class="gsw" style="background:${f.color}"></span>${esc(f.name)}</div>`).join('')
+    : '<div class="h">Kultur</div>'+GROUPS.filter(([g])=>feats.some(p=>p.g===g)).map(([g,c])=>`<div><span class="gsw" style="background:${c}"></span>${esc(g)}</div>`).join('')+'<div class="h" style="margin-top:3px">Rand = Betriebsfarbe</div>';}});
+const legend=new Legend(); legend.addTo(map);
+
+renderTable(); renderList(); fitVisible();
+})();
+</script>
+</body>
+</html>
