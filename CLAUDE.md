@@ -3,7 +3,8 @@
 Dieses Projekt zeigt die landwirtschaftlichen Flächen ausgewählter Gemüsebetriebe (aktuell 4: Imhof,
 Beerstecher, Gerber, Rathgeb) auf einer Karte. Grundlage sind die öffentlichen Geodaten
 «Landwirtschaftliche Kulturflächen» der Kantone (geodienste.ch). Die Ergebnisse sind eine
-Website (eine HTML-Datei), eine Excel-Tabelle, ein GeoPackage und ein QGIS-Projekt.
+Website (eine HTML-Datei, auch online über GitHub Pages, für Laptop und Handy), eine Excel-Tabelle,
+ein GeoPackage und ein QGIS-Projekt.
 
 Weiterführend: `docs/daten.md` (Quellen, Felder, Downloads) und `docs/betriebe.md`
 (wie die Betriebsnummern zugeordnet wurden, offene Punkte).
@@ -32,8 +33,12 @@ data/raw_zip/          die 6 Downloads von geodienste.ch als ZIP (ca. 140 MB) �
 data/raw/              entpackt (ca. 330 MB, nicht im Git). Fehlt ein Ordner, entpacken die
                        Skripte ihn automatisch aus data/raw_zip/
 scripts/               Datenaufbereitung, nummeriert in Ausführungsreihenfolge
-web/template.html      Vorlage der Website (Leaflet), web/vendor/leaflet/ = Leaflet 1.9.4
-work/                  Zwischenstände (auswahl.gpkg, Screenshots) – darf gelöscht werden
+web/template.html      Vorlage der Website (Leaflet), web/vendor/leaflet/ = Leaflet 1.9.4,
+                       web/vendor/fonts/ = IBM Plex Sans (variabel) + Mono, latin, OFL-Lizenz
+web/online/            Dateien nur für die Online-Fassung: icon.svg (Quelle, auch Favicon), App-Icons,
+                       vorschau.jpg (Link-Vorschau 1200×630)
+.github/workflows/     website.yml: veröffentlicht die Website bei jedem Push auf main (GitHub Pages)
+work/                  Zwischenstände (auswahl.gpkg, Screenshots, online/) – darf gelöscht werden
 output/                Ergebnisse: Website, Excel, GeoPackage, QGIS-Projekt
 anleitungen/           HTML-Quellen + Render-Skript der beiden QGIS-PDF-Anleitungen
 docs/                  Hintergrund zu Daten und Betrieben
@@ -51,7 +56,7 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 ## Alles neu bauen
 
 ```bash
-./run_all.sh          # Schritte 1–4: Auswahl, Website, GeoPackage, Excel
+./run_all.sh          # Schritte 1–4 und 6: Auswahl, Website, GeoPackage, Excel, Online-Fassung (work/online)
 ```
 
 | Schritt | Skript | liest | schreibt |
@@ -61,8 +66,10 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 | 3 | `scripts/03_gpkg.py` | `work/auswahl.gpkg` | `output/Feldkarte_Auswahl_4_Betriebe.gpkg` |
 | 4 | `scripts/04_excel.py` | `output/*.gpkg` | `output/Feldkarte_Flaechen_4_Betriebe.xlsx` |
 | 5 | `scripts/05_qgis_projekt.py` (PyQGIS) | `output/*.gpkg`, `data/raw/` | `output/QGIS_Feldkarte_lokal.qgz` |
+| 6 | `scripts/06_online.py` (nur Standardbibliothek) | `output/*.html`, `web/online/` | `work/online/` (bzw. `--out`) |
 | – | `scripts/pruefen_qgis.py` (PyQGIS) | `output/*.qgz` | Prüfausgabe |
-| – | `scripts/screenshots.py` (optional, Playwright) | `output/*.html` | `work/screenshots/` |
+| – | `scripts/screenshots.py` (optional, Playwright) | `output/*.html` | `work/screenshots/`; mit `--vorschau` auch `web/online/vorschau.jpg` |
+| – | `scripts/icons.py` (optional, Playwright) | `web/online/icon.svg` | `web/online/*.png` |
 
 **Schritt 5 braucht PyQGIS**, das nur im Python von QGIS steckt:
 - Weg A (am einfachsten): In QGIS *Erweiterungen → Python-Konsole*, Symbol *Editor anzeigen*,
@@ -89,6 +96,11 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 
 ## Häufige Aufgaben
 
+- **Website online aktualisieren:** `./run_all.sh`, committen, auf `main` pushen. Der Workflow
+  `.github/workflows/website.yml` baut mit `06_online.py --url <Pages-Adresse>` den Ordner `_site` aus der
+  committeten `output/*.html` (baut die Daten nicht neu!) und veröffentlicht ihn. Von Hand: Actions →
+  «Website veröffentlichen» → Run workflow. Adresse: https://konvalinaalexander-max.github.io/qgis/
+  (einmalig nötig: Settings → Pages → Source «GitHub Actions»).
 - **Betrieb hinzufügen / ändern:** Eintrag in `config/projekt.json` → `betriebe` (key, name, sub,
   nrs, color, note). Betriebsnummern exakt mit Leerzeichen übernehmen (`ZH0197/ 1/  1`).
   Dann `./run_all.sh` und Schritt 5. Dateinamen mit «4_Betriebe» ggf. unter `dateinamen` anpassen.
@@ -128,15 +140,31 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 
 ## Technische Eigenheiten
 
-- Website = **eine** HTML-Datei: Leaflet und alle Flächen sind eingebettet, kein Server nötig.
-  Aus dem Internet kommen nur die Hintergrundkarten und die Parzellen.
+- Website = **eine** HTML-Datei: Leaflet, Schriften (IBM Plex, base64) und alle Flächen sind eingebettet,
+  kein Server nötig. Aus dem Internet kommen nur die Hintergrundkarten und die Parzellen (keine Google Fonts).
+  - Layout: Desktop = Seitenleiste links (Tabs Betriebe/Kulturen/Flächen/Info) + Karte; Details als Popup.
+    Handy (≤ 760 px breit) = Karte bildschirmfüllend + ziehbares Panel unten (Stufen peek/half/full,
+    Details im Panel, `Sheet` im JS). Kleine Fenster/Handy quer (≤ 540 px hoch): Seitenleiste schmal,
+    Details in der Seitenleiste statt Popup. Eingabefelder auf Touch-Geräten 16 px (sonst zoomt iOS).
+  - Link zu einer Fläche: `#flaeche=<Breite>,<Länge>` (WGS84-Bezugspunkt `la`/`lo` je Fläche, liegt sicher
+    in der Fläche). Beim Öffnen: exakter Punkt, sonst Fläche, die den Punkt enthält, sonst nächster Punkt
+    < 50 m. Auswahl schreibt den Hash per `history.pushState`, damit die Zurück-Taste die Details schliesst.
+  - Standort-Knopf (`map.locate`, braucht https oder localhost), Route-Link (Apple Maps auf Apple-Geräten,
+    sonst Google Maps), Teilen (Web Share API, sonst Zwischenablage; nur online sichtbar).
+  - «Kultur»-Modus: Legenden-Schaltflächen filtern Kulturgruppen (gilt nur in diesem Modus); weit
+    herausgezoomt Rand in Kulturfarbe, nah (ab Zoom 13) in Betriebsfarbe; Linien in der Übersicht dicker.
+  - Platzhalter in `web/template.html`: `__TITEL__`, `__BESCHREIBUNG__`, `__ICON__`, `/*__FONTS__*/`,
+    `/*__DATA__*/`, `<!--__ROBOTS__-->` (02_website.py) und `<!--__ONLINE__-->` (06_online.py: Manifest,
+    apple-touch-icon, og:url/og:image).
+  - Online: GitHub Pages, öffentlich für alle mit Link; `noindex`, solange `online.suchmaschinen` in
+    `config/projekt.json` false ist.
   - swisstopo XYZ (EPSG:3857): Luftbild `ch.swisstopo.swissimage` bis Zoom 20; Landeskarte
     `ch.swisstopo.pixelkarte-farbe` / `-grau` nur bis Zoom 19 (z20 liefert HTTP 400) → in Leaflet
     `maxNativeZoom: 19`.
   - Parzellen ZH: WMS `https://wms.zh.ch/avwms`, Layer `Liegenschaften,OSNR_liegenschaften`,
     zeichnet erst ab Zoom 17 → `minZoom: 17`.
 - Flächen für die Website werden mit 0.3 m vereinfacht und auf 6 Nachkommastellen gerundet
-  (ca. 0.8 MB HTML).
+  (ca. 1.0 MB HTML inkl. Schriften; online mit gzip ausgeliefert).
 - Excel rechnet in der Übersicht mit SUMIFS/COUNTIF auf dem Blatt «Flächen». `04_excel.py` speichert
   keine Ergebniswerte; Excel/Numbers rechnen beim Öffnen. Für eine Vorschau mit Werten (Quick Look)
   einmal in Excel öffnen und speichern.
@@ -148,6 +176,10 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 ## Stand (5.10.2026)
 
 Erledigt:
+- Website für Handy optimiert (Panel unten, Tabs, Details, Standort, Route, Teilen-Link, Zurück-Taste),
+  Schriften eingebettet, Online-Fassung + GitHub-Pages-Workflow vorbereitet; getestet mit Playwright
+  (Desktop 1440/1280, iPhone 390/375, Android 360, iPad 768, Handy quer 844×390, Dunkelmodus).
+  Offen: GitHub Pages einschalten (Settings → Pages → «GitHub Actions») und Branch nach main mergen.
 - 4 Betriebe identifiziert, Daten ZH (Sitz aller 4) plus TG/SH geprüft. In TG kam die
   BioFresh AG (TG39621, Tägerwilen, Gewächshäuser, Bio) zu Rathgeb dazu, in SH nichts.
 - Website, Excel, GeoPackage und QGIS-Projekt mit ZH + TG + SH gebaut und geprüft.

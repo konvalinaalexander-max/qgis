@@ -5,3 +5,4 @@ data/raw/
 *.tmp
 .DS_Store
 ~$*
+_site/

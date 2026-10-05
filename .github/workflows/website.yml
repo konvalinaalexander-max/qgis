@@ -1,0 +1,59 @@
+# Veröffentlicht die Website auf GitHub Pages, sobald auf main etwas an Website, Vorlage oder
+# Konfiguration geändert wird (oder von Hand: Actions → «Website veröffentlichen» → Run workflow).
+# Einmalig nötig: Settings → Pages → Build and deployment → Source: «GitHub Actions».
+# Gebaut wird nichts neu: veröffentlicht wird output/<website>.html, so wie es im Repository liegt
+# (ergänzt durch scripts/06_online.py um Icons, Manifest und Link-Vorschau).
+name: Website veröffentlichen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "output/*.html"
+      - "web/**"
+      - "config/**"
+      - "scripts/06_online.py"
+      - "scripts/common.py"
+      - ".github/workflows/website.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Dateien holen (ohne die grossen Rohdaten)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            config
+            output
+            scripts
+            web
+
+      - name: Pages vorbereiten
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Website zusammenstellen
+        run: python3 scripts/06_online.py --url "${{ steps.pages.outputs.base_url }}/" --out _site
+
+      - name: Hochladen
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
