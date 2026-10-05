@@ -5,6 +5,6 @@ shapely>=2.0
 pyproj>=3.6
 pandas>=2.0
 openpyxl>=3.1
-# optional: Screenshots der Website und PDF-Anleitungen rendern
+# optional: Screenshots/Test der Website, Vorschaubild, App-Icons und PDF-Anleitungen rendern
 # playwright>=1.45
 # pypdf>=4.0

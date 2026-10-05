@@ -18,6 +18,9 @@
     "qgis": "QGIS_Feldkarte_lokal.qgz"
   },
   "qgis_startbetrieb": "ZH0197/ 1/  1",
+  "online": {
+    "suchmaschinen": false
+  },
   "betriebe": [
     {
       "key": "imhof",
