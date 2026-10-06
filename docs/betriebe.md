@@ -9,7 +9,7 @@ Bio-Zertifikaten und Fachpresse (Quellen unten).
 | Betrieb | Betriebsnummer | `betriebsname` in den Daten | Grundlage der Zuordnung |
 |---|---|---|---|
 | Imhof | ZH0197/ 1/  1 | Eichhof, 8603 Schwerzenbach | Adresse = Sitz der Imhofbio AG und der Imhof Flora AG |
-| Imhof | ZH0197/ 1/702 | Eichhof, 8603 Schwerzenbach | gleiche Adresse; 1 Fläche, 1.0 ha Gewächshaus |
+| Imhof | ZH0197/ 1/702 | Eichhof, 8603 Schwerzenbach | Imhof Flora AG (Angabe Alex, 6.10.2026); 1 Fläche, 1.0 ha Gewächshaus |
 | Beerstecher | ZH0191/ 1/ 55 | Hochbordstrasse 15, 8600 Dübendorf | Adresse = Sitz der Beerstecher AG |
 | Gerber | ZH0172/ 1/700 | Wohnadresse in Pfäffikon ZH (kein Firmensitz; hier bewusst ohne Strasse) | Produktionsstätten Fehraltorf und Felben-Wellhausen = Adressen der beiden Gerber-Firmen |
 | Rathgeb | ZH0042/ 1/850 | Rohräcker 414, 8476 Unterstammheim | Adresse |
@@ -27,7 +27,7 @@ bei der BioFresh AG (TG) trennt die Betriebsnummer.
 | Teilbetrieb | Zuordnung | Flächen | ha | Bio |
 |---|---|---|---|---|
 | Hansjürg Imhof Bio-Produkte (vermutet) | ZH0197/ 1/  1 | 245 | 90.61 | 84.70 ha als Bioproduktion gemeldet |
-| Gewächshaus Eichhof | ZH0197/ 1/702 | 1 | 1.02 | unklar |
+| Imhof Flora AG | ZH0197/ 1/702 | 1 | 1.02 | nicht Bio |
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47, Zürcherstrasse 75, Fehraltorf | 161 | 106.07 | Bio laut Firma, nicht gemeldet |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4, Rosenackerstr. 7, Felben-Wellhausen | 71 | 147.08 | nicht Bio |
 | Rathgeb BioProdukte AG (Unterstammheim) | PS ZH0042/ 1/ 48 | 227 | 288.86 | Bio gemeldet |
@@ -44,10 +44,9 @@ bei der BioFresh AG (TG) trennt die Betriebsnummer.
   84.7 ha als Bioproduktion gemeldet. Die nicht gemeldeten 5.9 ha der Hauptnummer sind Wald,
   Ruderalflächen, nicht beitragsberechtigte Flächen und Gewächshäuser mit festem Fundament.
 - **ZH0197/ 1/702** (1 Fläche, 1.02 ha, Code 802 «Übrige Spezialkulturen in Gewächshäusern mit festem
-  Fundament»): Betreiber nicht belegt. Möglich sind die Imhof Flora AG (Blumen, Swiss GAP, nicht Bio)
-  oder ein Kräuter-Gewächshaus der Imhofbio AG (Bio). Das fehlende Programm sagt nichts: In den Zürcher
-  Daten 2025 tragen alle Gewächshäuser mit festem Fundament (Codes 801–803) «Kein Programm», auch bei
-  Bio-Betrieben. Auf der Karte darum «Bio-Status unklar».
+  Fundament», Gewächshaus auf dem Eichhof) ist die Imhof Flora AG (Angabe Alex, 6.10.2026). Labels laut Firma:
+  Swiss GAP, Suisse Garantie; nicht Bio. In den Zürcher Daten 2025 tragen Gewächshäuser mit festem Fundament nie
+  ein Programm.
 - **Thalheim an der Thur** (12.1 ha mit Gewächshäusern beim Weiler Weidler): keine Quelle
   verbindet Imhof mit diesem Standort. Vermutung: Pacht oder Übernahme eines früheren Gemüsebetriebs.
 - Flächenangaben der Presse (2018: 68 ha LN; «70 ha Gemüse») sind älter als die Daten 2025 (91.6 ha).
@@ -141,7 +140,6 @@ Die Daten TG und SH wurden nach weiteren Betriebsnummern der vier Betriebe durch
 
 - **ZH0218/ 1/  3** (Alte Horgenbachstr. 2, Ellikon): Recherche ohne Beleg für eine Zugehörigkeit zu
   Rathgeb; vermutlich eigenständig. Nicht aufgenommen.
-- **Imhof ZH0197/ 1/702:** Betreiber (Imhof Flora AG oder Imhofbio AG) und Bio-Status offen.
 - **Imhof Thalheim an der Thur:** seit wann und auf welcher Grundlage bewirtschaftet, offen.
 - **Gerber:** Bio-Zertifikat der Bio Greens AG selbst nicht eingesehen (Zertifikatsdatenbank nicht
   abfragbar); Grund für die fehlende Bio-Meldung nicht bestätigt.
