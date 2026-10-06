@@ -189,6 +189,8 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 #cmp tr.bio td:first-child i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
 #cmp tr.biohead td{padding-top:10px;font:600 11px var(--f-body);font-stretch:85%;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
 .leaflet-popup-content .fband{margin:-13px -15px 10px;border-radius:12px 12px 0 0;border-left:0;border-top:6px solid var(--fc);padding:8px 40px 10px 15px}
+.leaflet-popup-scrolled{overflow-x:hidden}   /* Popup höher als das Fenster: nur senkrecht scrollen, Band ohne Rand-Ausgleich */
+.leaflet-popup-content.leaflet-popup-scrolled .fband{margin:0 0 10px;border-radius:10px}
 .dhead{position:sticky;top:0;z-index:2;background:var(--panel);display:grid;gap:8px;padding-bottom:12px}
 @media (max-height:700px){.dhead{position:static}}
 #side.detail header.top,#side.detail .tabs{display:none}   /* Detailansicht im Panel: nur die Fläche */
@@ -440,7 +442,7 @@ const bioOn=Object.fromEntries(BIO.map(([k])=>[k,true]));
 const shown=p=>farmOn[p.f]&&teilOn[p.t]&&(mode!=='kultur'||groupOn[p.g])&&(mode!=='bio'||bioOn[p.bs]);
 const farmShown=k=>farmOn[k]&&FK[k].teile.some(t=>teilOn[t.id]);
 // Schalten von Betrieben und Teilen – gleich für Legende und Betriebskarten
-function setFarm(k,on){farmOn[k]=on; if(on&&!FK[k].teile.some(t=>teilOn[t.id])) FK[k].teile.forEach(t=>teilOn[t.id]=true);}
+function setFarm(k,on){farmOn[k]=on; if(on) FK[k].teile.forEach(t=>teilOn[t.id]=true);}   // einschalten = ganzer Betrieb
 function setTeil(id,on){const t=TK[id];
   if(on&&!farmOn[t.f]){farmOn[t.f]=true;FK[t.f].teile.forEach(x=>teilOn[x.id]=x.id===id);}   // Betrieb war aus: nur diesen Teil zeigen
   else teilOn[id]=on;}
@@ -825,7 +827,7 @@ function ensureVisible(l){  // Handy: Fläche nicht unter dem Panel verstecken
 function select(l,o={}){
   if(!l) return;
   const p=l.feature.properties;
-  if(!shown(p)){farmOn[p.f]=true;teilOn[p.t]=true;groupOn[p.g]=true;bioOn[p.bs]=true;applyVisibility();}
+  if(!shown(p)){farmOn[p.f]=true;teilOn[p.t]=true;if(mode==='kultur')groupOn[p.g]=true;if(mode==='bio')bioOn[p.bs]=true;applyVisibility();}
   sel=l; highlight(l); setFocus(p.f);
   if(!o.fromHash) setHash(p);
   if(compact()){   // Handy und kleine Fenster: Details im Panel statt im Popup (das die Karte verdecken würde)

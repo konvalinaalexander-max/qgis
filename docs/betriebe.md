@@ -107,9 +107,10 @@ bei der BioFresh AG (TG) trennt die Betriebsnummer.
 - Gültige Bio-Suisse-Zertifikate (bis Ende 2026) für die Rathgeb BioProdukte AG, die Thurtaler Gemüse AG
   und die ThurBio AG (beide Ellikon) sowie die BioFresh AG (Tägerwilen). 2025 rund 9.6 ha in Umstellung.
 - Ellikon: seit April 2023 Nachfolgeregelung mit dem früheren Betrieb Kellermann, keine Fusion.
-- Produktionsstätte ZH0218/ 1/ 36 (Adresse Rohräcker 414, Unterstammheim, Punkt aber in Ellikon; eine
-  Hecke von 0.19 ha bei den Ellikoner Flächen) ist nach der Lage dem Teil Ellikon zugeordnet.
   Nicht alles am Standort ist Bio (z. B. Purnatur-Tomaten 2024 nicht bio-zertifiziert).
+- Produktionsstätte ZH0218/ 1/ 36 (Adresse Rohräcker 414, Unterstammheim, Punkt aber in Ellikon; eine
+  Hecke von 0.19 ha in Frauenfeld TG, zwischen den Ellikoner Flächen) ist nach der Lage dem Teil Ellikon
+  zugeordnet.
 - BioFresh AG: Verwaltungsrat aus der Familie Rathgeb; Gewächshäuser in Tägerwilen.
 
 ## Kennzahlen (Bezugsjahr 2025, Hauptkulturen)

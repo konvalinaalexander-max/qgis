@@ -12,7 +12,7 @@ import zipfile
 
 import pyogrio
 from openpyxl import Workbook
-from openpyxl.styles import Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from common import CFG, FARMS, GROUPS, kantone_text, out_path, teile
@@ -122,6 +122,7 @@ if mehr:
         c = ov.cell(tr0 + 1, j, h)
         c.font = F(bold=True, color="FFFFFF")
         c.fill = hdr
+        c.alignment = Alignment(wrap_text=True, vertical="bottom")   # «Freilandgemüse (ha)» passt sonst nicht in die Spalte
     for i, (f, t) in enumerate(mehr, tr0 + 2):
         ov.cell(i, 1, t["name"]).font = F()
         ov.cell(i, 2, f["name"]).font = F()
