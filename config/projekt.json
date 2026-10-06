@@ -28,7 +28,8 @@
       "sub": "Eichhof, Schwerzenbach",
       "nrs": ["ZH0197/ 1/  1", "ZH0197/ 1/702"],
       "color": "#3E9BD6",
-      "note": ""
+      "note": "",
+      "bio": "deklariert"
     },
     {
       "key": "beerstecher",
@@ -36,7 +37,8 @@
       "sub": "Dübendorf",
       "nrs": ["ZH0191/ 1/ 55"],
       "color": "#E68A00",
-      "note": ""
+      "note": "",
+      "bio": "nein"
     },
     {
       "key": "gerber",
@@ -44,15 +46,70 @@
       "sub": "Fehraltorf · Felben-Wellhausen",
       "nrs": ["ZH0172/ 1/700"],
       "color": "#C4569E",
-      "note": "Zuordnung über die Standorte, nicht über den Namen"
+      "note": "Zwei Firmen unter einer Betriebsnummer; aufgeteilt nach den amtlichen Produktionsstätten",
+      "teile": [
+        {
+          "key": "biogreens",
+          "name": "Gerber Bio Greens AG",
+          "kurz": "Bio Greens",
+          "sub": "Fehraltorf · Flaach",
+          "ps": ["ZH0172/ 1/ 47"],
+          "bio": "firma",
+          "color": "#C4569E",
+          "bio_text": "Bio (Knospe) laut Firma; in den Kantonsdaten nicht als Bio gemeldet"
+        },
+        {
+          "key": "gemuesebau",
+          "name": "Gerber Gemüsebau AG",
+          "kurz": "Gemüsebau",
+          "sub": "Felben-Wellhausen (TG)",
+          "ps": ["ZH4561/ 1/  4"],
+          "bio": "nein",
+          "color": "#7A2E62",
+          "bio_text": "konventionell (Suisse Garantie)"
+        }
+      ]
     },
     {
       "key": "rathgeb",
       "name": "Rathgeb",
-      "sub": "Unterstammheim · Tägerwilen (BioFresh AG)",
+      "sub": "Unterstammheim · Ellikon an der Thur · Tägerwilen",
       "nrs": ["ZH0042/ 1/850", "TG39621"],
       "color": "#D8C21A",
-      "note": ""
+      "note": "Drei Teile unter zwei Betriebsnummern; aufgeteilt nach den amtlichen Produktionsstätten",
+      "bio": "deklariert",
+      "teile": [
+        {
+          "key": "unterstammheim",
+          "name": "Rathgeb Bio, Unterstammheim",
+          "kurz": "Unterstammheim",
+          "sub": "Stammertal, Weinland, Schaffhausen, Thurgau",
+          "ps": ["ZH0042/ 1/ 48", "ZH0218/ 1/ 36"],
+          "bio": "deklariert",
+          "color": "#D8C21A",
+          "bio_text": "Bio (Knospe); Flächen als Bioproduktion gemeldet"
+        },
+        {
+          "key": "ellikon",
+          "name": "Ellikon an der Thur (Kellermann Gemüsekulturen)",
+          "kurz": "Ellikon",
+          "sub": "seit 2023 mit Rathgeb Bio zusammen",
+          "ps": ["ZH0218/ 1/ 30"],
+          "bio": "deklariert",
+          "color": "#9A8A12",
+          "bio_text": "Flächen als Bioproduktion gemeldet"
+        },
+        {
+          "key": "biofresh",
+          "name": "BioFresh AG, Tägerwilen",
+          "kurz": "BioFresh",
+          "sub": "Gewächshäuser in Tägerwilen (TG)",
+          "nrs": ["TG39621"],
+          "bio": "deklariert",
+          "color": "#F2E27C",
+          "bio_text": "Flächen als Bioproduktion gemeldet"
+        }
+      ]
     }
   ],
   "kulturgruppen": [

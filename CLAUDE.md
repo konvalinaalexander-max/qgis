@@ -25,8 +25,8 @@ Weiterführend: `docs/daten.md` (Quellen, Felder, Downloads) und `docs/betriebe.
 ## Ordner
 
 ```
-config/projekt.json    Betriebe (Name, Betriebsnummern, Farbe, Hinweis), Kantone + Datenversion,
-                       Kulturgruppen + Farben, Dateinamen, Startwert für @betrieb in QGIS
+config/projekt.json    Betriebe (Name, Betriebsnummern, Farbe, Hinweis, Bio-Status, Teilbetriebe), Kantone +
+                       Datenversion, Kulturgruppen + Farben, Dateinamen, Startwert für @betrieb in QGIS
 config/gemeinden.json  BFS-Nummer -> [Gemeindename, Kanton] (alle 381 Nummern, die in den
                        Daten ZH/TG/SH vorkommen; 3393 fehlt, wird als «BFS 3393» angezeigt)
 data/raw_zip/          die 6 Downloads von geodienste.ch als ZIP (ca. 140 MB) – so im Git-Repo
@@ -91,6 +91,16 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 | Rathgeb | ZH0042/ 1/850, TG39621 | 441 | 550.31 |
 | Total | | 1'092 | 1'027.79 |
 
+Teilbetriebe (nach amtlicher Produktionsstätte, `01_auswahl.py` gibt sie aus):
+
+| Teilbetrieb | Zuordnung | Flächen | ha |
+|---|---|---|---|
+| Gerber Bio Greens AG | PS ZH0172/ 1/ 47 (Zürcherstrasse 75, Fehraltorf) | 161 | 106.07 |
+| Gerber Gemüsebau AG | PS ZH4561/ 1/  4 (Rosenackerstr. 7, Felben-Wellhausen) | 71 | 147.08 |
+| Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 + ZH0218/ 1/ 36 | 228 | 289.05 |
+| Ellikon an der Thur (Kellermann) | PS ZH0218/ 1/ 30 (Neue Horgenbachstrasse 2/4) | 201 | 253.07 |
+| BioFresh AG, Tägerwilen | Betriebsnummer TG39621 | 12 | 8.18 |
+
 `pruefen_qgis.py` muss «absolute Pfade: 0», alle Layer gültig und für jede Betriebsnummer einen
 Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha).
 
@@ -102,7 +112,16 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   «Website veröffentlichen» → Run workflow. Adresse: https://konvalinaalexander-max.github.io/qgis/
   (Pages ist eingeschaltet, Quelle «GitHub Actions»).
 - **Betrieb hinzufügen / ändern:** Eintrag in `config/projekt.json` → `betriebe` (key, name, sub,
-  nrs, color, note). Betriebsnummern exakt mit Leerzeichen übernehmen (`ZH0197/ 1/  1`).
+  nrs, color, note, bio). Betriebsnummern exakt mit Leerzeichen übernehmen (`ZH0197/ 1/  1`).
+- **Teilbetriebe:** Führt ein Betrieb mehrere Firmen/Standorte unter einer Betriebsnummer, steht das in
+  den Rohdaten als Produktionsstätte (`ps_nr` an jeder Bewirtschaftungseinheit, Layer `produktionsstaette`
+  mit Adresse). In `betriebe[].teile` je Teil: key, name, kurz, sub, `ps` (Liste ps_nr) oder `nrs`
+  (Betriebsnummern) oder `rest: true`, bio, bio_text, color (Schattierung der Betriebsfarbe).
+  `common.teil_of()` ordnet zu und bricht ab, wenn eine Fläche keinem Teil zugeordnet werden kann.
+- **Bio-Status:** `bio` am Betrieb oder Teil: `deklariert` (Flächen als «Bioproduktion» gemeldet),
+  `firma` (Bio laut Firma, in den Daten nicht gemeldet), `nein`. Je Fläche ergibt `common.bio_status()`
+  «bio», «bio_betrieb» (Bio-Betrieb, Fläche nicht als Bio gemeldet: Wald, Gewächshäuser mit festem
+  Fundament, oder Teil mit `firma`) oder «nein». Website (Farbmodus «Bio»), GeoPackage und Excel zeigen das.
   Dann `./run_all.sh` und Schritt 5. Dateinamen mit «4_Betriebe» ggf. unter `dateinamen` anpassen.
 - **Weiteren Kanton aufnehmen:** Downloads entpackt nach `data/raw/` legen (Ordnernamen
   unverändert) und für das Repo gezippt nach `data/raw_zip/`, Kanton + Version in `kantone` und Namen in `kantonsnamen` eintragen.
@@ -149,7 +168,12 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   - Link zu einer Fläche: `#flaeche=<Breite>,<Länge>` (WGS84-Bezugspunkt `la`/`lo` je Fläche, liegt sicher
     in der Fläche). Beim Öffnen: exakter Punkt, sonst Fläche, die den Punkt enthält, sonst nächster Punkt
     < 50 m. Auswahl schreibt den Hash per `history.pushState`, damit die Zurück-Taste die Details schliesst.
-  - Wem gehört die Fläche: Details beginnen mit einem Band in Betriebsfarbe (Name, Ort, Betriebsnummer).
+  - Teilbetriebe: Farbe des Teils (Schattierung), eigene Legenden-Schaltfläche je Teil, aufklappbar in der
+    Betriebskarte (eigene Schalter + Zoom), Tabelle «Teilbetriebe» im Tab Kulturen; Daten-Feld `t` (Teil-ID).
+  - Farbmodus «Bio» (Daten-Feld `bs`): Bio gemeldet / Bio-Betrieb, nicht als Bio gemeldet / nicht Bio;
+    die Legenden-Schaltflächen filtern. Vergleichstabelle mit Zeilen «davon nach Bio-Status».
+  - Wem gehört die Fläche: Details beginnen mit einem Band in Betriebsfarbe (Name, Teilbetrieb, Ort,
+    Betriebsnummer, Bio-Kennzeichen).
     Bei einer Auswahl treten die Flächen der übrigen Betriebe zurück (`focus` im JS), die gewählte Fläche
     hat einen Rand in Betriebsfarbe; im Panel steht der Name zusätzlich als Schild auf der Fläche, und
     Kopf/Tabs sind ausgeblendet (Klasse `detail` an `#side`). Mit Maus: Betrieb schon beim Darüberfahren.
@@ -169,9 +193,10 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
     zeichnet erst ab Zoom 17 → `minZoom: 17`.
 - Flächen für die Website werden mit 0.3 m vereinfacht und auf 6 Nachkommastellen gerundet
   (ca. 1.0 MB HTML inkl. Schriften; online mit gzip ausgeliefert).
-- Excel rechnet in der Übersicht mit SUMIFS/COUNTIF auf dem Blatt «Flächen». `04_excel.py` speichert
-  keine Ergebniswerte; Excel/Numbers rechnen beim Öffnen. Für eine Vorschau mit Werten (Quick Look)
-  einmal in Excel öffnen und speichern.
+- Excel rechnet in der Übersicht mit SUMIFS/COUNTIF auf dem Blatt «Flächen» (Spalte M = Teilbetrieb,
+  N = Bio-Status). `04_excel.py` schreibt die in Python berechneten Ergebnisse zusätzlich als
+  zwischengespeicherte Werte in die Formelzellen, damit Quick Look und Browser-Vorschauen Zahlen zeigen;
+  Excel/Numbers rechnen beim Öffnen ohnehin neu.
 - QGIS-Projekt: Pfade relativ zu `output/` (`../data/raw/…`, `./Feldkarte_Auswahl_4_Betriebe.gpkg`).
   Der ganze Projektordner kann deshalb verschoben werden. Projektvariable `betrieb` ändern unter
   *Projekt → Eigenschaften… → Variablen*.
