@@ -77,38 +77,38 @@
       "sub": "Unterstammheim · Ellikon an der Thur · Tägerwilen",
       "nrs": ["ZH0042/ 1/850", "TG39621"],
       "color": "#D8C21A",
-      "note": "Drei Teile unter zwei Betriebsnummern; aufgeteilt nach den amtlichen Produktionsstätten",
+      "note": "Unternehmensgruppe: drei Teile unter zwei Betriebsnummern, getrennt nach amtlicher Produktionsstätte",
       "bio": "deklariert",
       "teile": [
         {
           "key": "unterstammheim",
           "name": "Rathgeb Bio, Unterstammheim",
           "kurz": "Unterstammheim",
-          "sub": "Stammertal, Weinland, Schaffhausen, Thurgau",
+          "sub": "Rathgeb BioProdukte AG · Stammertal, Weinland, SH, TG",
           "ps": ["ZH0042/ 1/ 48", "ZH0218/ 1/ 36"],
           "bio": "deklariert",
           "color": "#D8C21A",
-          "bio_text": "Bio (Knospe); Flächen als Bioproduktion gemeldet"
+          "bio_text": "Bio Suisse (Knospe); Flächen 2025 als Bioproduktion gemeldet"
         },
         {
           "key": "ellikon",
-          "name": "Ellikon an der Thur (Kellermann Gemüsekulturen)",
+          "name": "Rathgeb Bio, Ellikon an der Thur",
           "kurz": "Ellikon",
-          "sub": "seit 2023 mit Rathgeb Bio zusammen",
+          "sub": "ehem. Kellermann Gemüsekulturen; Thurtaler Gemüse AG, ThurBio AG",
           "ps": ["ZH0218/ 1/ 30"],
           "bio": "deklariert",
           "color": "#9A8A12",
-          "bio_text": "Flächen als Bioproduktion gemeldet"
+          "bio_text": "Bio Suisse (Knospe); Flächen 2025 als Bioproduktion gemeldet"
         },
         {
           "key": "biofresh",
           "name": "BioFresh AG, Tägerwilen",
           "kurz": "BioFresh",
-          "sub": "Gewächshäuser in Tägerwilen (TG)",
+          "sub": "Gewächshäuser in Tägerwilen (TG), Rathgeb-Gruppe",
           "nrs": ["TG39621"],
           "bio": "deklariert",
           "color": "#F2E27C",
-          "bio_text": "Flächen als Bioproduktion gemeldet"
+          "bio_text": "Bio Suisse (Knospe); Flächen 2025 als Bioproduktion gemeldet"
         }
       ]
     }

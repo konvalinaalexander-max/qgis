@@ -98,7 +98,7 @@ Teilbetriebe (nach amtlicher Produktionsstätte, `01_auswahl.py` gibt sie aus):
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47 (Zürcherstrasse 75, Fehraltorf) | 161 | 106.07 |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4 (Rosenackerstr. 7, Felben-Wellhausen) | 71 | 147.08 |
 | Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 + ZH0218/ 1/ 36 | 228 | 289.05 |
-| Ellikon an der Thur (Kellermann) | PS ZH0218/ 1/ 30 (Neue Horgenbachstrasse 2/4) | 201 | 253.07 |
+| Rathgeb Bio, Ellikon an der Thur | PS ZH0218/ 1/ 30 (Neue Horgenbachstrasse 2/4, ehem. Kellermann) | 201 | 253.07 |
 | BioFresh AG, Tägerwilen | Betriebsnummer TG39621 | 12 | 8.18 |
 
 `pruefen_qgis.py` muss «absolute Pfade: 0», alle Layer gültig und für jede Betriebsnummer einen
