@@ -97,7 +97,7 @@ Teilbetriebe (nach Betriebsnummer bzw. amtlicher Produktionsstätte, `01_auswahl
 | Teilbetrieb | Zuordnung | Flächen | ha |
 |---|---|---|---|
 | Hansjürg Imhof Bio-Produkte (vermutet) | Betriebsnummer ZH0197/ 1/  1 | 245 | 90.61 |
-| Gewächshaus Eichhof | Betriebsnummer ZH0197/ 1/702 (Bio-Status `offen`) | 1 | 1.02 |
+| Imhof Flora AG | Betriebsnummer ZH0197/ 1/702 (Angabe Alex) | 1 | 1.02 |
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47 (Zürcherstrasse 75, Fehraltorf) | 161 | 106.07 |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4 (Rosenackerstr. 7, Felben-Wellhausen) | 71 | 147.08 |
 | Rathgeb BioProdukte AG (Unterstammheim) | PS ZH0042/ 1/ 48 | 227 | 288.86 |
@@ -233,7 +233,6 @@ Erledigt:
 Offen / Ideen (nur auf Wunsch angehen):
 - ZH0218/ 1/  3 (Alte Horgenbachstr. 2, Ellikon): kein Beleg für eine Zugehörigkeit zu Rathgeb, nicht
   aufgenommen.
-- Imhof ZH0197/ 1/702: Betreiber (Imhof Flora AG oder Imhofbio AG) und Bio-Status offen.
 - Gerber Bio Greens: Bio laut Firma, aber keine Fläche als Bioproduktion gemeldet; wahrscheinliche
   Erklärung (Bio-Verordnung Art. 7 Abs. 5) in `docs/betriebe.md`, von Gerber nicht bestätigt.
 - Die PDF-Anleitungen beschreiben den Online-Weg. Eine Fassung für dieses lokale Projekt

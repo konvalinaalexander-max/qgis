@@ -30,8 +30,7 @@
       "color": "#3E9BD6",
       "note": "",
       "weitere_firmen": [
-        {"name": "Imhofbio AG", "was": "Topfkräuter, Handel", "bio": "deklariert"},
-        {"name": "Imhof Flora AG", "was": "Beet- und Balkonpflanzen", "bio": "nein"}
+        {"name": "Imhofbio AG", "was": "Topfkräuter, Handel", "bio": "deklariert"}
       ],
       "bio": "deklariert",
       "teile": [
@@ -47,13 +46,13 @@
         },
         {
           "key": "gewaechshaus",
-          "name": "Gewächshaus Eichhof",
-          "kurz": "Gewächshaus",
-          "sub": "Eichhof Schwerzenbach · eigene Betriebsnummer; Betreiber nicht belegt (vermutlich Imhof Flora AG oder Imhofbio AG)",
+          "name": "Imhof Flora AG",
+          "kurz": "Flora",
+          "sub": "Beet- und Balkonpflanzen · Gewächshaus Eichhof Schwerzenbach",
           "nrs": ["ZH0197/ 1/702"],
-          "bio": "offen",
+          "bio": "nein",
           "color": "#1C5F8E",
-          "bio_text": "Bio-Status unklar: Gewächshäuser mit festem Fundament tragen in den Zürcher Daten nie ein Programm"
+          "bio_text": "nicht Bio (Swiss GAP, Suisse Garantie)"
         }
       ]
     },

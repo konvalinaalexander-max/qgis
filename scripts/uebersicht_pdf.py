@@ -33,8 +33,8 @@ BIO = {"ja": "Bio", "nein": "nicht Bio", "firma": "Bio laut Firma¹", "offen": "
 BETRIEBE = [
     {"key": "imhof", "ort": "Schwerzenbach ZH", "status": "ja", "was": "Bio-Gemüse (Demeter), Topfkräuter, Zierpflanzen",
      "nummern": [("ZH0197/ 1/  1", [("Hansjürg Imhof Bio-Produkte", "Bio-Gemüse", "imhof-haupt", "ja")]),
-                 ("ZH0197/ 1/702", [("Gewächshaus Eichhof", "Betreiber nicht bekannt²", "imhof-gewaechshaus", "offen")])],
-     "weitere": [("Imhofbio AG", "Topfkräuter, Handel", "ja"), ("Imhof Flora AG", "Beet- und Balkonpflanzen", "nein")]},
+                 ("ZH0197/ 1/702", [("Imhof Flora AG", "Beet- und Balkonpflanzen, Gewächshaus", "imhof-gewaechshaus", "nein")])],
+     "weitere": [("Imhofbio AG", "Topfkräuter, Handel", "ja")]},
     {"key": "beerstecher", "ort": "Dübendorf ZH", "status": "nein", "was": "Gemüse, Salate und Beeren, konventionell",
      "nummern": [("ZH0191/ 1/ 55", [("Beerstecher AG", "Gemüse, Salate, Beeren", "beerstecher", "nein")])]},
     {"key": "gerber", "ort": "Fehraltorf ZH · Felben-Wellhausen TG", "status": "firma", "was": "Bio-Gemüse und konventionelles Gemüse",
@@ -44,7 +44,7 @@ BETRIEBE = [
      "nummern": [("ZH0042/ 1/850", [("Rathgeb BioProdukte AG", "Anbau, Unterstammheim", "rathgeb-unterstammheim", "ja"),
                                     ("Thurtaler Gemüse AG", "Anbau, Ellikon an der Thur", "rathgeb-ellikon", "ja")]),
                  ("TG39621", [("BioFresh AG", "Gewächshäuser, Tägerwilen", "rathgeb-biofresh", "ja")])],
-     "weitere": [("ThurBio AG", "neues Gewächshaus Ellikon³", "ja")]},
+     "weitere": [("ThurBio AG", "neues Gewächshaus Ellikon²", "ja")]},
 ]
 STATUS = {"ja": "Bio", "nein": "nicht Bio", "firma": "teils Bio"}
 
@@ -161,12 +161,11 @@ def html(nf):
 <h1>Vier Gemüsebetriebe: Firmen, Flächen, Bio</h1>
 <p class="sub">Welche Firma gehört zu welcher Betriebsnummer · Flächen 2025 · Stand {STAND}</p>
 <div class="leg"><span><i class="box"></i>amtliche Betriebsnummer</span><span><i style="background:#2e9e57"></i>Bio</span>
-<span><i style="background:#e08a3c"></i>nicht Bio</span><span><i style="background:#a8a8a8"></i>unklar</span></div>
+<span><i style="background:#e08a3c"></i>nicht Bio</span></div>
 {bl}
 <footer>
   <p>¹ Laut Firma Bio Suisse zertifiziert; in den Kantonsdaten ist keine Fläche als Bio gemeldet.
-  ² Ein Gewächshaus auf dem Eichhof (1.0 ha); vermutlich Imhof Flora AG oder Imhofbio AG, nicht belegt.
-  ³ In den Flächendaten 2025 nicht enthalten.</p>
+  ² In den Flächendaten 2025 nicht enthalten.</p>
   <p>Flächen: Kantonsdaten 2025 (geodienste.ch). Bio: Zertifikate (Knospe, Demeter) und Firmenangaben. Die Daten enthalten keine
   Firmennamen; welche Firma zu welcher Betriebsnummer gehört, ist aus Adressen, Handelsregister und Firmenangaben abgeleitet.</p>
 </footer>
