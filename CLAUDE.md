@@ -96,13 +96,13 @@ Teilbetriebe (nach Betriebsnummer bzw. amtlicher Produktionsstätte, `01_auswahl
 
 | Teilbetrieb | Zuordnung | Flächen | ha |
 |---|---|---|---|
-| Imhofbio, Eichhof Schwerzenbach | Betriebsnummer ZH0197/ 1/  1 | 245 | 90.61 |
+| Hansjürg Imhof Bio-Produkte (vermutet) | Betriebsnummer ZH0197/ 1/  1 | 245 | 90.61 |
 | Gewächshaus Eichhof | Betriebsnummer ZH0197/ 1/702 (Bio-Status `offen`) | 1 | 1.02 |
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47 (Zürcherstrasse 75, Fehraltorf) | 161 | 106.07 |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4 (Rosenackerstr. 7, Felben-Wellhausen) | 71 | 147.08 |
-| Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 | 227 | 288.86 |
-| Rathgeb Bio, Ellikon an der Thur | PS ZH0218/ 1/ 30 (Neue Horgenbachstrasse 2/4, ehem. Kellermann) + ZH0218/ 1/ 36 | 202 | 253.26 |
-| BioFresh AG, Tägerwilen | Betriebsnummer TG39621 | 12 | 8.18 |
+| Rathgeb BioProdukte AG (Unterstammheim) | PS ZH0042/ 1/ 48 | 227 | 288.86 |
+| Thurtaler Gemüse AG (Ellikon an der Thur) | PS ZH0218/ 1/ 30 (Neue Horgenbachstrasse 2/4, ehem. Kellermann) + ZH0218/ 1/ 36 | 202 | 253.26 |
+| BioFresh AG (Tägerwilen) | Betriebsnummer TG39621 | 12 | 8.18 |
 
 `pruefen_qgis.py` muss «absolute Pfade: 0», alle Layer gültig und für jede Betriebsnummer einen
 Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha).

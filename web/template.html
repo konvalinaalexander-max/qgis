@@ -95,7 +95,7 @@ h1{font:600 19px/1.2 var(--f-body);margin:0;text-wrap:balance}
 .stat b{font:600 15px var(--f-body);font-variant-numeric:tabular-nums}
 .stat span{font:500 10.5px/1.25 var(--f-body);font-stretch:85%;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .farm .more{grid-column:2/4}
-.note-chip{grid-column:2/4;justify-self:start;font:500 11.5px var(--f-body);font-stretch:85%;color:var(--warn);background:var(--warn-bg);padding:2px 7px;border-radius:5px}
+.note-chip{grid-column:2/4;justify-self:start;font:500 12px var(--f-body);color:var(--muted);background:var(--soft);padding:3px 8px;border-radius:5px}
 .btn{all:unset;cursor:pointer;font:500 12.5px var(--f-body);color:var(--accent);padding:4px 8px;border-radius:6px}
 .btn:hover{background:var(--soft)}
 .btn:focus-visible{outline:2px solid var(--focus)}
@@ -167,8 +167,19 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 .teile{grid-column:2/4;margin-top:4px;border-top:1px dashed var(--line);padding-top:6px}
 .teile summary{cursor:pointer;font:600 11px/1.6 var(--f-body);font-stretch:85%;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);list-style-position:inside}
 .teile summary .h2n{text-transform:none;letter-spacing:0;font-weight:400}
-.teil{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 8px;align-items:start;padding:7px 0 2px}
-.teil+.teil{border-top:1px solid var(--soft)}
+.teil{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 8px;align-items:start;padding:6px 0 6px 8px;margin-top:5px;
+  border-left:3px solid var(--bk,#a8a8a8);background:var(--soft);border-radius:0 6px 6px 0}
+.b-bio{--bk:#2e9e57}.b-bio_betrieb{--bk:#8cc06a}.b-nein{--bk:#e08a3c}.b-offen{--bk:#a8a8a8}
+.teil .tnr{font:12px/1.3 var(--f-mono);color:var(--muted);white-space:pre}
+.teil .tz{font-size:13px;margin-top:2px}
+.teil .tz em{font-style:normal;font-weight:600;color:var(--bk)}
+.b-bio_betrieb .tz em{color:#4d7c0f}
+.weitere{grid-column:2/4;margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px 8px 7px}
+.weitere .wk{font:600 11px/1.6 var(--f-body);font-stretch:85%;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.wf{border-left:3px solid var(--bk);padding:3px 0 3px 8px;margin-top:4px;font-size:13px}
+.wf b{font-weight:600}
+.wf span{color:var(--muted)}
+.wf em{font-style:normal;font-weight:600;color:var(--bk)}
 .teil input{margin:2px 0 0;width:16px;height:16px;accent-color:var(--accent)}
 .teil label{display:grid;cursor:pointer;min-width:0}
 .teil .tn2{display:flex;align-items:center;gap:6px;font-weight:600}
@@ -403,6 +414,7 @@ function bioText(p){   // Text des Bio-Kennzeichens einer Fläche
   if(p.bs==='offen') return t.bio_text||'Bio-Status unklar';
   return t.bio_text||'nicht Bio (kein Bio-Programm gemeldet)';
 }
+const BIOWORT={deklariert:'Bio',firma:'Bio laut Firma',nein:'nicht Bio',offen:'Bio unklar'};
 const bioPill=t=>`<span class="biob ${BCLS[t.bio]||'nein'}">${esc(t.bio_text||(t.bio==='deklariert'?'Bio – Flächen als Bioproduktion gemeldet':t.bio==='firma'?'Bio laut Firma, nicht als Bio gemeldet':t.bio==='offen'?'Bio-Status unklar':'nicht Bio (kein Bio-Programm gemeldet)'))}</span>`;
 const $=s=>document.querySelector(s);
 const root=document.documentElement;
@@ -611,12 +623,15 @@ function bioLine(ps){   // Flächen eines Betriebs/Teils nach Bio-Status
 function teileHtml(f){
   if(!split(f)) return '';
   const nachNr=f.teile.every(t=>t.nrs&&!t.ps), nachPs=f.teile.every(t=>t.ps&&!t.nrs);
-  return `<details class="teile" open><summary>${f.teile.length} Teilbetriebe <span class="h2n">· nach ${nachNr?'Betriebsnummer':nachPs?'amtlicher Produktionsstätte':'Produktionsstätte bzw. Betriebsnummer'}</span></summary>`+
+  return `<details class="teile" open><summary>Firmen und Flächen <span class="h2n">· getrennt nach ${nachNr?'Betriebsnummer':nachPs?'amtlicher Produktionsstätte':'Produktionsstätte bzw. Betriebsnummer'}</span></summary>`+
     f.teile.map(t=>{
       const ps=feats.filter(p=>p.t===t.id), gm=sum(ps.filter(p=>p.g==='Freilandgemüse')), gh=sum(ps.filter(p=>p.g==='Gewächshaus / geschützt'));
-      return `<div class="teil" data-t="${t.id}"><input type="checkbox" id="vt-${t.id}" checked aria-label="${esc(t.name)} anzeigen">
+      const nrs=[...new Set(ps.map(p=>p.nr))].join(' · ');
+      return `<div class="teil b-${BCLS[t.bio]||'nein'}" data-t="${t.id}"><input type="checkbox" id="vt-${t.id}" checked aria-label="${esc(t.name)} anzeigen">
         <label for="vt-${t.id}"><span class="tn2">${sw(t.color)}${esc(t.name)}</span>
-        <span class="sub">${esc(t.sub)} · ${ha(sum(ps))} ha · ${ps.length} Flächen · Gemüse ${ha(gm)} ha${gh?` · geschützt ${ha(gh)} ha`:''}</span>${bioPill(t)}</label>
+        <span class="sub">${esc(t.sub)}</span>
+        <span class="tz"><b>${ha(sum(ps))} ha</b> · ${ps.length} ${ps.length===1?'Fläche':'Flächen'} · <em>${BIOWORT[t.bio]||'nicht Bio'}</em></span>
+        <span class="tnr">Betriebsnummer ${esc(nrs)}</span></label>
         <button type="button" class="btn" data-zoomt="${t.id}" aria-label="Auf ${esc(t.name)} zoomen">Zoom</button></div>`;
     }).join('')+'</details>';
 }
@@ -638,7 +653,9 @@ FARMS.forEach(f=>{
    ${split(f)?'':`<div class="more">${bioPill(f.teile[0])}</div>`}
    ${bioLine(ps)}
    ${f.note?`<div class="note-chip">${esc(f.note)}</div>`:''}
-   ${teileHtml(f)}`;
+   ${teileHtml(f)}
+   ${(f.weitere_firmen||[]).length?`<div class="weitere"><div class="wk">Weitere Firmen, ohne zugeordnete Fläche</div>${f.weitere_firmen.map(w=>
+     `<div class="wf b-${BCLS[w.bio]||'nein'}"><b>${esc(w.name)}</b> <span>· ${esc(w.was)} ·</span> <em>${w.bio==='nein'?'nicht Bio':'Bio'}</em></div>`).join('')}</div>`:''}`;
   farmBox.appendChild(el);
 });
 farmBox.addEventListener('change',e=>{

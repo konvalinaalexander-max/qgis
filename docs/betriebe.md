@@ -26,13 +26,13 @@ bei der BioFresh AG (TG) trennt die Betriebsnummer.
 
 | Teilbetrieb | Zuordnung | Flächen | ha | Bio |
 |---|---|---|---|---|
-| Imhofbio, Eichhof Schwerzenbach | ZH0197/ 1/  1 | 245 | 90.61 | 84.70 ha als Bioproduktion gemeldet |
+| Hansjürg Imhof Bio-Produkte (vermutet) | ZH0197/ 1/  1 | 245 | 90.61 | 84.70 ha als Bioproduktion gemeldet |
 | Gewächshaus Eichhof | ZH0197/ 1/702 | 1 | 1.02 | unklar |
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47, Zürcherstrasse 75, Fehraltorf | 161 | 106.07 | Bio laut Firma, nicht gemeldet |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4, Rosenackerstr. 7, Felben-Wellhausen | 71 | 147.08 | nicht Bio |
-| Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 | 227 | 288.86 | Bio gemeldet |
-| Rathgeb Bio, Ellikon an der Thur | PS ZH0218/ 1/ 30, Neue Horgenbachstrasse, + ZH0218/ 1/ 36 | 202 | 253.26 | Bio gemeldet |
-| BioFresh AG, Tägerwilen | TG39621 | 12 | 8.18 | Bio gemeldet |
+| Rathgeb BioProdukte AG (Unterstammheim) | PS ZH0042/ 1/ 48 | 227 | 288.86 | Bio gemeldet |
+| Thurtaler Gemüse AG (Ellikon an der Thur) | PS ZH0218/ 1/ 30, Neue Horgenbachstrasse, + ZH0218/ 1/ 36 | 202 | 253.26 | Bio gemeldet |
+| BioFresh AG (Tägerwilen) | TG39621 | 12 | 8.18 | Bio gemeldet |
 
 ## Befunde je Betrieb (Faktencheck Oktober 2026)
 

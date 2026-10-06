@@ -28,24 +28,28 @@
       "sub": "Eichhof, Schwerzenbach",
       "nrs": ["ZH0197/ 1/  1", "ZH0197/ 1/702"],
       "color": "#3E9BD6",
-      "note": "Zwei Betriebsnummern auf dem Eichhof, getrennt nach Betriebsnummer",
+      "note": "",
+      "weitere_firmen": [
+        {"name": "Imhofbio AG", "was": "Topfkräuter, Handel", "bio": "deklariert"},
+        {"name": "Imhof Flora AG", "was": "Beet- und Balkonpflanzen", "bio": "nein"}
+      ],
       "bio": "deklariert",
       "teile": [
         {
           "key": "haupt",
-          "name": "Imhofbio, Eichhof Schwerzenbach",
+          "name": "Hansjürg Imhof Bio-Produkte",
           "kurz": "Hauptbetrieb",
-          "sub": "Schwerzenbach · Volketswil · Wangen-Brüttisellen · Thalheim an der Thur",
+          "sub": "Bio-Gemüse · Eichhof Schwerzenbach; Bewirtschafter vermutet",
           "nrs": ["ZH0197/ 1/  1"],
           "bio": "deklariert",
           "color": "#3E9BD6",
-          "bio_text": "Bio Suisse (Knospe), Gemüse nach Demeter; Flächen 2025 als Bioproduktion gemeldet"
+          "bio_text": "Bio Suisse (Knospe) und Demeter; Flächen 2025 als Bioproduktion gemeldet"
         },
         {
           "key": "gewaechshaus",
           "name": "Gewächshaus Eichhof",
           "kurz": "Gewächshaus",
-          "sub": "Schwerzenbach · eigene Betriebsnummer, Betreiber nicht belegt (Imhof Flora AG oder Imhofbio AG)",
+          "sub": "Eichhof Schwerzenbach · eigene Betriebsnummer; Betreiber nicht belegt (vermutlich Imhof Flora AG oder Imhofbio AG)",
           "nrs": ["ZH0197/ 1/702"],
           "bio": "offen",
           "color": "#1C5F8E",
@@ -56,7 +60,7 @@
     {
       "key": "beerstecher",
       "name": "Beerstecher",
-      "sub": "Dübendorf",
+      "sub": "Beerstecher AG · Dübendorf",
       "nrs": ["ZH0191/ 1/ 55"],
       "color": "#E68A00",
       "note": "",
@@ -70,13 +74,13 @@
       "nrs": ["ZH0172/ 1/700"],
       "standort_ps": "ZH0172/ 1/ 47",
       "color": "#C4569E",
-      "note": "Zwei Firmen unter einer Betriebsnummer, getrennt nach amtlicher Produktionsstätte (Firma über die Adresse zugeordnet)",
+      "note": "Eine Betriebsnummer, zwei Firmen: Bio Greens AG (Bio) und Gemüsebau AG (konventionell)",
       "teile": [
         {
           "key": "biogreens",
           "name": "Gerber Bio Greens AG",
           "kurz": "Bio Greens",
-          "sub": "Fehraltorf · Flaach (ZH)",
+          "sub": "Bio-Gemüse · Fehraltorf · Flaach (ZH)",
           "ps": ["ZH0172/ 1/ 47"],
           "bio": "firma",
           "color": "#C4569E",
@@ -86,7 +90,7 @@
           "key": "gemuesebau",
           "name": "Gerber Gemüsebau AG",
           "kurz": "Gemüsebau",
-          "sub": "Felben-Wellhausen · Wigoltingen (TG) · Altikon · Elsau (ZH)",
+          "sub": "Frisch- und Lagergemüse · Thurtal (TG) · Altikon · Elsau (ZH)",
           "ps": ["ZH4561/ 1/  4"],
           "bio": "nein",
           "color": "#7A2E62",
@@ -100,14 +104,17 @@
       "sub": "Unterstammheim · Ellikon an der Thur · Tägerwilen",
       "nrs": ["ZH0042/ 1/850", "TG39621"],
       "color": "#D8C21A",
-      "note": "Unternehmensgruppe: drei Teile unter zwei Betriebsnummern, getrennt nach Produktionsstätte bzw. Betriebsnummer",
+      "note": "",
+      "weitere_firmen": [
+        {"name": "ThurBio AG", "was": "neues Gewächshaus Ellikon (nicht in den Daten 2025)", "bio": "deklariert"}
+      ],
       "bio": "deklariert",
       "teile": [
         {
           "key": "unterstammheim",
-          "name": "Rathgeb Bio, Unterstammheim",
+          "name": "Rathgeb BioProdukte AG",
           "kurz": "Unterstammheim",
-          "sub": "Rathgeb BioProdukte AG · Stammertal, Weinland, SH, TG",
+          "sub": "Anbau · Standort Unterstammheim (ZH, SH, TG)",
           "ps": ["ZH0042/ 1/ 48"],
           "bio": "deklariert",
           "color": "#D8C21A",
@@ -115,9 +122,9 @@
         },
         {
           "key": "ellikon",
-          "name": "Rathgeb Bio, Ellikon an der Thur",
+          "name": "Thurtaler Gemüse AG",
           "kurz": "Ellikon",
-          "sub": "ehem. Kellermann Gemüsekulturen; Thurtaler Gemüse AG, ThurBio AG",
+          "sub": "Anbau · Standort Ellikon an der Thur; früher Kellermann, seit 2023 Rathgeb-Gruppe",
           "ps": ["ZH0218/ 1/ 30", "ZH0218/ 1/ 36"],
           "bio": "deklariert",
           "color": "#9A8A12",
@@ -125,9 +132,9 @@
         },
         {
           "key": "biofresh",
-          "name": "BioFresh AG, Tägerwilen",
+          "name": "BioFresh AG",
           "kurz": "BioFresh",
-          "sub": "Gewächshäuser in Tägerwilen (TG), Rathgeb-Gruppe",
+          "sub": "Gewächshäuser · Tägerwilen (TG)",
           "nrs": ["TG39621"],
           "bio": "deklariert",
           "color": "#F2E27C",
