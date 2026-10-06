@@ -19,9 +19,10 @@ Bio-Zertifikaten und Fachpresse (Quellen unten).
 
 Eine Betriebsnummer kann mehrere **Produktionsstätten** umfassen (Landwirtschaftliche
 Begriffsverordnung, Art. 2 Abs. 2: Führt ein Bewirtschafter mehrere Produktionsstätten, gelten sie
-zusammen als ein Betrieb). Die Rohdaten ordnen jede Bewirtschaftungseinheit einer Produktionsstätte zu
-(`ps_nr`, Layer `produktionsstaette` mit Adresse). Danach sind Gerber und Rathgeb aufgeteilt; bei
-Imhof trennt die Betriebsnummer.
+zusammen als ein Betrieb). In den Zürcher Daten 2025 tragen die Bewirtschaftungseinheiten vieler solcher
+Betriebe eine Produktionsstätte (`ps_nr`, Layer `produktionsstaette` mit Adresse), so bei Gerber und
+Rathgeb; in TG und SH ist `ps_nr` nie gefüllt. Danach sind Gerber und Rathgeb aufgeteilt; bei Imhof und
+bei der BioFresh AG (TG) trennt die Betriebsnummer.
 
 | Teilbetrieb | Zuordnung | Flächen | ha | Bio |
 |---|---|---|---|---|
@@ -29,8 +30,8 @@ Imhof trennt die Betriebsnummer.
 | Gewächshaus Eichhof | ZH0197/ 1/702 | 1 | 1.02 | unklar |
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47, Zürcherstrasse 75, Fehraltorf | 161 | 106.07 | Bio laut Firma, nicht gemeldet |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4, Rosenackerstr. 7, Felben-Wellhausen | 71 | 147.08 | nicht Bio |
-| Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 + ZH0218/ 1/ 36 | 228 | 289.05 | Bio gemeldet |
-| Rathgeb Bio, Ellikon an der Thur | PS ZH0218/ 1/ 30, Neue Horgenbachstrasse | 201 | 253.07 | Bio gemeldet |
+| Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 | 227 | 288.86 | Bio gemeldet |
+| Rathgeb Bio, Ellikon an der Thur | PS ZH0218/ 1/ 30, Neue Horgenbachstrasse, + ZH0218/ 1/ 36 | 202 | 253.26 | Bio gemeldet |
 | BioFresh AG, Tägerwilen | TG39621 | 12 | 8.18 | Bio gemeldet |
 
 ## Befunde je Betrieb (Faktencheck Oktober 2026)
@@ -71,8 +72,13 @@ Imhof trennt die Betriebsnummer.
   AG** (Sitz Felben-Wellhausen, Rosenackerstrasse 9; bis 2021 «Gerber Logistik AG» in Fehraltorf;
   2021 Sacheinlage des «Betriebsteils B, Betriebsstätte Felben-Wellhausen»). Laut Presse gehört beides
   demselben Inhaber.
-- Die beiden Produktionsstätten der Betriebsnummer ZH0172/ 1/700 entsprechen den Adressen der beiden
-  Firmen. Die Zuordnung «Produktionsstätte = Firma» ist daraus abgeleitet.
+- Die beiden Produktionsstätten der Betriebsnummer ZH0172/ 1/700 liegen an den Adressen der beiden
+  Firmen: Zürcherstrasse 75, Fehraltorf (Bio Greens) und Rosenackerstr. 7, Felben-Wellhausen (Firmensitz
+  der Gemüsebau AG: Rosenackerstrasse 9, Nachbaradresse). Die Zuordnung «Produktionsstätte = Firma» ist
+  daraus abgeleitet.
+- Der amtliche Betriebspunkt von ZH0172/ 1/700 liegt an der Wohnadresse in Pfäffikon ZH. Im GeoPackage
+  und im QGIS-Projekt steht der Gerber-Standort deshalb auf der Produktionsstätte Fehraltorf
+  (`standort_ps` in `config/projekt.json`).
 - **Bio Greens:** Bio-Suisse-Richtlinien laut Firma, Zertifikate Bio Suisse und bio.inspecta auf der
   Website. Bio seit 1996 (Bioaktuell 2023, «Knospe-Betrieb seit 1996») bzw. 1999 (BauernZeitung 2024,
   ganzer Betrieb Fehraltorf umgestellt). Fläche laut Presse «rund 80 ha» (Ackerfläche bzw. Nutzfläche,
@@ -101,6 +107,8 @@ Imhof trennt die Betriebsnummer.
 - Gültige Bio-Suisse-Zertifikate (bis Ende 2026) für die Rathgeb BioProdukte AG, die Thurtaler Gemüse AG
   und die ThurBio AG (beide Ellikon) sowie die BioFresh AG (Tägerwilen). 2025 rund 9.6 ha in Umstellung.
 - Ellikon: seit April 2023 Nachfolgeregelung mit dem früheren Betrieb Kellermann, keine Fusion.
+- Produktionsstätte ZH0218/ 1/ 36 (Adresse Rohräcker 414, Unterstammheim, Punkt aber in Ellikon; eine
+  Hecke von 0.19 ha bei den Ellikoner Flächen) ist nach der Lage dem Teil Ellikon zugeordnet.
   Nicht alles am Standort ist Bio (z. B. Purnatur-Tomaten 2024 nicht bio-zertifiziert).
 - BioFresh AG: Verwaltungsrat aus der Familie Rathgeb; Gewächshäuser in Tägerwilen.
 
@@ -114,7 +122,7 @@ Imhof trennt die Betriebsnummer.
 | Rathgeb | 441 | 550.3 | 280.0 | 8.7 | 547.4 ha |
 
 Wichtigste Gemeinden (ha):
-- Imhof: Schwerzenbach 26.6, Volketswil 13.5, Wangen-Brüttisellen 12.4, Thalheim an der Thur 12.1
+- Imhof: Schwerzenbach 27.6, Volketswil 13.5, Wangen-Brüttisellen 12.4, Thalheim an der Thur 12.1
 - Beerstecher: Dübendorf 45.2, Mönchaltorf 30.2, Fällanden 26.2, Pfäffikon 16.6
 - Gerber: Fehraltorf 63.0, Wigoltingen (TG) 60.4, Felben-Wellhausen (TG) 31.2, Hüttlingen (TG) 26.9
 - Rathgeb: Ramsen (SH) 52.3, Stammheim 47.7, Ellikon an der Thur 43.1, Basadingen-Schlattingen (TG) 42.0;

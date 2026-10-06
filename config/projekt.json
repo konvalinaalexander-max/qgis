@@ -68,6 +68,7 @@
       "name": "Gerber",
       "sub": "Fehraltorf · Felben-Wellhausen",
       "nrs": ["ZH0172/ 1/700"],
+      "standort_ps": "ZH0172/ 1/ 47",
       "color": "#C4569E",
       "note": "Zwei Firmen unter einer Betriebsnummer, getrennt nach amtlicher Produktionsstätte (Firma über die Adresse zugeordnet)",
       "teile": [
@@ -99,7 +100,7 @@
       "sub": "Unterstammheim · Ellikon an der Thur · Tägerwilen",
       "nrs": ["ZH0042/ 1/850", "TG39621"],
       "color": "#D8C21A",
-      "note": "Unternehmensgruppe: drei Teile unter zwei Betriebsnummern, getrennt nach amtlicher Produktionsstätte",
+      "note": "Unternehmensgruppe: drei Teile unter zwei Betriebsnummern, getrennt nach Produktionsstätte bzw. Betriebsnummer",
       "bio": "deklariert",
       "teile": [
         {
@@ -107,7 +108,7 @@
           "name": "Rathgeb Bio, Unterstammheim",
           "kurz": "Unterstammheim",
           "sub": "Rathgeb BioProdukte AG · Stammertal, Weinland, SH, TG",
-          "ps": ["ZH0042/ 1/ 48", "ZH0218/ 1/ 36"],
+          "ps": ["ZH0042/ 1/ 48"],
           "bio": "deklariert",
           "color": "#D8C21A",
           "bio_text": "Bio Suisse (Knospe); Flächen 2025 als Bioproduktion gemeldet"
@@ -117,7 +118,7 @@
           "name": "Rathgeb Bio, Ellikon an der Thur",
           "kurz": "Ellikon",
           "sub": "ehem. Kellermann Gemüsekulturen; Thurtaler Gemüse AG, ThurBio AG",
-          "ps": ["ZH0218/ 1/ 30"],
+          "ps": ["ZH0218/ 1/ 30", "ZH0218/ 1/ 36"],
           "bio": "deklariert",
           "color": "#9A8A12",
           "bio_text": "Bio Suisse (Knospe); Flächen 2025 als Bioproduktion gemeldet"

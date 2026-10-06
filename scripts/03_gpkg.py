@@ -7,7 +7,7 @@ Schreibt output/<dateinamen.gpkg> mit den Layern
 """
 import geopandas as gpd
 
-from common import AUSWAHL, BIO_LABELS, NR2FARM, bio_status, gemeinde, kulturgruppe, out_path, teil_of
+from common import AUSWAHL, BIO_LABELS, FARMS, NR2FARM, bio_status, gemeinde, kulturgruppe, out_path, teil_of
 
 nf = gpd.read_file(AUSWAHL, layer="nutzungsflaechen")
 nf = nf[nf.ist_ueberlagernd != True].copy()
@@ -39,6 +39,13 @@ if p.exists():
 out.to_file(p, layer="flaechen", driver="GPKG")
 bt = gpd.read_file(AUSWAHL, layer="betriebe")
 bt["betrieb"] = bt.betriebsnummer.map(lambda n: NR2FARM[n]["name"])
+# Liegt der amtliche Betriebspunkt an einer privaten Wohnadresse, steht in der Konfiguration «standort_ps»:
+# dann gilt der Punkt dieser Produktionsstätte (Firmenadresse) als Standort.
+ps = gpd.read_file(AUSWAHL, layer="produktionsstaetten").set_index("ps_nr")
+for f in FARMS:
+    if f.get("standort_ps"):
+        nr = ps.at[f["standort_ps"], "betriebsnummer"]
+        bt.loc[bt.betriebsnummer == nr, "geometry"] = ps.at[f["standort_ps"], "geometry"]
 bt[["betrieb", "betriebsnummer", "geometry"]].to_file(p, layer="betriebsstandorte", driver="GPKG")
 
 print(out.groupby("betrieb").flaeche_ha.agg(["count", "sum"]).round(2).to_string())

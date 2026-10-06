@@ -99,8 +99,8 @@ Teilbetriebe (nach Betriebsnummer bzw. amtlicher Produktionsstätte, `01_auswahl
 | Gewächshaus Eichhof | Betriebsnummer ZH0197/ 1/702 (Bio-Status `offen`) | 1 | 1.02 |
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47 (Zürcherstrasse 75, Fehraltorf) | 161 | 106.07 |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4 (Rosenackerstr. 7, Felben-Wellhausen) | 71 | 147.08 |
-| Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 + ZH0218/ 1/ 36 | 228 | 289.05 |
-| Rathgeb Bio, Ellikon an der Thur | PS ZH0218/ 1/ 30 (Neue Horgenbachstrasse 2/4, ehem. Kellermann) | 201 | 253.07 |
+| Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 | 227 | 288.86 |
+| Rathgeb Bio, Ellikon an der Thur | PS ZH0218/ 1/ 30 (Neue Horgenbachstrasse 2/4, ehem. Kellermann) + ZH0218/ 1/ 36 | 202 | 253.26 |
 | BioFresh AG, Tägerwilen | Betriebsnummer TG39621 | 12 | 8.18 |
 
 `pruefen_qgis.py` muss «absolute Pfade: 0», alle Layer gültig und für jede Betriebsnummer einen
@@ -116,9 +116,10 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 - **Betrieb hinzufügen / ändern:** Eintrag in `config/projekt.json` → `betriebe` (key, name, sub,
   nrs, color, note, bio). Betriebsnummern exakt mit Leerzeichen übernehmen (`ZH0197/ 1/  1`).
 - **Teilbetriebe:** Führt ein Betrieb mehrere Firmen/Standorte unter einer Betriebsnummer, steht das in
-  den Rohdaten als Produktionsstätte (`ps_nr` an jeder Bewirtschaftungseinheit, Layer `produktionsstaette`
-  mit Adresse). In `betriebe[].teile` je Teil: key, name, kurz, sub, `ps` (Liste ps_nr) oder `nrs`
-  (Betriebsnummern) oder `rest: true`, bio, bio_text, color (Schattierung der Betriebsfarbe).
+  den ZH-Rohdaten oft als Produktionsstätte (`ps_nr` an der Bewirtschaftungseinheit, Layer
+  `produktionsstaette` mit Adresse; bei Gerber und Rathgeb gefüllt, in TG/SH nie). In `betriebe[].teile`
+  je Teil: key, name, kurz, sub, `ps` (Liste ps_nr) oder `nrs` (Betriebsnummern) oder `rest: true`, bio,
+  bio_text, color (Schattierung der Betriebsfarbe).
   `common.teil_of()` ordnet zu und bricht ab, wenn eine Fläche keinem Teil zugeordnet werden kann.
 - **Bio-Status:** `bio` am Betrieb oder Teil: `deklariert` (Flächen als «Bioproduktion» gemeldet),
   `firma` (Bio laut Firma, in den Daten nicht gemeldet), `nein`, `offen` (nicht belegt). Je Fläche ergibt
@@ -127,7 +128,9 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   «Bio»), GeoPackage und Excel zeigen das. Achtung: In den ZH-Daten 2025 tragen Gewächshäuser mit festem
   Fundament (Codes 801–803) nie ein Programm, auch bei Bio-Betrieben (TG/SH schon). Belege und Quellen
   zu jedem Betrieb: `docs/betriebe.md`.
-  Dann `./run_all.sh` und Schritt 5. Dateinamen mit «4_Betriebe» ggf. unter `dateinamen` anpassen.
+- **Standortpunkt:** Liegt der amtliche Betriebspunkt an einer Wohnadresse, setzt `standort_ps` am Betrieb
+  den Standort im GeoPackage/QGIS auf eine Produktionsstätte (Gerber: ZH0172/ 1/ 47, Fehraltorf).
+  Nach Änderungen an Betrieben: `./run_all.sh` und Schritt 5. Dateinamen mit «4_Betriebe» ggf. unter `dateinamen` anpassen.
 - **Weiteren Kanton aufnehmen:** Downloads entpackt nach `data/raw/` legen (Ordnernamen
   unverändert) und für das Repo gezippt nach `data/raw_zip/`, Kanton + Version in `kantone` und Namen in `kantonsnamen` eintragen.
   Fehlende Gemeindenamen meldet `02_website.py` als Warnung (siehe unten).
@@ -221,7 +224,8 @@ Erledigt:
 - Faktencheck aller Betriebe (6.10.2026, Handelsregister, Firmenwebsites, Zertifikate, Presse; Ergebnisse
   und Quellen in `docs/betriebe.md`). Daraus: Teilbetriebe Imhof (2 Nummern), Gerber (Bio Greens AG /
   Gemüsebau AG nach Produktionsstätte), Rathgeb (Unterstammheim / Ellikon / BioFresh); Bio-Status je Teil,
-  Farbmodus «Bio». Die Wohnadresse aus `betriebsname` von Gerber wird nirgends angezeigt.
+  Farbmodus «Bio». Die Wohnadresse aus `betriebsname` von Gerber wird weder angezeigt noch als
+  Standortpunkt verwendet (`standort_ps`).
 - Zwei PDF-Anleitungen (Windows, Mac) für QGIS mit Online-Daten (Stand 28.09.2026), Quellen in
   `anleitungen/`. Die PDFs selbst liegen in `~/Downloads`.
 

@@ -26,8 +26,8 @@ auf der man steht. Über *Teilen → Zum Home-Bildschirm* (iPhone) bzw. *⋮ →
 (Android) lässt sich die Karte wie eine App starten.
 
 **Teilbetriebe und Bio:** Gerber und Rathgeb führen mehrere Firmen bzw. Standorte unter einer
-Betriebsnummer, Imhof hat zwei Betriebsnummern. Die Kantonsdaten ordnen jede Fläche einer
-Produktionsstätte zu; danach sind sie auf der Karte getrennt (gleiche Farbe, verschiedene Schattierungen,
+Betriebsnummer, Imhof hat zwei Betriebsnummern. Bei Gerber und Rathgeb ordnen die Zürcher Daten jede
+Fläche einer Produktionsstätte zu; danach (bzw. nach Betriebsnummer) sind sie auf der Karte getrennt (gleiche Farbe, verschiedene Schattierungen,
 eigene Schaltflächen in der Legende, aufklappbar in der Betriebskarte). Der Farbmodus **Bio** zeigt,
 welche Flächen als Bio gemeldet sind, welche zu einem Bio-Betrieb gehören, aber nicht als Bio gemeldet
 sind (z. B. Gerber Bio Greens), welche nicht Bio sind und wo der Bio-Status unklar ist. Belege zu jedem

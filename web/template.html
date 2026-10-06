@@ -183,13 +183,14 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 #teile-h{margin-top:10px}
 #tcmp td:first-child .sw{width:10px;height:10px;margin-right:6px;vertical-align:-1px}
 #tcmp td small{display:block;color:var(--muted);font-size:11px}
-#tcmp .bk{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+#tcmp .bk{display:flex;align-items:center;gap:5px;margin-top:1px;color:var(--muted);font-size:11px}
 #tcmp .bk i{width:8px;height:8px;border-radius:50%}
 #cmp tr.bio td{color:var(--muted);font-weight:400;border-bottom:0;padding-top:3px;padding-bottom:3px}
 #cmp tr.bio td:first-child i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
 #cmp tr.biohead td{padding-top:10px;font:600 11px var(--f-body);font-stretch:85%;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
 .leaflet-popup-content .fband{margin:-13px -15px 10px;border-radius:12px 12px 0 0;border-left:0;border-top:6px solid var(--fc);padding:8px 40px 10px 15px}
 .dhead{position:sticky;top:0;z-index:2;background:var(--panel);display:grid;gap:8px;padding-bottom:12px}
+@media (max-height:700px){.dhead{position:static}}
 #side.detail header.top,#side.detail .tabs{display:none}   /* Detailansicht im Panel: nur die Fläche */
 /* Betriebsname beim Darüberfahren (Desktop) und als Schild auf der gewählten Fläche (Handy) */
 .leaflet-tooltip.ftip{background:var(--panel);color:var(--ink);border:0;border-radius:8px;box-shadow:var(--shadow);padding:6px 10px;font:13px/1.3 var(--f-body)}
@@ -350,7 +351,7 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
       <p id="kantone"></p>
       <p>Die Geodaten enthalten keine Personennamen. Die Zuordnung der Betriebsnummern zu den Betrieben ist abgeleitet (Adresse, Lage der Flächen) und nicht amtlich bestätigt.</p>
       <h2>Teilbetriebe</h2>
-      <p>Führt ein Betrieb mehrere Firmen oder Standorte unter einer Betriebsnummer, ordnen die Kantonsdaten jede Fläche einer Produktionsstätte zu. Danach sind die Teilbetriebe getrennt (gleiche Farbe, verschiedene Schattierungen); hat ein Betrieb mehrere Betriebsnummern, ist jede Nummer ein eigener Teil. Welche Firma zu welcher Produktionsstätte gehört, ist aus Adressen und Firmenangaben abgeleitet.</p>
+      <p>Führt ein Betrieb mehrere Firmen oder Standorte unter einer Betriebsnummer, ordnen die Zürcher Daten die Flächen oft einer Produktionsstätte zu (so bei Gerber und Rathgeb; in den Daten TG und SH fehlt diese Angabe). Danach sind die Teilbetriebe getrennt (gleiche Farbe, verschiedene Schattierungen); hat ein Betrieb mehrere Betriebsnummern, ist jede Nummer ein eigener Teil. Welche Firma zu welcher Produktionsstätte gehört, ist aus Adressen und Firmenangaben abgeleitet.</p>
       <h2>Bio</h2>
       <p>«Bio gemeldet» heisst: Die Fläche ist in den Kantonsdaten mit dem Direktzahlungsprogramm «Bioproduktion» gemeldet. «Bio-Betrieb, nicht als Bio gemeldet»: Die Fläche gehört zu einem Bio-Betrieb, trägt aber keine Bio-Meldung – etwa Wald, Gewächshäuser mit festem Fundament (in den Zürcher Daten nie mit Programm) oder ein Teilbetrieb, der laut Firma Bio ist, in den Daten aber nicht als Bio erscheint. «Bio-Status unklar»: weder Meldung noch Firmenangabe. Eine Bio-Zertifizierung selbst steht nicht in den Daten.</p>
       <p id="bio-hinweise"></p>
@@ -400,7 +401,7 @@ function bioText(p){   // Text des Bio-Kennzeichens einer Fläche
   if(p.bs==='offen') return t.bio_text||'Bio-Status unklar';
   return t.bio_text||'nicht Bio (kein Bio-Programm gemeldet)';
 }
-const bioPill=t=>`<span class="biob ${BCLS[t.bio]||'nein'}">${esc(t.bio_text||(t.bio==='deklariert'?'Bio – Flächen als Bioproduktion gemeldet':t.bio==='offen'?'Bio-Status unklar':'nicht Bio (kein Bio-Programm gemeldet)'))}</span>`;
+const bioPill=t=>`<span class="biob ${BCLS[t.bio]||'nein'}">${esc(t.bio_text||(t.bio==='deklariert'?'Bio – Flächen als Bioproduktion gemeldet':t.bio==='firma'?'Bio laut Firma, nicht als Bio gemeldet':t.bio==='offen'?'Bio-Status unklar':'nicht Bio (kein Bio-Programm gemeldet)'))}</span>`;
 const $=s=>document.querySelector(s);
 const root=document.documentElement;
 const nf=new Intl.NumberFormat('de-CH',{maximumFractionDigits:1,minimumFractionDigits:1});
@@ -438,6 +439,11 @@ const bioOn=Object.fromEntries(BIO.map(([k])=>[k,true]));
 // Kulturgruppen-Filter gilt nur im Modus «Kultur», Bio-Filter nur im Modus «Bio»
 const shown=p=>farmOn[p.f]&&teilOn[p.t]&&(mode!=='kultur'||groupOn[p.g])&&(mode!=='bio'||bioOn[p.bs]);
 const farmShown=k=>farmOn[k]&&FK[k].teile.some(t=>teilOn[t.id]);
+// Schalten von Betrieben und Teilen – gleich für Legende und Betriebskarten
+function setFarm(k,on){farmOn[k]=on; if(on&&!FK[k].teile.some(t=>teilOn[t.id])) FK[k].teile.forEach(t=>teilOn[t.id]=true);}
+function setTeil(id,on){const t=TK[id];
+  if(on&&!farmOn[t.f]){farmOn[t.f]=true;FK[t.f].teile.forEach(x=>teilOn[x.id]=x.id===id);}   // Betrieb war aus: nur diesen Teil zeigen
+  else teilOn[id]=on;}
 const probe=$('#safe');
 function safe(){const s=getComputedStyle(probe);return {t:parseFloat(s.paddingTop)||0,b:parseFloat(s.paddingBottom)||0};}
 
@@ -605,10 +611,10 @@ function teileHtml(f){
   const nachNr=f.teile.every(t=>t.nrs&&!t.ps), nachPs=f.teile.every(t=>t.ps&&!t.nrs);
   return `<details class="teile" open><summary>${f.teile.length} Teilbetriebe <span class="h2n">· nach ${nachNr?'Betriebsnummer':nachPs?'amtlicher Produktionsstätte':'Produktionsstätte bzw. Betriebsnummer'}</span></summary>`+
     f.teile.map(t=>{
-      const ps=feats.filter(p=>p.t===t.id), gm=sum(ps.filter(p=>p.g==='Freilandgemüse'||p.g==='Gewächshaus / geschützt'));
+      const ps=feats.filter(p=>p.t===t.id), gm=sum(ps.filter(p=>p.g==='Freilandgemüse')), gh=sum(ps.filter(p=>p.g==='Gewächshaus / geschützt'));
       return `<div class="teil" data-t="${t.id}"><input type="checkbox" id="vt-${t.id}" checked aria-label="${esc(t.name)} anzeigen">
         <label for="vt-${t.id}"><span class="tn2">${sw(t.color)}${esc(t.name)}</span>
-        <span class="sub">${esc(t.sub)} · ${ha(sum(ps))} ha · ${ps.length} Flächen · Gemüse ${ha(gm)} ha</span>${bioPill(t)}</label>
+        <span class="sub">${esc(t.sub)} · ${ha(sum(ps))} ha · ${ps.length} Flächen · Gemüse ${ha(gm)} ha${gh?` · geschützt ${ha(gh)} ha`:''}</span>${bioPill(t)}</label>
         <button type="button" class="btn" data-zoomt="${t.id}" aria-label="Auf ${esc(t.name)} zoomen">Zoom</button></div>`;
     }).join('')+'</details>';
 }
@@ -635,15 +641,14 @@ FARMS.forEach(f=>{
 });
 farmBox.addEventListener('change',e=>{
   const id=e.target.id; if(e.target.type!=='checkbox') return;
-  if(id.startsWith('vt-')){const t=TK[id.slice(3)];teilOn[t.id]=e.target.checked;if(e.target.checked)farmOn[t.f]=true;}
-  else{const k=id.slice(2);farmOn[k]=e.target.checked;if(farmOn[k]&&!farmShown(k))FK[k].teile.forEach(t=>teilOn[t.id]=true);}
+  if(id.startsWith('vt-')) setTeil(id.slice(3),e.target.checked);
+  else setFarm(id.slice(2),e.target.checked);
   applyVisibility();
 });
 farmBox.addEventListener('click',e=>{
   const b=e.target.closest('[data-zoom],[data-zoomt]'); if(!b) return;
   const t=b.dataset.zoomt?TK[b.dataset.zoomt]:null, k=t?t.f:b.dataset.zoom;
-  if(!farmOn[k]) farmOn[k]=true;
-  if(t) teilOn[t.id]=true; else if(!farmShown(k)) FK[k].teile.forEach(x=>teilOn[x.id]=true);
+  if(t){if(!(farmOn[k]&&teilOn[t.id])) setTeil(t.id,true);} else if(!farmShown(k)) setFarm(k,true);
   applyVisibility();
   if(sel) deselect();
   if(mobile()) Sheet.snap('peek');
@@ -651,7 +656,7 @@ farmBox.addEventListener('click',e=>{
 });
 function syncChecks(){
   FARMS.forEach(f=>{const cb=$('#v-'+f.key); if(cb) cb.checked=farmShown(f.key);});
-  TEILE.forEach(t=>{const cb=$('#vt-'+t.id); if(cb) cb.checked=teilOn[t.id]; const r=cb&&cb.closest('.teil'); if(r) r.classList.toggle('off',!teilOn[t.id]);});
+  TEILE.forEach(t=>{const on=farmOn[t.f]&&teilOn[t.id], cb=$('#vt-'+t.id); if(cb) cb.checked=on; const r=cb&&cb.closest('.teil'); if(r) r.classList.toggle('off',!on);});
 }
 
 // ---------- Legende / Filter ----------
@@ -672,13 +677,10 @@ function updateLegend(){document.querySelectorAll('#legend .chip,#legend .cgn').
   c.setAttribute('aria-pressed',String(d.f?farmShown(d.f):d.t?farmOn[TK[d.t].f]&&teilOn[d.t]:d.g?groupOn[d.g]:bioOn[d.b]));});}
 $('#legend').addEventListener('click',e=>{
   const c=e.target.closest('.chip,.cgn'); if(!c) return; const d=c.dataset;
-  if(d.f){   // Name eines Betriebs mit Teilen: ganzen Betrieb aus bzw. mit allen Teilen ein
-    if(farmShown(d.f)) farmOn[d.f]=false;
-    else {farmOn[d.f]=true; FK[d.f].teile.forEach(t=>teilOn[t.id]=true);}}
+  if(d.f) setFarm(d.f,!farmShown(d.f));   // Name eines Betriebs mit Teilen: ganzer Betrieb
   else if(d.t){const t=TK[d.t];
-    if(!split(FK[t.f])) farmOn[t.f]=!farmOn[t.f];
-    else if(!farmOn[t.f]){farmOn[t.f]=true;teilOn[t.id]=true;}
-    else teilOn[t.id]=!teilOn[t.id];}
+    if(!split(FK[t.f])) setFarm(t.f,!farmShown(t.f));
+    else setTeil(t.id,!(farmOn[t.f]&&teilOn[t.id]));}
   else if(d.g) groupOn[d.g]=!groupOn[d.g];
   else bioOn[d.b]=!bioOn[d.b];
   applyVisibility();
@@ -714,17 +716,17 @@ function renderTable(){
 function renderTeilTable(){   // Betriebe mit Teilbetrieben: Fläche, Gemüse und Bio-Status je Teil
   const ts=TEILE.filter(t=>split(FK[t.f])&&farmOn[t.f]&&teilOn[t.id]);
   $('#teile-h').hidden=!ts.length;
-  const BK={deklariert:['bio','Bio gemeldet'],firma:['bio_betrieb','Bio laut Firma'],nein:['nein','nicht Bio'],offen:['offen','unklar']};
-  $('#tcmp').innerHTML=!ts.length?'':'<thead><tr><th>Teilbetrieb</th><th>ha</th><th>Gemüse</th><th>Bio</th></tr></thead><tbody>'+
-    ts.map(t=>{const ps=feats.filter(p=>p.t===t.id), [k,l]=BK[t.bio]||BK.nein;
-      return `<tr><td>${sw(t.color)}${esc(FK[t.f].name)} ${esc(t.kurz)}<small>${esc(t.name)}</small></td><td>${ha(sum(ps))}</td>`+
-        `<td>${ha(sum(ps.filter(p=>p.g==='Freilandgemüse'||p.g==='Gewächshaus / geschützt')))}</td><td><span class="bk"><i style="background:${BC[k]}"></i>${l}</span></td></tr>`;}).join('')+'</tbody>';
+  const BK={deklariert:['bio','Bio gemeldet'],firma:['bio_betrieb','Bio laut Firma'],nein:['nein','nicht Bio'],offen:['offen','Bio unklar']};
+  $('#tcmp').innerHTML=!ts.length?'':'<thead><tr><th>Teilbetrieb</th><th>ha</th><th>Gemüse</th><th>geschützt</th></tr></thead><tbody>'+
+    ts.map(t=>{const ps=feats.filter(p=>p.t===t.id), [k,l]=BK[t.bio]||BK.nein, g=x=>{const v=sum(ps.filter(p=>p.g===x));return v?ha(v):'–';};
+      return `<tr><td>${sw(t.color)}${esc(FK[t.f].name)} ${esc(t.kurz)}<small>${esc(t.name)}</small><span class="bk"><i style="background:${BC[k]}"></i>${l}</span></td>`+
+        `<td>${ha(sum(ps))}</td><td>${g('Freilandgemüse')}</td><td>${g('Gewächshaus / geschützt')}</td></tr>`;}).join('')+'</tbody>';
 }
 
 // ---------- Liste ----------
 const gsel=$('#gsel'), q=$('#q');
 gsel.innerHTML='<option value="">Alle Kulturgruppen</option>'+GPRES.map(([g])=>`<option>${esc(g)}</option>`).join('');
-const hay=feats.map(p=>fold([p.k,p.gm,p.kt,p.c,p.g,FK[p.f].name,TK[p.t].name,p.nr,p.nr.replace(/ /g,'')].join(' ')));
+const hay=feats.map(p=>fold([p.k,p.gm,p.kt,p.c,p.g,FK[p.f].name,TK[p.t].name,TK[p.t].kurz,p.nr,p.nr.replace(/ /g,'')].join(' ')));
 function filtered(){
   const ts=fold(q.value).split(/\s+/).filter(Boolean), g=gsel.value;
   return feats.filter((p,i)=>shown(p)&&(!g||p.g===g)&&ts.every(t=>hay[i].includes(t))).sort((a,b)=>b.m2-a.m2);
@@ -823,7 +825,7 @@ function ensureVisible(l){  // Handy: Fläche nicht unter dem Panel verstecken
 function select(l,o={}){
   if(!l) return;
   const p=l.feature.properties;
-  if(!shown(p)){farmOn[p.f]=true;groupOn[p.g]=true;$('#v-'+p.f).checked=true;applyVisibility();}
+  if(!shown(p)){farmOn[p.f]=true;teilOn[p.t]=true;groupOn[p.g]=true;bioOn[p.bs]=true;applyVisibility();}
   sel=l; highlight(l); setFocus(p.f);
   if(!o.fromHash) setHash(p);
   if(compact()){   // Handy und kleine Fenster: Details im Panel statt im Popup (das die Karte verdecken würde)
@@ -832,7 +834,7 @@ function select(l,o={}){
     if(o.zoom) fit(l.getBounds(),{maxZoom:18}); else ensureVisible(l);
   }else{
     l.closeTooltip();
-    const open=()=>{if(sel!==l)return;switching=true;popup.setLatLng(o.latlng||L.latLng(p.la,p.lo)).setContent(detailHtml(p)).openOn(map);switching=false;};
+    const open=()=>{if(sel!==l)return;switching=true;popup.options.maxHeight=Math.max(240,innerHeight-80);popup.setLatLng(o.latlng||L.latLng(p.la,p.lo)).setContent(detailHtml(p)).openOn(map);switching=false;};
     if(o.zoom){afterMove(open);fit(l.getBounds(),{maxZoom:18});}else open();
   }
 }

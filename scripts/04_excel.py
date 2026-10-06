@@ -117,7 +117,7 @@ mehr = [(f, t) for f in FARMS if f.get("teile") for t in teile(f)]
 if mehr:
     tr0 = ar + 2
     ov.cell(tr0, 1, "Teilbetriebe (aufgeteilt nach Betriebsnummer bzw. amtlicher Produktionsstätte)").font = F(bold=True, size=11)
-    kopf = ["Teilbetrieb", "Betrieb", "Fläche (ha)", "Gemüse (ha)", "Anzahl Flächen", "Bio-Status"]
+    kopf = ["Teilbetrieb", "Betrieb", "Fläche (ha)", "Freilandgemüse (ha)", "geschützt (ha)", "Anzahl Flächen", "Bio-Status"]
     for j, h in enumerate(kopf, 1):
         c = ov.cell(tr0 + 1, j, h)
         c.font = F(bold=True, color="FFFFFF")
@@ -128,13 +128,13 @@ if mehr:
         c = ov.cell(i, 3, f"=SUMIFS(Flächen!$G$2:$G${n},Flächen!$M$2:$M${n},$A{i})")
         c.number_format, c.font = fmt, F()
         cache[f"C{i}"] = ha_(d.teilbetrieb == t["name"])
-        c = ov.cell(i, 4, f'=SUMIFS(Flächen!$G$2:$G${n},Flächen!$M$2:$M${n},$A{i},Flächen!$E$2:$E${n},"Freilandgemüse")'
-                          f'+SUMIFS(Flächen!$G$2:$G${n},Flächen!$M$2:$M${n},$A{i},Flächen!$E$2:$E${n},"Gewächshaus / geschützt")')
-        c.number_format, c.font = fmt, F()
-        cache[f"D{i}"] = ha_((d.teilbetrieb == t["name"]) & d.kulturgruppe.isin(["Freilandgemüse", "Gewächshaus / geschützt"]))
-        ov.cell(i, 5, f"=COUNTIF(Flächen!$M$2:$M${n},$A{i})").font = F()
-        cache[f"E{i}"] = int((d.teilbetrieb == t["name"]).sum())
-        ov.cell(i, 6, t.get("bio_text", "")).font = F(size=9)
+        for j, (L, gruppe) in enumerate([("D", "Freilandgemüse"), ("E", "Gewächshaus / geschützt")], 4):
+            c = ov.cell(i, j, f'=SUMIFS(Flächen!$G$2:$G${n},Flächen!$M$2:$M${n},$A{i},Flächen!$E$2:$E${n},"{gruppe}")')
+            c.number_format, c.font = fmt, F()
+            cache[f"{L}{i}"] = ha_((d.teilbetrieb == t["name"]) & (d.kulturgruppe == gruppe))
+        ov.cell(i, 6, f"=COUNTIF(Flächen!$M$2:$M${n},$A{i})").font = F()
+        cache[f"F{i}"] = int((d.teilbetrieb == t["name"]).sum())
+        ov.cell(i, 7, t.get("bio_text", "")).font = F(size=9)
 ov.column_dimensions["A"].width = 28
 for j in range(2, tj + 1):
     ov.column_dimensions[get_column_letter(j)].width = 13
@@ -152,8 +152,17 @@ def werte_einsetzen(pfad, blatt_xml, werte):
             daten = zin.read(it.filename)
             if it.filename == blatt_xml:
                 x = daten.decode("utf-8")
-                x = re.sub(r'(<c r="([A-Z]+[0-9]+)"[^>]*><f>[^<]*</f>)<v ?/>',
-                           lambda m: f"{m.group(1)}<v>{werte[m.group(2)]}</v>" if m.group(2) in werte else m.group(0), x)
+                gesetzt = set()
+
+                def ersetze(m):
+                    if m.group(2) not in werte:
+                        return m.group(0)
+                    gesetzt.add(m.group(2))
+                    return f"{m.group(1)}<v>{werte[m.group(2)]}</v>"
+                # leere Werte schreibt openpyxl als <v/> bzw. <v /> (ohne lxml) oder <v></v> (mit lxml)
+                x = re.sub(r'(<c r="([A-Z]+[0-9]+)"[^>]*><f>[^<]*</f>)<v(?: ?/>|></v>)', ersetze, x)
+                if len(gesetzt) < len(werte):
+                    raise RuntimeError(f"nur {len(gesetzt)} von {len(werte)} Ergebniswerten eingesetzt: {sorted(set(werte) - gesetzt)[:5]}")
                 daten = x.encode("utf-8")
             zout.writestr(it, daten)
     tmp.replace(pfad)
