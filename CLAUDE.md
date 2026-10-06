@@ -70,6 +70,7 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 | – | `scripts/pruefen_qgis.py` (PyQGIS) | `output/*.qgz` | Prüfausgabe |
 | – | `scripts/screenshots.py` (optional, Playwright) | `output/*.html` | `work/screenshots/`; mit `--vorschau` auch `web/online/vorschau.jpg` |
 | – | `scripts/icons.py` (optional, Playwright) | `web/online/icon.svg` | `web/online/*.png` |
+| – | `scripts/uebersicht_pdf.py` (optional, Playwright; `--pdf`) | `work/auswahl.gpkg` | `output/Betriebe_Firmen_Flaechen.pdf` (1 Seite: Firmen, Flächen, Bio, Kulturen; vorher fact-checken) |
 
 **Schritt 5 braucht PyQGIS**, das nur im Python von QGIS steckt:
 - Weg A (am einfachsten): In QGIS *Erweiterungen → Python-Konsole*, Symbol *Editor anzeigen*,

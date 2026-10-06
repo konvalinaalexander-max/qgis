@@ -48,7 +48,7 @@ bei der BioFresh AG (TG) trennt die Betriebsnummer.
   oder ein Kräuter-Gewächshaus der Imhofbio AG (Bio). Das fehlende Programm sagt nichts: In den Zürcher
   Daten 2025 tragen alle Gewächshäuser mit festem Fundament (Codes 801–803) «Kein Programm», auch bei
   Bio-Betrieben. Auf der Karte darum «Bio-Status unklar».
-- **Thalheim an der Thur** (12.1 ha mit Gewächshäusern beim Weiler Weidler, Gütighausen): keine Quelle
+- **Thalheim an der Thur** (12.1 ha mit Gewächshäusern beim Weiler Weidler): keine Quelle
   verbindet Imhof mit diesem Standort. Vermutung: Pacht oder Übernahme eines früheren Gemüsebetriebs.
 - Flächenangaben der Presse (2018: 68 ha LN; «70 ha Gemüse») sind älter als die Daten 2025 (91.6 ha).
   Die grossen Glashäuser (Kräuter rund 4 ha, Anlage Altwiesen in Wangen) sind in den Daten nur teilweise
