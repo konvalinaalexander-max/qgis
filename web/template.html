@@ -95,7 +95,7 @@ h1{font:600 19px/1.2 var(--f-body);margin:0;text-wrap:balance}
 .stat b{font:600 15px var(--f-body);font-variant-numeric:tabular-nums}
 .stat span{font:500 10.5px/1.25 var(--f-body);font-stretch:85%;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .farm .more{grid-column:2/4}
-.note-chip{grid-column:2/4;justify-self:start;font:500 11.5px var(--f-body);font-stretch:85%;color:var(--warn);background:var(--warn-bg);padding:2px 7px;border-radius:5px}
+.note-chip{grid-column:2/4;justify-self:start;font:500 12px var(--f-body);color:var(--muted);background:var(--soft);padding:3px 8px;border-radius:5px}
 .btn{all:unset;cursor:pointer;font:500 12.5px var(--f-body);color:var(--accent);padding:4px 8px;border-radius:6px}
 .btn:hover{background:var(--soft)}
 .btn:focus-visible{outline:2px solid var(--focus)}
@@ -153,8 +153,57 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 .fband .fb-n .sw{width:14px;height:14px}
 .fband .fb-s{font-size:12.5px;color:var(--muted)}
 .fband .fb-nr{font:12px/1.4 var(--f-mono);color:var(--muted);white-space:pre-wrap}
+.fband .fb-t{font-weight:600;font-size:13.5px;color:var(--ink)}
+/* Bio-Status als Kennzeichen */
+.biob{display:inline-block;justify-self:start;max-width:100%;font:500 11.5px/1.35 var(--f-body);padding:2px 8px;border-radius:10px;border:1px solid;margin-top:4px;color:var(--ink);white-space:normal}
+.biob.bio{background:rgba(18,161,80,.14);border-color:rgba(18,161,80,.45)}
+.biob.bio_betrieb{background:rgba(142,224,122,.18);border-color:rgba(98,178,80,.5)}
+.biob.nein{background:rgba(227,155,45,.14);border-color:rgba(227,155,45,.5)}
+.biob.offen{background:rgba(140,146,153,.14);border-color:rgba(140,146,153,.55)}
+.bioline{grid-column:2/4;display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--muted)}
+.bioline span{display:inline-flex;align-items:center;gap:5px}
+.bioline i{width:9px;height:9px;border-radius:50%;flex:none}
+/* Teilbetriebe in der Betriebskarte */
+.teile{grid-column:2/4;margin-top:4px;border-top:1px dashed var(--line);padding-top:6px}
+.teile summary{cursor:pointer;font:600 11px/1.6 var(--f-body);font-stretch:85%;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);list-style-position:inside}
+.teile summary .h2n{text-transform:none;letter-spacing:0;font-weight:400}
+.teil{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 8px;align-items:start;padding:6px 0 6px 8px;margin-top:5px;
+  border-left:3px solid var(--bk,#a8a8a8);background:var(--soft);border-radius:0 6px 6px 0}
+.b-bio{--bk:#2e9e57}.b-bio_betrieb{--bk:#8cc06a}.b-nein{--bk:#e08a3c}.b-offen{--bk:#a8a8a8}
+.teil .tnr{font:12px/1.3 var(--f-mono);color:var(--muted);white-space:pre}
+.teil .tz{font-size:13px;margin-top:2px}
+.teil .tz em{font-style:normal;font-weight:600;color:var(--bk)}
+.b-bio_betrieb .tz em{color:#4d7c0f}
+.weitere{grid-column:2/4;margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px 8px 7px}
+.weitere .wk{font:600 11px/1.6 var(--f-body);font-stretch:85%;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.wf{border-left:3px solid var(--bk);padding:3px 0 3px 8px;margin-top:4px;font-size:13px}
+.wf b{font-weight:600}
+.wf span{color:var(--muted)}
+.wf em{font-style:normal;font-weight:600;color:var(--bk)}
+.teil input{margin:2px 0 0;width:16px;height:16px;accent-color:var(--accent)}
+.teil label{display:grid;cursor:pointer;min-width:0}
+.teil .tn2{display:flex;align-items:center;gap:6px;font-weight:600}
+.teil.off{opacity:.55}
+/* Betrieb mit Teilbetrieben: Name (schaltet den ganzen Betrieb) + eine Schaltfläche je Teil in einer Gruppe */
+.cgrp{display:inline-flex;flex-wrap:wrap;max-width:100%;align-items:center;gap:3px;padding:2px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.cgn{all:unset;box-sizing:border-box;cursor:pointer;padding:2px 5px 2px 8px;border-radius:999px;font:600 12.5px/1.25 var(--f-body);color:var(--ink);white-space:nowrap}
+.cgn:hover{background:var(--soft)}
+.cgn[aria-pressed="false"]{color:var(--muted)}
+.cgn:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.cgrp .chip{padding:2px 8px 2px 6px}
+#teile-h{margin-top:10px}
+#tcmp td:first-child .sw{width:10px;height:10px;margin-right:6px;vertical-align:-1px}
+#tcmp td small{display:block;color:var(--muted);font-size:11px}
+#tcmp .bk{display:flex;align-items:center;gap:5px;margin-top:1px;color:var(--muted);font-size:11px}
+#tcmp .bk i{width:8px;height:8px;border-radius:50%}
+#cmp tr.bio td{color:var(--muted);font-weight:400;border-bottom:0;padding-top:3px;padding-bottom:3px}
+#cmp tr.bio td:first-child i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+#cmp tr.biohead td{padding-top:10px;font:600 11px var(--f-body);font-stretch:85%;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
 .leaflet-popup-content .fband{margin:-13px -15px 10px;border-radius:12px 12px 0 0;border-left:0;border-top:6px solid var(--fc);padding:8px 40px 10px 15px}
+.leaflet-popup-scrolled{overflow-x:hidden}   /* Popup höher als das Fenster: nur senkrecht scrollen, Band ohne Rand-Ausgleich */
+.leaflet-popup-content.leaflet-popup-scrolled .fband{margin:0 0 10px;border-radius:10px}
 .dhead{position:sticky;top:0;z-index:2;background:var(--panel);display:grid;gap:8px;padding-bottom:12px}
+@media (max-height:700px){.dhead{position:static}}
 #side.detail header.top,#side.detail .tabs{display:none}   /* Detailansicht im Panel: nur die Fläche */
 /* Betriebsname beim Darüberfahren (Desktop) und als Schild auf der gewählten Fläche (Handy) */
 .leaflet-tooltip.ftip{background:var(--panel);color:var(--ink);border:0;border-radius:8px;box-shadow:var(--shadow);padding:6px 10px;font:13px/1.3 var(--f-body)}
@@ -213,6 +262,7 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
   h1{font-size:16.5px}
   .lh{display:none}
   .chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;scrollbar-width:none;margin:8px -16px 0;padding:1px 16px 2px}
+  .cgrp{flex:none;flex-wrap:nowrap;max-width:none}
   .chips::-webkit-scrollbar{display:none}
   .tabs,.dhead{touch-action:none;user-select:none;-webkit-user-select:none}
   .tabs button{padding:12px 2px;font-size:14px}
@@ -238,12 +288,16 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 /* Touch-Bedienung: grössere Ziele, 16 px in Eingabefeldern (sonst zoomt iOS beim Tippen) */
 @media (pointer:coarse){
   .chip{min-height:34px;font-size:13.5px;padding:6px 12px 6px 10px}
+  .cgrp .chip{min-height:30px;padding:4px 10px 4px 8px}
+  .cgn{min-height:30px;display:inline-flex;align-items:center;padding:4px 5px 4px 10px;font-size:13.5px}
   .seg button{padding:7px 12px;font-size:14px}
   .row{padding:10px 6px}
   input[type=search],select{font-size:16px;padding:9px 12px}
   .btn{padding:8px 10px;font-size:14px}
   .act,.leaflet-container a.act{padding:9px 13px;font-size:14px}
   .farm input{width:21px;height:21px;margin-top:1px}
+  .teil input{width:20px;height:20px}
+  .teil{padding:9px 0 4px}
 }
 /* Handy quer und kleine Fenster: schmalere Seitenleiste */
 @media (min-width:761px) and (max-height:540px){
@@ -252,6 +306,7 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
   h1{font-size:16px}
   .lh{display:none}
   .chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:6px -14px 0;padding:1px 14px 2px}
+  .cgrp{flex:none;flex-wrap:nowrap;max-width:none}
   .chips::-webkit-scrollbar{display:none}
   .panel{padding:10px 14px 18px}
   .tabs button{padding:8px 2px}
@@ -272,7 +327,7 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
     <div class="lh">Einfärben nach</div>
     <div class="chips" id="chips">
       <div class="segw"><div class="seg" role="group" aria-label="Flächen einfärben nach">
-        <button type="button" id="m-farm" aria-pressed="true">Betrieb</button><button type="button" id="m-kultur" aria-pressed="false">Kultur</button>
+        <button type="button" id="m-farm" aria-pressed="true">Betrieb</button><button type="button" id="m-kultur" aria-pressed="false">Kultur</button><button type="button" id="m-bio" aria-pressed="false">Bio</button>
       </div></div>
       <div class="legend" id="legend"></div>
     </div>
@@ -290,6 +345,8 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
     <section class="panel" id="p-kulturen" role="tabpanel" aria-labelledby="t-kulturen" hidden>
       <p class="hint">Fläche in Hektaren nach Kulturgruppe, für die eingeblendeten Betriebe.</p>
       <div class="tbl-wrap"><table id="cmp"></table></div>
+      <h2 id="teile-h" hidden>Teilbetriebe</h2>
+      <div class="tbl-wrap"><table id="tcmp"></table></div>
     </section>
     <section class="panel" id="p-flaechen" role="tabpanel" aria-labelledby="t-flaechen" hidden>
       <div class="controls">
@@ -306,12 +363,17 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
       <p>Dargestellt ist die deklarierte Hauptkultur gemäss Bundeskatalog. Gemüse wird darin nicht nach Art unterschieden («Einjährige Freilandgemüse»). Überlagernde Elemente (z.&nbsp;B. Hochstammbäume) sind nicht dargestellt.</p>
       <p id="kantone"></p>
       <p>Die Geodaten enthalten keine Personennamen. Die Zuordnung der Betriebsnummern zu den Betrieben ist abgeleitet (Adresse, Lage der Flächen) und nicht amtlich bestätigt.</p>
+      <h2>Teilbetriebe</h2>
+      <p>Führt ein Betrieb mehrere Firmen oder Standorte unter einer Betriebsnummer, ordnen die Zürcher Daten die Flächen oft einer Produktionsstätte zu (so bei Gerber und Rathgeb; in den Daten TG und SH fehlt diese Angabe). Danach sind die Teilbetriebe getrennt (gleiche Farbe, verschiedene Schattierungen); hat ein Betrieb mehrere Betriebsnummern, ist jede Nummer ein eigener Teil. Welche Firma zu welcher Produktionsstätte gehört, ist aus Adressen und Firmenangaben abgeleitet.</p>
+      <h2>Bio</h2>
+      <p>«Bio gemeldet» heisst: Die Fläche ist in den Kantonsdaten mit dem Direktzahlungsprogramm «Bioproduktion» gemeldet. «Bio-Betrieb, nicht als Bio gemeldet»: Die Fläche gehört zu einem Bio-Betrieb, trägt aber keine Bio-Meldung – etwa Wald, Gewächshäuser mit festem Fundament (in den Zürcher Daten nie mit Programm) oder ein Teilbetrieb, der laut Firma Bio ist, in den Daten aber nicht als Bio erscheint. «Bio-Status unklar»: weder Meldung noch Firmenangabe. Eine Bio-Zertifizierung selbst steht nicht in den Daten.</p>
+      <p id="bio-hinweise"></p>
       <h2>Karte</h2>
       <p>Hintergrundkarten © swisstopo · Parzellen © Kanton Zürich (amtliche Vermessung, erst bei starkem Hineinzoomen sichtbar).</p>
       <h2>Bedienung</h2>
       <ul class="tips">
         <li>Fläche antippen oder anklicken: Zuoberst steht der Betrieb, darunter Kultur, Fläche, Route und Link zum Teilen. Die Flächen der übrigen Betriebe treten so lange zurück.</li>
-        <li>«Betrieb» / «Kultur» wechselt die Einfärbung. Die Schaltflächen daneben blenden Betriebe bzw. Kulturgruppen ein und aus.</li>
+        <li>«Betrieb» / «Kultur» / «Bio» wechselt die Einfärbung. Die Schaltflächen daneben blenden Betriebe bzw. Teilbetriebe, Kulturgruppen oder Bio-Kategorien ein und aus.</li>
         <li>Standort-Knopf: eigene Position anzeigen. Liegt sie auf einer der Flächen, wird diese genannt.</li>
       </ul>
     </section>
@@ -334,6 +396,26 @@ const FARMS=M.farms, FK=Object.fromEntries(FARMS.map(f=>[f.key,f]));
 const GROUPS=M.groups, GC=Object.fromEntries(GROUPS);  // [[Kulturgruppe, Farbe], …] aus config/projekt.json
 const feats=D.features.map(f=>f.properties);
 const GPRES=GROUPS.filter(([g])=>feats.some(p=>p.g===g));  // nur Gruppen, die vorkommen
+// Teilbetriebe: Betriebe ohne Aufteilung haben genau einen Teil (= Betrieb)
+const TEILE=FARMS.flatMap(f=>f.teile.map(t=>Object.assign({},t,{f:f.key})));
+const TK=Object.fromEntries(TEILE.map(t=>[t.id,t]));
+const split=f=>f.teile.length>1;
+const who=p=>FK[p.f].name+(split(FK[p.f])?' · '+TK[p.t].kurz:'');   // «Gerber · Bio Greens»
+// Bio-Status je Fläche (aus 02_website.py): bio = als Bioproduktion gemeldet, bio_betrieb = Bio-Betrieb/Bio laut Firma ohne Meldung,
+// nein = nicht Bio, offen = Bio-Status nicht belegt
+const BIO_ALLE=[['bio','Bio gemeldet','#12A150'],['bio_betrieb','Bio-Betrieb, nicht als Bio gemeldet','#8EE07A'],['nein','nicht Bio','#E39B2D'],['offen','Bio-Status unklar','#9AA1A9']];
+const BIO=BIO_ALLE.filter(([k])=>feats.some(p=>p.bs===k));   // Legende/Tabellen: nur vorkommende Stufen
+const BC=Object.fromEntries(BIO_ALLE.map(([k,,c])=>[k,c]));
+const BCLS={deklariert:'bio',firma:'bio_betrieb',nein:'nein',offen:'offen'};
+function bioText(p){   // Text des Bio-Kennzeichens einer Fläche
+  const t=TK[p.t];
+  if(p.bs==='bio') return 'Bio – als Bioproduktion gemeldet';
+  if(p.bs==='bio_betrieb') return t.bio==='firma'?(t.bio_text||'Bio laut Firma, nicht als Bio gemeldet'):'Bio-Betrieb; diese Fläche ist nicht als Bio gemeldet';
+  if(p.bs==='offen') return t.bio_text||'Bio-Status unklar';
+  return t.bio_text||'nicht Bio (kein Bio-Programm gemeldet)';
+}
+const BIOWORT={deklariert:'Bio',firma:'Bio laut Firma',nein:'nicht Bio',offen:'Bio unklar'};
+const bioPill=t=>`<span class="biob ${BCLS[t.bio]||'nein'}">${esc(t.bio_text||(t.bio==='deklariert'?'Bio – Flächen als Bioproduktion gemeldet':t.bio==='firma'?'Bio laut Firma, nicht als Bio gemeldet':t.bio==='offen'?'Bio-Status unklar':'nicht Bio (kein Bio-Programm gemeldet)'))}</span>`;
 const $=s=>document.querySelector(s);
 const root=document.documentElement;
 const nf=new Intl.NumberFormat('de-CH',{maximumFractionDigits:1,minimumFractionDigits:1});
@@ -341,7 +423,7 @@ const nf0=new Intl.NumberFormat('de-CH',{maximumFractionDigits:0});
 const ha=m2=>nf.format(m2/1e4), ar=m2=>nf0.format(m2/100);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sum=ps=>ps.reduce((a,p)=>a+p.m2,0);
-const fold=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const fold=s=>String(s).toLowerCase().replace(/ae/g,'a').replace(/oe/g,'o').replace(/ue/g,'u').normalize('NFD').replace(/[\u0300-\u036f]/g,'');   // «Gemüse» = «gemuese» = «gemuse»
 const mqMobile=matchMedia('(max-width:760px)'), mobile=()=>mqMobile.matches;
 const mqCompact=matchMedia('(max-width:760px), (max-height:540px)'), compact=()=>mqCompact.matches;
 const coarse=matchMedia('(pointer:coarse)').matches, hover=matchMedia('(hover:hover) and (pointer:fine)').matches;
@@ -360,12 +442,22 @@ const ICON={layers:ico('<path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5
 
 document.getElementById('quelle').textContent='Quelle: '+M.quelle+', '+M.stand+'.';
 document.getElementById('kantone').textContent='Daten der '+M.kantone+'. Ein Betrieb liefert alle seine Flächen an den Kanton seines Sitzes, auch Flächen in Nachbarkantonen.';
+$('#bio-hinweise').textContent=TEILE.filter(t=>t.bio_text).map(t=>t.name+': '+t.bio_text+'.').join(' ');
 
 // ---------- Zustand ----------
 let mode='farm';
 const farmOn=Object.fromEntries(FARMS.map(f=>[f.key,true]));
+const teilOn=Object.fromEntries(TEILE.map(t=>[t.id,true]));
 const groupOn=Object.fromEntries(GROUPS.map(([g])=>[g,true]));
-const shown=p=>farmOn[p.f]&&(mode!=='kultur'||groupOn[p.g]);   // Kulturgruppen-Filter gilt nur im Modus «Kultur»
+const bioOn=Object.fromEntries(BIO.map(([k])=>[k,true]));
+// Kulturgruppen-Filter gilt nur im Modus «Kultur», Bio-Filter nur im Modus «Bio»
+const shown=p=>farmOn[p.f]&&teilOn[p.t]&&(mode!=='kultur'||groupOn[p.g])&&(mode!=='bio'||bioOn[p.bs]);
+const farmShown=k=>farmOn[k]&&FK[k].teile.some(t=>teilOn[t.id]);
+// Schalten von Betrieben und Teilen – gleich für Legende und Betriebskarten
+function setFarm(k,on){farmOn[k]=on; if(on) FK[k].teile.forEach(t=>teilOn[t.id]=true);}   // einschalten = ganzer Betrieb
+function setTeil(id,on){const t=TK[id];
+  if(on&&!farmOn[t.f]){farmOn[t.f]=true;FK[t.f].teile.forEach(x=>teilOn[x.id]=x.id===id);}   // Betrieb war aus: nur diesen Teil zeigen
+  else teilOn[id]=on;}
 const probe=$('#safe');
 function safe(){const s=getComputedStyle(probe);return {t:parseFloat(s.paddingTop)||0,b:parseFloat(s.paddingBottom)||0};}
 
@@ -411,14 +503,15 @@ new Layers().addTo(map); new Tools().addTo(map);
 function lineW(){const z=map.getZoom();return z<=10?3:z<=12?2.2:z<=14?1.6:1.4;}
 let focus=null;   // Betrieb der ausgewählten Fläche: Flächen der übrigen Betriebe treten zurück
 function style(f){
-  const p=f.properties, fc=FK[p.f].color, w=lineW(), gc=GC[p.g];
-  const s=mode==='farm'?{color:darker(fc,.75),weight:w,fillColor:fc,fillOpacity:.45}
-    :{color:darker(w>=2.2?gc:fc,.75),weight:w+.2,fillColor:gc,fillOpacity:.65};   // Kultur: nah gezoomt Rand in Betriebsfarbe
+  const p=f.properties, tc=TK[p.t].color, w=lineW();   // tc: Farbe des Teilbetriebs (= Betriebsfarbe, falls nicht aufgeteilt)
+  const c=mode==='kultur'?GC[p.g]:BC[p.bs];
+  const s=mode==='farm'?{color:darker(tc,.75),weight:w,fillColor:tc,fillOpacity:.45}
+    :{color:darker(w>=2.2?c:tc,.75),weight:w+.2,fillColor:c,fillOpacity:mode==='bio'?.7:.65};   // Kultur/Bio: nah gezoomt Rand in Betriebsfarbe
   if(focus&&p.f!==focus){s.fillOpacity*=.3;s.opacity=.35;} else s.opacity=1;
   return s;
 }
 function setFocus(k){if(focus!==k){focus=k;layer.setStyle(style);}}
-const tipHtml=p=>`<span class="tn">${sw(FK[p.f].color)}${esc(FK[p.f].name)}</span><span class="tk">${esc(p.g)} · ${ha(p.m2)} ha</span>`;
+const tipHtml=p=>`<span class="tn">${sw(TK[p.t].color)}${esc(who(p))}</span><span class="tk">${esc(p.g)} · ${ha(p.m2)} ha${p.bs==='bio'?' · Bio':''}</span>`;
 const layer=L.geoJSON(D,{style,bubblingMouseEvents:false,onEachFeature(f,l){
   l.on('click',e=>select(l,{latlng:e.latlng}));
   if(hover) l.bindTooltip(()=>tipHtml(f.properties),{sticky:true,direction:'top',offset:[0,-10],opacity:1,className:'ftip'});   // Maus: Betrieb schon vor dem Klick
@@ -520,11 +613,32 @@ function toast(msg,action){
 }
 
 // ---------- Betriebe ----------
+function bioLine(ps){   // Flächen eines Betriebs/Teils nach Bio-Status
+  const parts=[['bio','Bio gemeldet'],['bio_betrieb',null],['nein','nicht Bio'],['offen','Bio unklar']].map(([k,l])=>{
+    const xs=ps.filter(p=>p.bs===k); if(!xs.length) return '';
+    if(!l) l=xs.some(p=>TK[p.t].bio==='firma')?'Bio laut Firma, nicht gemeldet':'Bio-Betrieb, ohne Bio-Meldung';
+    return `<span><i style="background:${BC[k]}"></i>${ha(sum(xs))} ha ${esc(l)}</span>`;}).join('');
+  return `<div class="bioline">${parts}</div>`;
+}
+function teileHtml(f){
+  if(!split(f)) return '';
+  const nachNr=f.teile.every(t=>t.nrs&&!t.ps), nachPs=f.teile.every(t=>t.ps&&!t.nrs);
+  return `<details class="teile" open><summary>Firmen und Flächen <span class="h2n">· getrennt nach ${nachNr?'Betriebsnummer':nachPs?'amtlicher Produktionsstätte':'Produktionsstätte bzw. Betriebsnummer'}</span></summary>`+
+    f.teile.map(t=>{
+      const ps=feats.filter(p=>p.t===t.id), gm=sum(ps.filter(p=>p.g==='Freilandgemüse')), gh=sum(ps.filter(p=>p.g==='Gewächshaus / geschützt'));
+      const nrs=[...new Set(ps.map(p=>p.nr))].join(' · ');
+      return `<div class="teil b-${BCLS[t.bio]||'nein'}" data-t="${t.id}"><input type="checkbox" id="vt-${t.id}" checked aria-label="${esc(t.name)} anzeigen">
+        <label for="vt-${t.id}"><span class="tn2">${sw(t.color)}${esc(t.name)}</span>
+        <span class="sub">${esc(t.sub)}</span>
+        <span class="tz"><b>${ha(sum(ps))} ha</b> · ${ps.length} ${ps.length===1?'Fläche':'Flächen'} · <em>${BIOWORT[t.bio]||'nicht Bio'}</em></span>
+        <span class="tnr">Betriebsnummer ${esc(nrs)}</span></label>
+        <button type="button" class="btn" data-zoomt="${t.id}" aria-label="Auf ${esc(t.name)} zoomen">Zoom</button></div>`;
+    }).join('')+'</details>';
+}
 const farmBox=$('#farms');
 FARMS.forEach(f=>{
   const ps=feats.filter(p=>p.f===f.key);
   const gem=sum(ps.filter(p=>p.g==='Freilandgemüse')), gh=sum(ps.filter(p=>p.g==='Gewächshaus / geschützt'));
-  const bio=sum(ps.filter(p=>p.p.some(x=>/Bioproduktion/.test(x))));
   const el=document.createElement('div'); el.className='farm'; el.dataset.k=f.key;
   el.innerHTML=`<input type="checkbox" id="v-${f.key}" checked>
    <label for="v-${f.key}"><span class="fname">${sw(f.color)}${esc(f.name)}</span>
@@ -536,61 +650,102 @@ FARMS.forEach(f=>{
     <div class="stat"><b>${ha(gem)}</b><span>ha Gemüse</span></div>
     <div class="stat"><b>${ha(gh)}</b><span>ha geschützt</span></div>
    </div>
-   <div class="sub more">${bio>0?'Bioproduktion: '+ha(bio)+' ha':'Kein Bio-Programm deklariert'}</div>
-   ${f.note?`<div class="note-chip">${esc(f.note)}</div>`:''}`;
+   ${split(f)?'':`<div class="more">${bioPill(f.teile[0])}</div>`}
+   ${bioLine(ps)}
+   ${f.note?`<div class="note-chip">${esc(f.note)}</div>`:''}
+   ${teileHtml(f)}
+   ${(f.weitere_firmen||[]).length?`<div class="weitere"><div class="wk">Weitere Firmen, ohne zugeordnete Fläche</div>${f.weitere_firmen.map(w=>
+     `<div class="wf b-${BCLS[w.bio]||'nein'}"><b>${esc(w.name)}</b> <span>· ${esc(w.was)} ·</span> <em>${w.bio==='nein'?'nicht Bio':'Bio'}</em></div>`).join('')}</div>`:''}`;
   farmBox.appendChild(el);
 });
-farmBox.addEventListener('change',e=>{if(e.target.type==='checkbox'){farmOn[e.target.id.slice(2)]=e.target.checked;applyVisibility();}});
+farmBox.addEventListener('change',e=>{
+  const id=e.target.id; if(e.target.type!=='checkbox') return;
+  if(id.startsWith('vt-')) setTeil(id.slice(3),e.target.checked);
+  else setFarm(id.slice(2),e.target.checked);
+  applyVisibility();
+});
 farmBox.addEventListener('click',e=>{
-  const b=e.target.closest('[data-zoom]'); if(!b) return;
-  const k=b.dataset.zoom;
-  if(!farmOn[k]){farmOn[k]=true;$('#v-'+k).checked=true;applyVisibility();}
+  const b=e.target.closest('[data-zoom],[data-zoomt]'); if(!b) return;
+  const t=b.dataset.zoomt?TK[b.dataset.zoomt]:null, k=t?t.f:b.dataset.zoom;
+  if(t){if(!(farmOn[k]&&teilOn[t.id])) setTeil(t.id,true);} else if(!farmShown(k)) setFarm(k,true);
+  applyVisibility();
   if(sel) deselect();
   if(mobile()) Sheet.snap('peek');
-  fit(boundsOf(p=>p.f===k&&shown(p)),{vis:mobile()?Sheet.heightOf('peek'):null});
+  fit(boundsOf(p=>(t?p.t===t.id:p.f===k)&&shown(p)),{vis:mobile()?Sheet.heightOf('peek'):null});
 });
+function syncChecks(){
+  FARMS.forEach(f=>{const cb=$('#v-'+f.key); if(cb) cb.checked=farmShown(f.key);});
+  TEILE.forEach(t=>{const on=farmOn[t.f]&&teilOn[t.id], cb=$('#vt-'+t.id); if(cb) cb.checked=on; const r=cb&&cb.closest('.teil'); if(r) r.classList.toggle('off',!on);});
+}
 
 // ---------- Legende / Filter ----------
 function renderLegend(){
   $('#legend').innerHTML=mode==='farm'
-    ? FARMS.map(f=>`<button type="button" class="chip" data-f="${f.key}" aria-pressed="${farmOn[f.key]}" title="${esc(f.name)} ein-/ausblenden">${sw(f.color)}${esc(f.name)}</button>`).join('')
-    : GPRES.map(([g,c])=>`<button type="button" class="chip" data-g="${esc(g)}" aria-pressed="${groupOn[g]}" title="${esc(g)} ein-/ausblenden">${sw(c,.8)}${esc(g)}</button>`).join('')+
-      '<span class="note">Nah gezoomt: Rand in Betriebsfarbe</span>';
+    ? FARMS.map(f=>!split(f)   // Betriebe mit Teilbetrieben: Gruppe aus Name + je Teil eine Schaltfläche (Schattierung)
+        ? `<button type="button" class="chip" data-t="${f.teile[0].id}" title="${esc(f.name)} ein-/ausblenden">${sw(f.color)}${esc(f.name)}</button>`
+        : `<span class="cgrp" role="group" aria-label="${esc(f.name)}"><button type="button" class="cgn" data-f="${f.key}" title="${esc(f.name)} ganz ein-/ausblenden">${esc(f.name)}</button>`+
+          f.teile.map(t=>`<button type="button" class="chip" data-t="${t.id}" title="${esc(t.name)} ein-/ausblenden">${sw(t.color)}${esc(t.kurz)}</button>`).join('')+'</span>').join('')
+    : mode==='kultur'
+    ? GPRES.map(([g,c])=>`<button type="button" class="chip" data-g="${esc(g)}" title="${esc(g)} ein-/ausblenden">${sw(c,.8)}${esc(g)}</button>`).join('')+
+      '<span class="note">Nah gezoomt: Rand in Betriebsfarbe</span>'
+    : BIO.map(([k,l,c])=>`<button type="button" class="chip" data-b="${k}" title="${esc(l)} ein-/ausblenden">${sw(c,.75)}${esc(l)}</button>`).join('')+
+      '<span class="note">laut Kantonsdaten und Firmenangaben</span>';
+  updateLegend();
 }
-function updateLegend(){document.querySelectorAll('#legend .chip').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.f?farmOn[c.dataset.f]:groupOn[c.dataset.g])));}
+function updateLegend(){document.querySelectorAll('#legend .chip,#legend .cgn').forEach(c=>{const d=c.dataset;
+  c.setAttribute('aria-pressed',String(d.f?farmShown(d.f):d.t?farmOn[TK[d.t].f]&&teilOn[d.t]:d.g?groupOn[d.g]:bioOn[d.b]));});}
 $('#legend').addEventListener('click',e=>{
-  const c=e.target.closest('.chip'); if(!c) return;
-  if(c.dataset.f){const k=c.dataset.f;farmOn[k]=!farmOn[k];$('#v-'+k).checked=farmOn[k];}
-  else{const g=c.dataset.g;groupOn[g]=!groupOn[g];}
+  const c=e.target.closest('.chip,.cgn'); if(!c) return; const d=c.dataset;
+  if(d.f) setFarm(d.f,!farmShown(d.f));   // Name eines Betriebs mit Teilen: ganzer Betrieb
+  else if(d.t){const t=TK[d.t];
+    if(!split(FK[t.f])) setFarm(t.f,!farmShown(t.f));
+    else setTeil(t.id,!(farmOn[t.f]&&teilOn[t.id]));}
+  else if(d.g) groupOn[d.g]=!groupOn[d.g];
+  else bioOn[d.b]=!bioOn[d.b];
   applyVisibility();
 });
 
 function applyVisibility(){
   all.forEach(l=>{const on=shown(l.feature.properties);if(on!==map.hasLayer(l))on?l.addTo(map):map.removeLayer(l);});
   if(sel&&!map.hasLayer(sel)) deselect();
-  document.querySelectorAll('.farm').forEach(el=>el.classList.toggle('off',!farmOn[el.dataset.k]));
-  updateLegend(); renderSummary(); renderTable(); renderList();
+  document.querySelectorAll('.farm').forEach(el=>el.classList.toggle('off',!farmShown(el.dataset.k)));
+  syncChecks(); updateLegend(); renderSummary(); renderTable(); renderList();
 }
 function renderSummary(){const ps=feats.filter(shown);$('#summary').textContent=`${jahr} · ${nf0.format(ps.length)} Flächen · ${ha(sum(ps))} ha`;}
 
 // ---------- Vergleichstabelle ----------
 function renderTable(){
-  const fs=FARMS.filter(f=>farmOn[f.key]);
-  if(!fs.length){$('#cmp').innerHTML='<tbody><tr><td>Kein Betrieb eingeblendet.</td></tr></tbody>';return;}
-  let h='<thead><tr><th>Kulturgruppe</th>'+fs.map(f=>`<th title="${esc(f.name)}">${sw(f.color)}${esc(f.name)}</th>`).join('')+'</tr></thead><tbody>';
+  // Spalten je Betrieb (eingeblendete Teilbetriebe); die Kulturgruppen-/Bio-Filter gelten hier nicht
+  const cols=FARMS.filter(f=>farmShown(f.key)).map(f=>({head:`${sw(f.color)}${esc(f.name)}`,title:f.name,ok:p=>p.f===f.key&&teilOn[p.t]}));
+  renderTeilTable();
+  if(!cols.length){$('#cmp').innerHTML='<tbody><tr><td>Kein Betrieb eingeblendet.</td></tr></tbody>';return;}
+  const S=fn=>cols.map(c=>sum(feats.filter(p=>c.ok(p)&&fn(p))));
+  let h='<thead><tr><th>Kulturgruppe</th>'+cols.map(c=>`<th title="${esc(c.title)}">${c.head}</th>`).join('')+'</tr></thead><tbody>';
   GROUPS.forEach(([g,c])=>{
-    const vals=fs.map(f=>sum(feats.filter(p=>p.f===f.key&&p.g===g)));
+    const vals=S(p=>p.g===g);
     if(vals.every(v=>v===0)) return;
     h+=`<tr><td><span class="gsw" style="background:${c}"></span>${esc(g)}</td>`+vals.map(v=>`<td>${v?ha(v):'–'}</td>`).join('')+'</tr>';
   });
-  h+='</tbody><tfoot><tr><td>Total</td>'+fs.map(f=>`<td>${ha(sum(feats.filter(p=>p.f===f.key)))}</td>`).join('')+'</tr></tfoot>';
-  $('#cmp').innerHTML=h;
+  h+='</tbody><tfoot><tr><td>Total</td>'+S(()=>true).map(v=>`<td>${ha(v)}</td>`).join('')+'</tr>';
+  h+=`<tr class="biohead"><td colspan="${cols.length+1}">davon nach Bio-Status</td></tr>`;
+  BIO.forEach(([k,l,c])=>{const vals=S(p=>p.bs===k); if(vals.every(v=>v===0)) return;
+    h+=`<tr class="bio"><td><i style="background:${c}"></i>${esc(l)}</td>`+vals.map(v=>`<td>${v?ha(v):'–'}</td>`).join('')+'</tr>';});
+  $('#cmp').innerHTML=h+'</tfoot>';
+}
+function renderTeilTable(){   // Betriebe mit Teilbetrieben: Fläche, Gemüse und Bio-Status je Teil
+  const ts=TEILE.filter(t=>split(FK[t.f])&&farmOn[t.f]&&teilOn[t.id]);
+  $('#teile-h').hidden=!ts.length;
+  const BK={deklariert:['bio','Bio gemeldet'],firma:['bio_betrieb','Bio laut Firma'],nein:['nein','nicht Bio'],offen:['offen','Bio unklar']};
+  $('#tcmp').innerHTML=!ts.length?'':'<thead><tr><th>Teilbetrieb</th><th>ha</th><th>Gemüse</th><th>geschützt</th></tr></thead><tbody>'+
+    ts.map(t=>{const ps=feats.filter(p=>p.t===t.id), [k,l]=BK[t.bio]||BK.nein, g=x=>{const v=sum(ps.filter(p=>p.g===x));return v?ha(v):'–';};
+      return `<tr><td>${sw(t.color)}${esc(FK[t.f].name)} ${esc(t.kurz)}<small>${esc(t.name)}</small><span class="bk"><i style="background:${BC[k]}"></i>${l}</span></td>`+
+        `<td>${ha(sum(ps))}</td><td>${g('Freilandgemüse')}</td><td>${g('Gewächshaus / geschützt')}</td></tr>`;}).join('')+'</tbody>';
 }
 
 // ---------- Liste ----------
 const gsel=$('#gsel'), q=$('#q');
 gsel.innerHTML='<option value="">Alle Kulturgruppen</option>'+GPRES.map(([g])=>`<option>${esc(g)}</option>`).join('');
-const hay=feats.map(p=>fold([p.k,p.gm,p.kt,p.c,p.g,FK[p.f].name,p.nr,p.nr.replace(/ /g,'')].join(' ')));
+const hay=feats.map(p=>fold([p.k,p.gm,p.kt,p.c,p.g,FK[p.f].name,TK[p.t].name,TK[p.t].kurz,p.nr,p.nr.replace(/ /g,'')].join(' ')));
 function filtered(){
   const ts=fold(q.value).split(/\s+/).filter(Boolean), g=gsel.value;
   return feats.filter((p,i)=>shown(p)&&(!g||p.g===g)&&ts.every(t=>hay[i].includes(t))).sort((a,b)=>b.m2-a.m2);
@@ -598,7 +753,7 @@ function filtered(){
 function renderList(){
   const rows=filtered();
   $('#count').textContent=`${nf0.format(rows.length)} Flächen · ${ha(sum(rows))} ha`;
-  $('#list').innerHTML=rows.map(p=>`<button type="button" class="row" data-id="${p.id}"><span class="dot" style="background:${mode==='farm'?FK[p.f].color:GC[p.g]}"></span><span class="rt"><span class="k">${esc(p.k)}</span><span class="g"><b>${esc(FK[p.f].name)}</b> · ${esc(p.gm)}</span></span><span class="a">${ar(p.m2)} a</span></button>`).join('')||'<p class="hint">Keine Flächen gefunden.</p>';
+  $('#list').innerHTML=rows.map(p=>`<button type="button" class="row" data-id="${p.id}"><span class="dot" style="background:${mode==='farm'?TK[p.t].color:mode==='kultur'?GC[p.g]:BC[p.bs]}"></span><span class="rt"><span class="k">${esc(p.k)}</span><span class="g"><b>${esc(FK[p.f].name)}</b>${split(FK[p.f])?' '+esc(TK[p.t].kurz):''} · ${esc(p.gm)}</span></span><span class="a">${ar(p.m2)} a</span></button>`).join('')||'<p class="hint">Keine Flächen gefunden.</p>';
 }
 let qT=0; q.addEventListener('input',()=>{cancelAnimationFrame(qT);qT=requestAnimationFrame(renderList);});
 q.addEventListener('focus',()=>{if(mobile())Sheet.snap('full');});
@@ -606,9 +761,9 @@ q.addEventListener('keydown',e=>{if(e.key==='Enter')q.blur();});
 gsel.addEventListener('change',renderList);
 $('#list').addEventListener('click',e=>{const b=e.target.closest('.row');if(b)select(byId[b.dataset.id],{zoom:true});});
 $('#csv').addEventListener('click',()=>{
-  const rows=filtered(), head=['Betrieb','Betriebsnummer','Kultur','Code','Kulturgruppe','Flaeche_a','Flaeche_ha','Gemeinde','Kanton','Programme','beitragsberechtigt','Jahr','LV95_E','LV95_N'];
+  const rows=filtered(), head=['Betrieb','Teilbetrieb','Betriebsnummer','Kultur','Code','Kulturgruppe','Flaeche_a','Flaeche_ha','Gemeinde','Kanton','Programme','Bio_Status','beitragsberechtigt','Jahr','LV95_E','LV95_N'];
   const q2=v=>'"'+String(v).replace(/"/g,'""')+'"';
-  const csv=[head.join(';')].concat(rows.map(p=>[FK[p.f].name,p.nr,p.k,p.c,p.g,(p.m2/100).toFixed(1),(p.m2/1e4).toFixed(2),p.gm,p.kt,p.p.join(' | '),p.bb?'ja':'nein',p.j,p.x,p.y].map(q2).join(';'))).join('\n');
+  const csv=[head.join(';')].concat(rows.map(p=>[FK[p.f].name,TK[p.t].name,p.nr,p.k,p.c,p.g,(p.m2/100).toFixed(1),(p.m2/1e4).toFixed(2),p.gm,p.kt,p.p.join(' | '),bioText(p),p.bb?'ja':'nein',p.j,p.x,p.y].map(q2).join(';'))).join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
   a.download='flaechen_auswahl.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 });
@@ -625,9 +780,11 @@ $('#tabs').addEventListener('keydown',e=>{
 
 // ---------- Details einer Fläche ----------
 function farmBand(p){
-  const f=FK[p.f];
-  return `<div class="fband" style="--fc:${f.color}"><span class="fb-l">Betrieb</span><span class="fb-n">${sw(f.color)}${esc(f.name)}</span>`+
-    `<span class="fb-s">${esc(f.sub)}</span><span class="fb-nr">${esc(p.nr)}</span></div>`;
+  const f=FK[p.f], t=TK[p.t], sp=split(f);
+  return `<div class="fband" style="--fc:${t.color}"><span class="fb-l">Betrieb</span><span class="fb-n">${sw(t.color)}${esc(f.name)}</span>`+
+    (sp?`<span class="fb-t">${esc(t.name)}</span>`:'')+
+    `<span class="fb-s">${esc(sp?t.sub:f.sub)}</span><span class="fb-nr">${esc(p.nr)}</span>`+
+    `<span class="biob ${p.bs}">${esc(bioText(p))}</span></div>`;
 }
 function detailHtml(p,band=true){
   const prog=p.p.length?'<ul>'+p.p.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'–';
@@ -657,13 +814,13 @@ function highlight(l){
   if(hl) map.removeLayer(hl);
   const f=l.feature;
   hl=L.layerGroup([L.geoJSON(f,{renderer:topR,interactive:false,style:{color:'#FFFFFF',weight:7,opacity:.95,fill:false}}),
-                   L.geoJSON(f,{renderer:topR,interactive:false,style:{color:darker(FK[f.properties.f].color,.6),weight:3,opacity:1,fill:false}})]).addTo(map);
+                   L.geoJSON(f,{renderer:topR,interactive:false,style:{color:darker(TK[f.properties.t].color,.6),weight:3,opacity:1,fill:false}})]).addTo(map);
 }
 let flabel=null;
 function showLabel(p){   // Handy/Panel: Betriebsname als Schild auf der gewählten Fläche
-  hideLabel(); const f=FK[p.f];
-  flabel=L.tooltip({direction:'top',offset:[0,-4],opacity:1,className:'flabel'}).setLatLng([p.la,p.lo]).setContent(sw(f.color)+esc(f.name)).addTo(map);
-  const el=flabel.getElement(); if(el) el.style.setProperty('--fc',f.color);
+  hideLabel(); const c=TK[p.t].color;
+  flabel=L.tooltip({direction:'top',offset:[0,-4],opacity:1,className:'flabel'}).setLatLng([p.la,p.lo]).setContent(sw(c)+esc(who(p))).addTo(map);
+  const el=flabel.getElement(); if(el) el.style.setProperty('--fc',c);
 }
 function hideLabel(){if(flabel){map.removeLayer(flabel);flabel=null;}}
 function showDetail(p){
@@ -687,7 +844,7 @@ function ensureVisible(l){  // Handy: Fläche nicht unter dem Panel verstecken
 function select(l,o={}){
   if(!l) return;
   const p=l.feature.properties;
-  if(!shown(p)){farmOn[p.f]=true;groupOn[p.g]=true;$('#v-'+p.f).checked=true;applyVisibility();}
+  if(!shown(p)){farmOn[p.f]=true;teilOn[p.t]=true;if(mode==='kultur')groupOn[p.g]=true;if(mode==='bio')bioOn[p.bs]=true;applyVisibility();}
   sel=l; highlight(l); setFocus(p.f);
   if(!o.fromHash) setHash(p);
   if(compact()){   // Handy und kleine Fenster: Details im Panel statt im Popup (das die Karte verdecken würde)
@@ -696,7 +853,7 @@ function select(l,o={}){
     if(o.zoom) fit(l.getBounds(),{maxZoom:18}); else ensureVisible(l);
   }else{
     l.closeTooltip();
-    const open=()=>{if(sel!==l)return;switching=true;popup.setLatLng(o.latlng||L.latLng(p.la,p.lo)).setContent(detailHtml(p)).openOn(map);switching=false;};
+    const open=()=>{if(sel!==l)return;switching=true;popup.options.maxHeight=Math.max(240,innerHeight-80);popup.setLatLng(o.latlng||L.latLng(p.la,p.lo)).setContent(detailHtml(p)).openOn(map);switching=false;};
     if(o.zoom){afterMove(open);fit(l.getBounds(),{maxZoom:18});}else open();
   }
 }
@@ -723,7 +880,7 @@ addEventListener('hashchange',()=>{
   if(l){if(l!==sel)select(l,{fromHash:true,zoom:true});}else deselect({fromHash:true});
 });
 async function share(p){
-  const url=location.href.split('#')[0]+hashOf(p), title='Fläche von '+FK[p.f].name+': '+p.k;
+  const url=location.href.split('#')[0]+hashOf(p), title='Fläche von '+who(p)+': '+p.k;
   if(navigator.share){try{await navigator.share({title,url});}catch(_){}return;}
   try{await navigator.clipboard.writeText(url);toast('Link kopiert.');}catch(_){window.prompt('Link zum Kopieren:',url);}
 }
@@ -743,7 +900,7 @@ map.on('locationfound',e=>{
     L.circleMarker(e.latlng,{renderer:topR,radius:7,interactive:false,weight:2.5,color:'#FFFFFF',fillColor:'#1A73E8',fillOpacity:1})]).addTo(map);
   fit(e.latlng.toBounds(Math.max(2*e.accuracy,250)),{maxZoom:17});
   const hit=all.find(l=>map.hasLayer(l)&&inside(l.feature.geometry,e.latlng.lng,e.latlng.lat));
-  if(hit){const p=hit.feature.properties;toast(`Hier: Fläche von ${FK[p.f].name} – ${p.k}`,{label:'Details',fn:()=>select(hit)});}
+  if(hit){const p=hit.feature.properties;toast(`Hier: Fläche von ${who(p)} – ${p.k}`,{label:'Details',fn:()=>select(hit)});}
   else toast(`Standort gefunden (± ${nf0.format(e.accuracy)} m), nicht auf einer der Flächen.`);
 });
 map.on('locationerror',e=>{
@@ -754,11 +911,10 @@ map.on('locationerror',e=>{
 // ---------- Einfärben nach ----------
 function setMode(m){
   if(m===mode) return; mode=m;
-  $('#m-farm').setAttribute('aria-pressed',String(m==='farm')); $('#m-kultur').setAttribute('aria-pressed',String(m==='kultur'));
+  ['farm','kultur','bio'].forEach(k=>$('#m-'+k).setAttribute('aria-pressed',String(m===k)));
   renderLegend(); applyVisibility(); layer.setStyle(style);
 }
-$('#m-farm').addEventListener('click',()=>setMode('farm'));
-$('#m-kultur').addEventListener('click',()=>setMode('kultur'));
+['farm','kultur','bio'].forEach(k=>$('#m-'+k).addEventListener('click',()=>setMode(k)));
 
 // ---------- Wechsel Handy ↔ Desktop, Grösse ----------
 function relayout(){

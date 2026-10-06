@@ -15,12 +15,16 @@ from urllib.parse import quote
 import geopandas as gpd
 import pandas as pd
 
-from common import AUSWAHL, CFG, FARMS, NR2FARM, WEB, gemeinde, kantone_text, kulturgruppe, out_path, programme
+from common import (AUSWAHL, BIO_LABELS, CFG, FARMS, NR2FARM, WEB, bio_status, gemeinde, kantone_text, kulturgruppe, out_path,
+                    programme, teil_of, teile)
 
 nf = gpd.read_file(AUSWAHL, layer="nutzungsflaechen")
 nf = nf[nf.ist_ueberlagernd != True].copy()          # überlagernde Elemente (z. B. Hochstammbäume) weglassen
 nf["farm"] = nf.betriebsnummer.map(lambda n: NR2FARM[n]["key"])
 nf["gruppe"] = [kulturgruppe(c, n) for c, n in zip(nf.lnf_code, nf.nutzung)]
+tl = [teil_of(n, ps) for n, ps in zip(nf.betriebsnummer, nf.ps_nr)]   # Teilbetrieb über die Produktionsstätte
+nf["teil"] = [t["id"] for t in tl]
+nf["bio"] = [bio_status(pr, t) for pr, t in zip(nf.programm, tl)]
 nf["geometry"] = nf.geometry.simplify(0.3, preserve_topology=True)
 pts = nf.representative_point()                       # liegt sicher in der Fläche
 nf["x"] = pts.x.round(0).astype(int)
@@ -48,10 +52,11 @@ for i, r in enumerate(w.itertuples()):
                                  "g": r.gruppe, "m2": int(r.flaeche_m2), "gm": gname, "kt": gkt, "p": programme(r.programm),
                                  "bb": bool(r.beitragsberechtigt),
                                  "bg": int(r.bewirtschaftungsgrad) if pd.notna(r.bewirtschaftungsgrad) else None,
-                                 "j": int(r.bezugsjahr), "x": int(r.x), "y": int(r.y), "la": r.la, "lo": r.lo}})
+                                 "j": int(r.bezugsjahr), "x": int(r.x), "y": int(r.y), "la": r.la, "lo": r.lo,
+                                 "t": r.teil, "bs": r.bio}})
 
 kts = [k for k in CFG["kantone"] if k in kts]
-meta = {"farms": FARMS, "stand": CFG["stand"], "groups": CFG["kulturgruppen"], "kantone": kantone_text(kts),
+meta = {"farms": [dict(f, teile=teile(f)) for f in FARMS], "bio_labels": BIO_LABELS, "stand": CFG["stand"], "groups": CFG["kulturgruppen"], "kantone": kantone_text(kts),
         "quelle": kantone_text(kts) + ", Nutzungsflächen und Bewirtschaftungseinheiten (geodienste.ch)"}
 data_js = ("window.FELDDATEN=" + json.dumps({"type": "FeatureCollection", "features": feats}, ensure_ascii=False, separators=(",", ":"))
            + ";\nwindow.META=" + json.dumps(meta, ensure_ascii=False) + ";")
@@ -104,6 +109,7 @@ p = out_path("website")
 p.write_text(t, encoding="utf-8")
 s = nf.groupby("farm").agg(flaechen=("t_id", "count"), ha=("flaeche_m2", lambda v: round(v.sum() / 1e4, 2)))
 print(s.to_string())
+print(nf.groupby(["teil", "bio"]).agg(flaechen=("t_id", "count"), ha=("flaeche_m2", lambda v: round(v.sum() / 1e4, 2))).to_string())
 unbekannt = sorted({f["properties"]["gm"] for f in feats if f["properties"]["gm"].startswith("BFS")})
 if unbekannt:
     print("WARNUNG – Gemeindenamen fehlen in config/gemeinden.json:", unbekannt)

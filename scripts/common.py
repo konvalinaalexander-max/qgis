@@ -22,6 +22,58 @@ GROUPS = [g for g, _ in CFG["kulturgruppen"]]
 GROUP_COLORS = dict(map(tuple, CFG["kulturgruppen"]))
 NR2FARM = {n: f for f in FARMS for n in f["nrs"]}
 
+# Bio-Status je Teilbetrieb (config: "bio" am Betrieb oder am Teilbetrieb)
+#   deklariert = Betrieb meldet seine Flächen als «Bioproduktion» (Direktzahlungsprogramm)
+#   firma      = Bio laut Firmenangaben (z. B. Knospe), in den Kantonsdaten aber nicht als Bio gemeldet
+#   nein       = kein Bio
+#   offen      = Bio-Status nicht belegt (z. B. Gewächshaus mit eigener Betriebsnummer, Betreiber unklar)
+BIO_CODES = ("deklariert", "firma", "nein", "offen")
+
+
+def teile(farm):
+    """Teilbetriebe eines Betriebs. Ohne Eintrag «teile» ist der Betrieb selbst der einzige Teil."""
+    if farm.get("teile"):
+        return [dict(t, id=f"{farm['key']}-{t['key']}") for t in farm["teile"]]
+    return [{"key": farm["key"], "id": farm["key"], "name": farm["name"], "kurz": farm["name"], "sub": farm.get("sub", ""),
+             "bio": farm.get("bio", "nein"), "bio_text": farm.get("bio_text", ""), "color": farm["color"]}]
+
+
+def teil_of(nr, ps_nr=None):
+    """Betriebsnummer (+ Produktionsstätte der Bewirtschaftungseinheit) -> Teilbetrieb (dict mit «id»).
+
+    Ein Teil passt, wenn die Betriebsnummer in «nrs» oder die Produktionsstätte in «ps» steht; sonst greift
+    der Teil mit «rest»: true. Passt nichts, ist die Konfiguration unvollständig (Fehler)."""
+    farm = NR2FARM[nr]
+    ts = teile(farm)
+    if len(ts) == 1 and not farm.get("teile"):
+        return ts[0]
+    for t in ts:
+        if nr in t.get("nrs", []) or (ps_nr and ps_nr in t.get("ps", [])):
+            return t
+    for t in ts:
+        if t.get("rest"):
+            return t
+    raise ValueError(f"Keine Zuordnung zu einem Teilbetrieb: {farm['name']} {nr!r} Produktionsstätte {ps_nr!r} – config/projekt.json ergänzen")
+
+
+def bio_status(programm, teil):
+    """Bio-Status einer Fläche: «bio» (als Bioproduktion gemeldet), «bio_betrieb» (Bio-Betrieb bzw. Bio laut
+    Firma, Fläche aber nicht als Bio gemeldet – z. B. Wald, Gewächshäuser mit festem Fundament), «offen»
+    (Bio-Status des Teilbetriebs nicht belegt) oder «nein»."""
+    if isinstance(programm, str) and "Bioproduktion" in programm:
+        return "bio"
+    if teil.get("bio") == "offen":
+        return "offen"
+    return "bio_betrieb" if teil.get("bio") in ("deklariert", "firma") else "nein"
+
+
+BIO_LABELS = {"bio": "Bio (gemeldet)", "bio_betrieb": "Bio-Betrieb, Fläche nicht als Bio gemeldet", "nein": "nicht Bio",
+              "offen": "Bio-Status unklar"}
+for _f in FARMS:
+    for _t in teile(_f):
+        if _t["bio"] not in BIO_CODES:
+            raise ValueError(f"config/projekt.json: «bio» von {_t['name']} muss eines von {BIO_CODES} sein, nicht {_t['bio']!r}")
+
 
 def out_path(kind):
     """kind: website | excel | gpkg | qgis"""

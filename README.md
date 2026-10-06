@@ -25,6 +25,14 @@ Darüberfahren mit der Maus. Der Standort-Knopf zeigt die eigene Position und ne
 auf der man steht. Über *Teilen → Zum Home-Bildschirm* (iPhone) bzw. *⋮ → Zum Startbildschirm*
 (Android) lässt sich die Karte wie eine App starten.
 
+**Teilbetriebe und Bio:** Gerber und Rathgeb führen mehrere Firmen bzw. Standorte unter einer
+Betriebsnummer, Imhof hat zwei Betriebsnummern. Bei Gerber und Rathgeb ordnen die Zürcher Daten jede
+Fläche einer Produktionsstätte zu; danach (bzw. nach Betriebsnummer) sind sie auf der Karte getrennt (gleiche Farbe, verschiedene Schattierungen,
+eigene Schaltflächen in der Legende, aufklappbar in der Betriebskarte). Der Farbmodus **Bio** zeigt,
+welche Flächen als Bio gemeldet sind, welche zu einem Bio-Betrieb gehören, aber nicht als Bio gemeldet
+sind (z. B. Gerber Bio Greens), welche nicht Bio sind und wo der Bio-Status unklar ist. Belege zu jedem
+Betrieb: `docs/betriebe.md`. Excel und GeoPackage enthalten dazu die Spalten «Teilbetrieb» und «Bio-Status».
+
 GitHub Pages ist eingeschaltet (Settings → Pages → Source: «GitHub Actions»). Bei einem neuen
 Repository wäre das der einzige Schritt von Hand; danach einen Push auf `main` machen oder den Workflow
 von Hand starten.
