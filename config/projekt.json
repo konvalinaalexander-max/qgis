@@ -28,8 +28,30 @@
       "sub": "Eichhof, Schwerzenbach",
       "nrs": ["ZH0197/ 1/  1", "ZH0197/ 1/702"],
       "color": "#3E9BD6",
-      "note": "",
-      "bio": "deklariert"
+      "note": "Zwei Betriebsnummern auf dem Eichhof, getrennt nach Betriebsnummer",
+      "bio": "deklariert",
+      "teile": [
+        {
+          "key": "haupt",
+          "name": "Imhofbio, Eichhof Schwerzenbach",
+          "kurz": "Hauptbetrieb",
+          "sub": "Schwerzenbach · Volketswil · Wangen-Brüttisellen · Thalheim an der Thur",
+          "nrs": ["ZH0197/ 1/  1"],
+          "bio": "deklariert",
+          "color": "#3E9BD6",
+          "bio_text": "Bio Suisse (Knospe), Gemüse nach Demeter; Flächen 2025 als Bioproduktion gemeldet"
+        },
+        {
+          "key": "gewaechshaus",
+          "name": "Gewächshaus Eichhof",
+          "kurz": "Gewächshaus",
+          "sub": "Schwerzenbach · eigene Betriebsnummer, Betreiber nicht belegt (Imhof Flora AG oder Imhofbio AG)",
+          "nrs": ["ZH0197/ 1/702"],
+          "bio": "offen",
+          "color": "#1C5F8E",
+          "bio_text": "Bio-Status unklar: Gewächshäuser mit festem Fundament tragen in den Zürcher Daten nie ein Programm"
+        }
+      ]
     },
     {
       "key": "beerstecher",
@@ -39,7 +61,7 @@
       "color": "#E68A00",
       "note": "",
       "bio": "nein",
-      "bio_text": "nicht Bio (ÖLN); keine Bio-Zertifizierung bekannt"
+      "bio_text": "nicht Bio (ÖLN, Swiss GAP); keine Bio-Zertifizierung"
     },
     {
       "key": "gerber",
@@ -47,27 +69,27 @@
       "sub": "Fehraltorf · Felben-Wellhausen",
       "nrs": ["ZH0172/ 1/700"],
       "color": "#C4569E",
-      "note": "Zwei Firmen unter einer Betriebsnummer; aufgeteilt nach den amtlichen Produktionsstätten",
+      "note": "Zwei Firmen unter einer Betriebsnummer, getrennt nach amtlicher Produktionsstätte (Firma über die Adresse zugeordnet)",
       "teile": [
         {
           "key": "biogreens",
           "name": "Gerber Bio Greens AG",
           "kurz": "Bio Greens",
-          "sub": "Fehraltorf · Flaach",
+          "sub": "Fehraltorf · Flaach (ZH)",
           "ps": ["ZH0172/ 1/ 47"],
           "bio": "firma",
           "color": "#C4569E",
-          "bio_text": "Bio (Knospe) laut Firma; in den Kantonsdaten nicht als Bio gemeldet"
+          "bio_text": "Bio Suisse (Knospe) laut Firma; 2025 keine Fläche als Bioproduktion gemeldet"
         },
         {
           "key": "gemuesebau",
           "name": "Gerber Gemüsebau AG",
           "kurz": "Gemüsebau",
-          "sub": "Felben-Wellhausen (TG)",
+          "sub": "Felben-Wellhausen · Wigoltingen (TG) · Altikon · Elsau (ZH)",
           "ps": ["ZH4561/ 1/  4"],
           "bio": "nein",
           "color": "#7A2E62",
-          "bio_text": "konventionell (Suisse Garantie)"
+          "bio_text": "konventionell, Suisse Garantie (laut Firma)"
         }
       ]
     },

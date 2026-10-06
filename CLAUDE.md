@@ -91,10 +91,12 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 | Rathgeb | ZH0042/ 1/850, TG39621 | 441 | 550.31 |
 | Total | | 1'092 | 1'027.79 |
 
-Teilbetriebe (nach amtlicher Produktionsstätte, `01_auswahl.py` gibt sie aus):
+Teilbetriebe (nach Betriebsnummer bzw. amtlicher Produktionsstätte, `01_auswahl.py` gibt sie aus):
 
 | Teilbetrieb | Zuordnung | Flächen | ha |
 |---|---|---|---|
+| Imhofbio, Eichhof Schwerzenbach | Betriebsnummer ZH0197/ 1/  1 | 245 | 90.61 |
+| Gewächshaus Eichhof | Betriebsnummer ZH0197/ 1/702 (Bio-Status `offen`) | 1 | 1.02 |
 | Gerber Bio Greens AG | PS ZH0172/ 1/ 47 (Zürcherstrasse 75, Fehraltorf) | 161 | 106.07 |
 | Gerber Gemüsebau AG | PS ZH4561/ 1/  4 (Rosenackerstr. 7, Felben-Wellhausen) | 71 | 147.08 |
 | Rathgeb Bio, Unterstammheim | PS ZH0042/ 1/ 48 + ZH0218/ 1/ 36 | 228 | 289.05 |
@@ -119,9 +121,12 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   (Betriebsnummern) oder `rest: true`, bio, bio_text, color (Schattierung der Betriebsfarbe).
   `common.teil_of()` ordnet zu und bricht ab, wenn eine Fläche keinem Teil zugeordnet werden kann.
 - **Bio-Status:** `bio` am Betrieb oder Teil: `deklariert` (Flächen als «Bioproduktion» gemeldet),
-  `firma` (Bio laut Firma, in den Daten nicht gemeldet), `nein`. Je Fläche ergibt `common.bio_status()`
-  «bio», «bio_betrieb» (Bio-Betrieb, Fläche nicht als Bio gemeldet: Wald, Gewächshäuser mit festem
-  Fundament, oder Teil mit `firma`) oder «nein». Website (Farbmodus «Bio»), GeoPackage und Excel zeigen das.
+  `firma` (Bio laut Firma, in den Daten nicht gemeldet), `nein`, `offen` (nicht belegt). Je Fläche ergibt
+  `common.bio_status()` «bio», «bio_betrieb» (Bio-Betrieb, Fläche nicht als Bio gemeldet: Wald,
+  Gewächshäuser mit festem Fundament, oder Teil mit `firma`), «offen» oder «nein». Website (Farbmodus
+  «Bio»), GeoPackage und Excel zeigen das. Achtung: In den ZH-Daten 2025 tragen Gewächshäuser mit festem
+  Fundament (Codes 801–803) nie ein Programm, auch bei Bio-Betrieben (TG/SH schon). Belege und Quellen
+  zu jedem Betrieb: `docs/betriebe.md`.
   Dann `./run_all.sh` und Schritt 5. Dateinamen mit «4_Betriebe» ggf. unter `dateinamen` anpassen.
 - **Weiteren Kanton aufnehmen:** Downloads entpackt nach `data/raw/` legen (Ordnernamen
   unverändert) und für das Repo gezippt nach `data/raw_zip/`, Kanton + Version in `kantone` und Namen in `kantonsnamen` eintragen.
@@ -170,8 +175,8 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
     < 50 m. Auswahl schreibt den Hash per `history.pushState`, damit die Zurück-Taste die Details schliesst.
   - Teilbetriebe: Farbe des Teils (Schattierung), eigene Legenden-Schaltfläche je Teil, aufklappbar in der
     Betriebskarte (eigene Schalter + Zoom), Tabelle «Teilbetriebe» im Tab Kulturen; Daten-Feld `t` (Teil-ID).
-  - Farbmodus «Bio» (Daten-Feld `bs`): Bio gemeldet / Bio-Betrieb, nicht als Bio gemeldet / nicht Bio;
-    die Legenden-Schaltflächen filtern. Vergleichstabelle mit Zeilen «davon nach Bio-Status».
+  - Farbmodus «Bio» (Daten-Feld `bs`): Bio gemeldet / Bio-Betrieb, nicht als Bio gemeldet / nicht Bio /
+    Bio-Status unklar (nur vorkommende Stufen); die Legenden-Schaltflächen filtern. Vergleichstabelle mit Zeilen «davon nach Bio-Status».
   - Wem gehört die Fläche: Details beginnen mit einem Band in Betriebsfarbe (Name, Teilbetrieb, Ort,
     Betriebsnummer, Bio-Kennzeichen).
     Bei einer Auswahl treten die Flächen der übrigen Betriebe zurück (`focus` im JS), die gewählte Fläche
@@ -202,7 +207,7 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   *Projekt → Eigenschaften… → Variablen*.
 - Die Kantonsdaten sind in LV95 (EPSG:2056); das QGIS-Projekt ebenfalls.
 
-## Stand (5.10.2026)
+## Stand (6.10.2026)
 
 Erledigt:
 - Website für Handy optimiert (Panel unten, Tabs, Details, Standort, Route, Teilen-Link, Zurück-Taste),
@@ -213,13 +218,18 @@ Erledigt:
 - 4 Betriebe identifiziert, Daten ZH (Sitz aller 4) plus TG/SH geprüft. In TG kam die
   BioFresh AG (TG39621, Tägerwilen, Gewächshäuser, Bio) zu Rathgeb dazu, in SH nichts.
 - Website, Excel, GeoPackage und QGIS-Projekt mit ZH + TG + SH gebaut und geprüft.
+- Faktencheck aller Betriebe (6.10.2026, Handelsregister, Firmenwebsites, Zertifikate, Presse; Ergebnisse
+  und Quellen in `docs/betriebe.md`). Daraus: Teilbetriebe Imhof (2 Nummern), Gerber (Bio Greens AG /
+  Gemüsebau AG nach Produktionsstätte), Rathgeb (Unterstammheim / Ellikon / BioFresh); Bio-Status je Teil,
+  Farbmodus «Bio». Die Wohnadresse aus `betriebsname` von Gerber wird nirgends angezeigt.
 - Zwei PDF-Anleitungen (Windows, Mac) für QGIS mit Online-Daten (Stand 28.09.2026), Quellen in
   `anleitungen/`. Die PDFs selbst liegen in `~/Downloads`.
 
 Offen / Ideen (nur auf Wunsch angehen):
-- Möglicher zweiter Rathgeb-Betrieb ZH0218/ 1/  3 (Alte Horgenbachstr. 2, Ellikon) – nicht
-  aufgenommen, Bestätigung durch Alex ausstehend.
-- Gerber: Ein Artikel nennt rund 80 ha Bio; in den Deklarationen 2025 ist für
-  ZH0172/ 1/700 keine Bioproduktion deklariert. Ungeklärt.
+- ZH0218/ 1/  3 (Alte Horgenbachstr. 2, Ellikon): kein Beleg für eine Zugehörigkeit zu Rathgeb, nicht
+  aufgenommen.
+- Imhof ZH0197/ 1/702: Betreiber (Imhof Flora AG oder Imhofbio AG) und Bio-Status offen.
+- Gerber Bio Greens: Bio laut Firma, aber keine Fläche als Bioproduktion gemeldet; wahrscheinliche
+  Erklärung (Bio-Verordnung Art. 7 Abs. 5) in `docs/betriebe.md`, von Gerber nicht bestätigt.
 - Die PDF-Anleitungen beschreiben den Online-Weg. Eine Fassung für dieses lokale Projekt
   (Rohdaten, QGIS-Projekt, @betrieb) gibt es noch nicht.

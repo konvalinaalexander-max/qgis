@@ -68,6 +68,7 @@ async def main():
             c, pg, msgs = await seite(b, viewport={"width": 1200, "height": 630})
             await pg.click(".lyr summary")                 # Kartenauswahl zuklappen
             await pg.click("[data-zoom=beerstecher]")      # Ausschnitt Greifensee: drei Betriebe nebeneinander
+            await pg.evaluate("document.querySelector('#panels').scrollTop = 0")   # Seitenleiste wieder oben
             await pg.mouse.move(700, 600)
             await pg.wait_for_timeout(4000)
             ziel = WEB / "online" / "vorschau.jpg"

@@ -112,11 +112,11 @@ for j in range(2, tj):
 c = ov.cell(ar, tj, f"=SUM(B{ar}:{get_column_letter(tj - 1)}{ar})")
 cache[f"{get_column_letter(tj)}{ar}"] = len(d)
 c.font = F(bold=True)
-# Teilbetriebe (Betriebe mit mehreren Firmen/Standorten unter einer Betriebsnummer, getrennt über die Produktionsstätte)
+# Teilbetriebe (Betriebe mit mehreren Firmen/Standorten, getrennt über Betriebsnummer bzw. Produktionsstätte)
 mehr = [(f, t) for f in FARMS if f.get("teile") for t in teile(f)]
 if mehr:
     tr0 = ar + 2
-    ov.cell(tr0, 1, "Teilbetriebe (aufgeteilt nach amtlicher Produktionsstätte)").font = F(bold=True, size=11)
+    ov.cell(tr0, 1, "Teilbetriebe (aufgeteilt nach Betriebsnummer bzw. amtlicher Produktionsstätte)").font = F(bold=True, size=11)
     kopf = ["Teilbetrieb", "Betrieb", "Fläche (ha)", "Gemüse (ha)", "Anzahl Flächen", "Bio-Status"]
     for j, h in enumerate(kopf, 1):
         c = ov.cell(tr0 + 1, j, h)

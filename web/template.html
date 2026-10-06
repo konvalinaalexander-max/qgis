@@ -155,10 +155,11 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 .fband .fb-nr{font:12px/1.4 var(--f-mono);color:var(--muted);white-space:pre-wrap}
 .fband .fb-t{font-weight:600;font-size:13.5px;color:var(--ink)}
 /* Bio-Status als Kennzeichen */
-.biob{display:inline-block;justify-self:start;max-width:100%;font:500 11.5px/1.35 var(--f-body);padding:2px 8px;border-radius:999px;border:1px solid;margin-top:4px;color:var(--ink);white-space:normal}
+.biob{display:inline-block;justify-self:start;max-width:100%;font:500 11.5px/1.35 var(--f-body);padding:2px 8px;border-radius:10px;border:1px solid;margin-top:4px;color:var(--ink);white-space:normal}
 .biob.bio{background:rgba(18,161,80,.14);border-color:rgba(18,161,80,.45)}
 .biob.bio_betrieb{background:rgba(142,224,122,.18);border-color:rgba(98,178,80,.5)}
 .biob.nein{background:rgba(227,155,45,.14);border-color:rgba(227,155,45,.5)}
+.biob.offen{background:rgba(140,146,153,.14);border-color:rgba(140,146,153,.55)}
 .bioline{grid-column:2/4;display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--muted)}
 .bioline span{display:inline-flex;align-items:center;gap:5px}
 .bioline i{width:9px;height:9px;border-radius:50%;flex:none}
@@ -172,7 +173,13 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 .teil label{display:grid;cursor:pointer;min-width:0}
 .teil .tn2{display:flex;align-items:center;gap:6px;font-weight:600}
 .teil.off{opacity:.55}
-.chip .ck{color:var(--muted);font-weight:500;margin-left:-2px}
+/* Betrieb mit Teilbetrieben: Name (schaltet den ganzen Betrieb) + eine Schaltfläche je Teil in einer Gruppe */
+.cgrp{display:inline-flex;flex-wrap:wrap;max-width:100%;align-items:center;gap:3px;padding:2px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.cgn{all:unset;box-sizing:border-box;cursor:pointer;padding:2px 5px 2px 8px;border-radius:999px;font:600 12.5px/1.25 var(--f-body);color:var(--ink);white-space:nowrap}
+.cgn:hover{background:var(--soft)}
+.cgn[aria-pressed="false"]{color:var(--muted)}
+.cgn:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.cgrp .chip{padding:2px 8px 2px 6px}
 #teile-h{margin-top:10px}
 #tcmp td:first-child .sw{width:10px;height:10px;margin-right:6px;vertical-align:-1px}
 #tcmp td small{display:block;color:var(--muted);font-size:11px}
@@ -241,6 +248,7 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
   h1{font-size:16.5px}
   .lh{display:none}
   .chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x;scrollbar-width:none;margin:8px -16px 0;padding:1px 16px 2px}
+  .cgrp{flex:none;flex-wrap:nowrap;max-width:none}
   .chips::-webkit-scrollbar{display:none}
   .tabs,.dhead{touch-action:none;user-select:none;-webkit-user-select:none}
   .tabs button{padding:12px 2px;font-size:14px}
@@ -266,6 +274,8 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
 /* Touch-Bedienung: grössere Ziele, 16 px in Eingabefeldern (sonst zoomt iOS beim Tippen) */
 @media (pointer:coarse){
   .chip{min-height:34px;font-size:13.5px;padding:6px 12px 6px 10px}
+  .cgrp .chip{min-height:30px;padding:4px 10px 4px 8px}
+  .cgn{min-height:30px;display:inline-flex;align-items:center;padding:4px 5px 4px 10px;font-size:13.5px}
   .seg button{padding:7px 12px;font-size:14px}
   .row{padding:10px 6px}
   input[type=search],select{font-size:16px;padding:9px 12px}
@@ -282,6 +292,7 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
   h1{font-size:16px}
   .lh{display:none}
   .chips{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:6px -14px 0;padding:1px 14px 2px}
+  .cgrp{flex:none;flex-wrap:nowrap;max-width:none}
   .chips::-webkit-scrollbar{display:none}
   .panel{padding:10px 14px 18px}
   .tabs button{padding:8px 2px}
@@ -339,9 +350,9 @@ input[type=search]:focus-visible,select:focus-visible{outline:2px solid var(--fo
       <p id="kantone"></p>
       <p>Die Geodaten enthalten keine Personennamen. Die Zuordnung der Betriebsnummern zu den Betrieben ist abgeleitet (Adresse, Lage der Flächen) und nicht amtlich bestätigt.</p>
       <h2>Teilbetriebe</h2>
-      <p>Führt ein Betrieb mehrere Firmen oder Standorte unter einer Betriebsnummer, ordnen die Kantonsdaten jede Fläche einer Produktionsstätte zu. Danach sind die Teilbetriebe getrennt (gleiche Farbe, zwei Schattierungen).</p>
+      <p>Führt ein Betrieb mehrere Firmen oder Standorte unter einer Betriebsnummer, ordnen die Kantonsdaten jede Fläche einer Produktionsstätte zu. Danach sind die Teilbetriebe getrennt (gleiche Farbe, verschiedene Schattierungen); hat ein Betrieb mehrere Betriebsnummern, ist jede Nummer ein eigener Teil. Welche Firma zu welcher Produktionsstätte gehört, ist aus Adressen und Firmenangaben abgeleitet.</p>
       <h2>Bio</h2>
-      <p>«Bio gemeldet» heisst: Die Fläche ist in den Kantonsdaten mit dem Direktzahlungsprogramm «Bioproduktion» gemeldet. «Bio-Betrieb, nicht als Bio gemeldet»: Die Fläche gehört zu einem Bio-Betrieb, trägt aber keine Bio-Meldung – etwa Wald, Gewächshäuser mit festem Fundament oder ein Teilbetrieb, der laut Firma Bio ist, in den Daten aber nicht als Bio erscheint. Eine Bio-Zertifizierung selbst steht nicht in den Daten.</p>
+      <p>«Bio gemeldet» heisst: Die Fläche ist in den Kantonsdaten mit dem Direktzahlungsprogramm «Bioproduktion» gemeldet. «Bio-Betrieb, nicht als Bio gemeldet»: Die Fläche gehört zu einem Bio-Betrieb, trägt aber keine Bio-Meldung – etwa Wald, Gewächshäuser mit festem Fundament (in den Zürcher Daten nie mit Programm) oder ein Teilbetrieb, der laut Firma Bio ist, in den Daten aber nicht als Bio erscheint. «Bio-Status unklar»: weder Meldung noch Firmenangabe. Eine Bio-Zertifizierung selbst steht nicht in den Daten.</p>
       <p id="bio-hinweise"></p>
       <h2>Karte</h2>
       <p>Hintergrundkarten © swisstopo · Parzellen © Kanton Zürich (amtliche Vermessung, erst bei starkem Hineinzoomen sichtbar).</p>
@@ -376,17 +387,20 @@ const TEILE=FARMS.flatMap(f=>f.teile.map(t=>Object.assign({},t,{f:f.key})));
 const TK=Object.fromEntries(TEILE.map(t=>[t.id,t]));
 const split=f=>f.teile.length>1;
 const who=p=>FK[p.f].name+(split(FK[p.f])?' · '+TK[p.t].kurz:'');   // «Gerber · Bio Greens»
-// Bio-Status je Fläche (aus 02_website.py): bio = als Bioproduktion gemeldet, bio_betrieb = Bio-Betrieb/Bio laut Firma ohne Meldung, nein
-const BIO=[['bio','Bio gemeldet','#12A150'],['bio_betrieb','Bio-Betrieb, nicht als Bio gemeldet','#8EE07A'],['nein','nicht Bio','#E39B2D']];
-const BC=Object.fromEntries(BIO.map(([k,,c])=>[k,c]));
-const BCLS={deklariert:'bio',firma:'bio_betrieb',nein:'nein'};
+// Bio-Status je Fläche (aus 02_website.py): bio = als Bioproduktion gemeldet, bio_betrieb = Bio-Betrieb/Bio laut Firma ohne Meldung,
+// nein = nicht Bio, offen = Bio-Status nicht belegt
+const BIO_ALLE=[['bio','Bio gemeldet','#12A150'],['bio_betrieb','Bio-Betrieb, nicht als Bio gemeldet','#8EE07A'],['nein','nicht Bio','#E39B2D'],['offen','Bio-Status unklar','#9AA1A9']];
+const BIO=BIO_ALLE.filter(([k])=>feats.some(p=>p.bs===k));   // Legende/Tabellen: nur vorkommende Stufen
+const BC=Object.fromEntries(BIO_ALLE.map(([k,,c])=>[k,c]));
+const BCLS={deklariert:'bio',firma:'bio_betrieb',nein:'nein',offen:'offen'};
 function bioText(p){   // Text des Bio-Kennzeichens einer Fläche
   const t=TK[p.t];
   if(p.bs==='bio') return 'Bio – als Bioproduktion gemeldet';
   if(p.bs==='bio_betrieb') return t.bio==='firma'?(t.bio_text||'Bio laut Firma, nicht als Bio gemeldet'):'Bio-Betrieb; diese Fläche ist nicht als Bio gemeldet';
+  if(p.bs==='offen') return t.bio_text||'Bio-Status unklar';
   return t.bio_text||'nicht Bio (kein Bio-Programm gemeldet)';
 }
-const bioPill=t=>`<span class="biob ${BCLS[t.bio]||'nein'}">${esc(t.bio_text||(t.bio==='deklariert'?'Bio – Flächen als Bioproduktion gemeldet':'nicht Bio (kein Bio-Programm gemeldet)'))}</span>`;
+const bioPill=t=>`<span class="biob ${BCLS[t.bio]||'nein'}">${esc(t.bio_text||(t.bio==='deklariert'?'Bio – Flächen als Bioproduktion gemeldet':t.bio==='offen'?'Bio-Status unklar':'nicht Bio (kein Bio-Programm gemeldet)'))}</span>`;
 const $=s=>document.querySelector(s);
 const root=document.documentElement;
 const nf=new Intl.NumberFormat('de-CH',{maximumFractionDigits:1,minimumFractionDigits:1});
@@ -580,7 +594,7 @@ function toast(msg,action){
 
 // ---------- Betriebe ----------
 function bioLine(ps){   // Flächen eines Betriebs/Teils nach Bio-Status
-  const parts=[['bio','Bio gemeldet'],['bio_betrieb',null],['nein','nicht Bio']].map(([k,l])=>{
+  const parts=[['bio','Bio gemeldet'],['bio_betrieb',null],['nein','nicht Bio'],['offen','Bio unklar']].map(([k,l])=>{
     const xs=ps.filter(p=>p.bs===k); if(!xs.length) return '';
     if(!l) l=xs.some(p=>TK[p.t].bio==='firma')?'Bio laut Firma, nicht gemeldet':'Bio-Betrieb, ohne Bio-Meldung';
     return `<span><i style="background:${BC[k]}"></i>${ha(sum(xs))} ha ${esc(l)}</span>`;}).join('');
@@ -588,7 +602,8 @@ function bioLine(ps){   // Flächen eines Betriebs/Teils nach Bio-Status
 }
 function teileHtml(f){
   if(!split(f)) return '';
-  return `<details class="teile" open><summary>${f.teile.length} Teilbetriebe <span class="h2n">· nach amtlicher Produktionsstätte</span></summary>`+
+  const nachNr=f.teile.every(t=>t.nrs&&!t.ps), nachPs=f.teile.every(t=>t.ps&&!t.nrs);
+  return `<details class="teile" open><summary>${f.teile.length} Teilbetriebe <span class="h2n">· nach ${nachNr?'Betriebsnummer':nachPs?'amtlicher Produktionsstätte':'Produktionsstätte bzw. Betriebsnummer'}</span></summary>`+
     f.teile.map(t=>{
       const ps=feats.filter(p=>p.t===t.id), gm=sum(ps.filter(p=>p.g==='Freilandgemüse'||p.g==='Gewächshaus / geschützt'));
       return `<div class="teil" data-t="${t.id}"><input type="checkbox" id="vt-${t.id}" checked aria-label="${esc(t.name)} anzeigen">
@@ -642,8 +657,10 @@ function syncChecks(){
 // ---------- Legende / Filter ----------
 function renderLegend(){
   $('#legend').innerHTML=mode==='farm'
-    ? TEILE.map(t=>{const f=FK[t.f];   // Betriebe mit Teilbetrieben: eine Schaltfläche je Teil (Schattierung)
-        return `<button type="button" class="chip" data-t="${t.id}" title="${esc(t.name)} ein-/ausblenden">${sw(t.color)}${esc(f.name)}${split(f)?` <span class="ck">${esc(t.kurz)}</span>`:''}</button>`;}).join('')
+    ? FARMS.map(f=>!split(f)   // Betriebe mit Teilbetrieben: Gruppe aus Name + je Teil eine Schaltfläche (Schattierung)
+        ? `<button type="button" class="chip" data-t="${f.teile[0].id}" title="${esc(f.name)} ein-/ausblenden">${sw(f.color)}${esc(f.name)}</button>`
+        : `<span class="cgrp" role="group" aria-label="${esc(f.name)}"><button type="button" class="cgn" data-f="${f.key}" title="${esc(f.name)} ganz ein-/ausblenden">${esc(f.name)}</button>`+
+          f.teile.map(t=>`<button type="button" class="chip" data-t="${t.id}" title="${esc(t.name)} ein-/ausblenden">${sw(t.color)}${esc(t.kurz)}</button>`).join('')+'</span>').join('')
     : mode==='kultur'
     ? GPRES.map(([g,c])=>`<button type="button" class="chip" data-g="${esc(g)}" title="${esc(g)} ein-/ausblenden">${sw(c,.8)}${esc(g)}</button>`).join('')+
       '<span class="note">Nah gezoomt: Rand in Betriebsfarbe</span>'
@@ -651,11 +668,14 @@ function renderLegend(){
       '<span class="note">laut Kantonsdaten und Firmenangaben</span>';
   updateLegend();
 }
-function updateLegend(){document.querySelectorAll('#legend .chip').forEach(c=>{const d=c.dataset;
-  c.setAttribute('aria-pressed',String(d.t?farmOn[TK[d.t].f]&&teilOn[d.t]:d.g?groupOn[d.g]:bioOn[d.b]));});}
+function updateLegend(){document.querySelectorAll('#legend .chip,#legend .cgn').forEach(c=>{const d=c.dataset;
+  c.setAttribute('aria-pressed',String(d.f?farmShown(d.f):d.t?farmOn[TK[d.t].f]&&teilOn[d.t]:d.g?groupOn[d.g]:bioOn[d.b]));});}
 $('#legend').addEventListener('click',e=>{
-  const c=e.target.closest('.chip'); if(!c) return; const d=c.dataset;
-  if(d.t){const t=TK[d.t];
+  const c=e.target.closest('.chip,.cgn'); if(!c) return; const d=c.dataset;
+  if(d.f){   // Name eines Betriebs mit Teilen: ganzen Betrieb aus bzw. mit allen Teilen ein
+    if(farmShown(d.f)) farmOn[d.f]=false;
+    else {farmOn[d.f]=true; FK[d.f].teile.forEach(t=>teilOn[t.id]=true);}}
+  else if(d.t){const t=TK[d.t];
     if(!split(FK[t.f])) farmOn[t.f]=!farmOn[t.f];
     else if(!farmOn[t.f]){farmOn[t.f]=true;teilOn[t.id]=true;}
     else teilOn[t.id]=!teilOn[t.id];}
@@ -694,7 +714,7 @@ function renderTable(){
 function renderTeilTable(){   // Betriebe mit Teilbetrieben: Fläche, Gemüse und Bio-Status je Teil
   const ts=TEILE.filter(t=>split(FK[t.f])&&farmOn[t.f]&&teilOn[t.id]);
   $('#teile-h').hidden=!ts.length;
-  const BK={deklariert:['bio','Bio gemeldet'],firma:['bio_betrieb','Bio laut Firma'],nein:['nein','nicht Bio']};
+  const BK={deklariert:['bio','Bio gemeldet'],firma:['bio_betrieb','Bio laut Firma'],nein:['nein','nicht Bio'],offen:['offen','unklar']};
   $('#tcmp').innerHTML=!ts.length?'':'<thead><tr><th>Teilbetrieb</th><th>ha</th><th>Gemüse</th><th>Bio</th></tr></thead><tbody>'+
     ts.map(t=>{const ps=feats.filter(p=>p.t===t.id), [k,l]=BK[t.bio]||BK.nein;
       return `<tr><td>${sw(t.color)}${esc(FK[t.f].name)} ${esc(t.kurz)}<small>${esc(t.name)}</small></td><td>${ha(sum(ps))}</td>`+
