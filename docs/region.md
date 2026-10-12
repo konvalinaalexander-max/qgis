@@ -32,7 +32,7 @@ Kontrollwerte (Bezugsjahr 2025, GL und GR nur 2026 erhältlich):
 | 12 | `12_region.py` | `work/auswahl.gpkg`, Kantonsdaten | `work/region.gpkg` (Gebiet, Flächen, Betriebspunkte, Produktionsstätten) |
 | 13 | `13_betriebe.py` | `work/region.gpkg`, Gemeindegrenzen, Gebäudeadressen | `work/betriebe.gpkg`, `work/betriebe.csv` |
 | 14 | `14_namen.py` | Handelsregister (LINDAS), OpenStreetMap | `data/intern/namen.csv` (vertraulich) |
-| 15 | `15_adr.py` | `data/intern/adr/*.xls(x)` (vertraulich), PLZ-Gebiete | `work/adr.gpkg`, `work/adr_anteile.csv` |
+| 15 | `15_adr.py` | `data/adr/*.xls(x)` (AdR-Listen der Migros), PLZ-Gebiete | `work/adr.gpkg`, `work/adr_anteile.csv`, `work/adr_kombi.csv` |
 | 16 | `16_karte.py` | alles oben, `web/karte/`, `web/vendor/` | `output/karte/` |
 | 6 | `06_online.py` | `output/karte/`, `output/*.html` | `work/online/` bzw. `_site/` (Startseite = Karte, `betriebe.html` = Favoriten) |
 
@@ -97,19 +97,25 @@ Bewusst nicht verwendet:
 - Private Telefonbucheinträge, Angaben zu Familienmitgliedern.
 - Eigentümer: nur über die Eigentumsauskunft des Kantons (grundstücksbezogen).
 
-## Interne Regionen (vertraulich)
+## AdR-Regionen (Migros «Aus der Region», öffentlich)
 
-Regionsdefinitionen als Excel-Dateien (eine Datei je Region, je Zeile PLZ und Ort) in `data/intern/adr/`, nicht im Git.
-`15_adr.py` bildet jede Zeile auf die amtlichen PLZ-Gebiete ab und berechnet je Betrieb den Anteil der Fläche pro
-Region (Lage des Flächenpunkts, jede Fläche je Region einmal). Regionen können sich überschneiden, die Summe kann
-dann über 100 % liegen. Flächen im Ausland liegen in keiner Region. Regeln im Kopf von `15_adr.py`. Auf der Website
-erscheinen der Schalter «Regionen (intern)» (Tab Karte) und die Tabelle in den Details erst nach dem Entsperren.
+Die Gebietsdefinitionen «Aus der Region» der Migros-Genossenschaften sind öffentlich (Entscheid Alex, 12.10.2026) und
+stehen ohne Passwort auf der Website. Quelle: Excel-Dateien (eine je Region, je Zeile PLZ und Ort) in `data/adr/`,
+nicht im Git. `15_adr.py` bildet jede Zeile auf die amtlichen PLZ-Gebiete ab und berechnet je Betrieb
+- den Anteil der Fläche je Region (`adr_anteile.csv`; Lage des Flächenpunkts, jede Fläche je Region einmal) – die
+  Listen überschneiden sich (z. B. 108 PLZ bei Ostschweiz und Zürich), eine Fläche dort zählt für beide, die Summe
+  kann über 100 % liegen;
+- die Aufteilung ohne Doppelzählung nach Kombination der Regionen (`adr_kombi.csv`, zusammen 100 %).
+Flächen im Ausland liegen in keiner Region. Regeln im Kopf von `15_adr.py`. `16_karte.py` schreibt daraus
+`regionen.json` (Umrisse, Stand, Anteile). Auf der Website: Schalter «AdR-Regionen» im Tab Karte (Layer + Legende);
+ist er an, zeigen die Details eines Betriebs den Anteil je Region und die Aufteilung. Beispiel Imhof: Zürich 100 %,
+Ostschweiz 23 % (nur Zürich 77 %, Zürich + Ostschweiz 23 %).
 
 ## Verschlüsselung
 
 Repo und Website sind öffentlich. Vertrauliches liegt unverschlüsselt nur in `data/intern/` (nicht im Git).
 `16_karte.py` schreibt mit gesetztem `FELDKARTE_PASSWORT` (mindestens 16 Zeichen, z. B. vier zufällige Wörter) die
-Datei `output/karte/intern.bin`: Namen + Regionen, gzip, AES-256-GCM, Schlüssel per PBKDF2-SHA256 mit 600'000 Runden
+Datei `output/karte/intern.bin`: Namen, gzip, AES-256-GCM, Schlüssel per PBKDF2-SHA256 mit 600'000 Runden
 (Zahl im Dateikopf). Wer intern.bin herunterlädt, kann das Passwort offline durchprobieren – darum ein langes,
 zufälliges Passwort wählen und es nur intern weitergeben; ein neues Passwort schützt ältere intern.bin in der
 Git-Historie nicht. Die Website entschlüsselt im Browser (WebCrypto) nach Eingabe des Passworts (Tab Info). Den

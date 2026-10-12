@@ -1,7 +1,8 @@
 """Schritt 16: Website «Feldkarte» bauen – alle Flächen im Gebiet, ein Klick zeigt den ganzen Betrieb.
 
 Liest  work/betriebe.gpkg (Schritt 13), web/karte/ (Vorlage), web/vendor/ (MapLibre, PMTiles, Schriften)
-       vertraulich, nur mit Passwort: data/intern/namen.csv (Schritt 14), work/adr.gpkg + work/adr_anteile.csv (Schritt 15)
+       work/adr.gpkg, work/adr_anteile.csv, work/adr_kombi.csv (Schritt 15, AdR-Regionen der Migros, öffentlich)
+       vertraulich, nur mit Passwort: data/intern/namen.csv (Schritt 14)
 Schreibt output/karte/
   index.html, app.js, app.css, vendor/   die Website (statisch, braucht einen Webserver mit Range-Anfragen:
                                          GitHub Pages oder lokal scripts/server.py)
@@ -12,8 +13,10 @@ Schreibt output/karte/
                      betriebe.json passen so immer zusammen, ältere Kacheldateien werden gelöscht.
   betriebe.json      ein Eintrag je Betrieb: Betriebsnummer, Adresse (ohne Personenangaben), Gemeinde, Kennzahlen,
                      Favoriten aus der Konfiguration – keine Namen (auch nicht die Bezeichnung der Kantonsdaten)
-  intern.bin         verschlüsselt (scripts/intern.py): Namen mit Quellen (inkl. Bezeichnung der Kantonsdaten) und die
-                     internen Regionen samt Anteilen je Betrieb. Nur wenn FELDKARTE_PASSWORT gesetzt ist (≥ 16 Zeichen).
+  regionen.json      AdR-Regionen («Aus der Region», Migros): Umrisse, Stand, Anteil der Fläche je Betrieb und Region
+                     sowie die Aufteilung ohne Doppelzählung (nur wenn Schritt 15 gelaufen ist)
+  intern.bin         verschlüsselt (scripts/intern.py): Namen mit Quellen (inkl. Bezeichnung der Kantonsdaten).
+                     Nur wenn FELDKARTE_PASSWORT gesetzt ist (≥ 16 Zeichen).
 """
 import gzip
 import hashlib
@@ -136,6 +139,32 @@ else:
     gr = fl.flaeche_m2 >= 3000
     kacheln_schreiben(gpd.GeoDataFrame(kacheln.loc[gr.values, ["p", "i", "g"]], geometry=fl.geometry[gr].simplify(8).values, crs=2056)
                       .to_crs(3857), grob, "f", 10, 11, 2)
+# --- AdR-Regionen (öffentlich): eigene Datei, die Seite lädt sie erst, wenn der Layer eingeschaltet wird
+if (WORK / "adr.gpkg").exists():
+    reg = gpd.read_file(WORK / "adr.gpkg", layer="regionen").to_crs(4326)
+    reg["geometry"] = reg.geometry.simplify(0.0004)
+    namen_reg = list(reg.region)
+    geo = json.loads(reg[["region", "stand", "geometry"]].to_json(drop_id=True))
+    for i, ft in enumerate(geo["features"]):
+        ft["properties"]["r"] = i
+    anteile, kombi = {}, {}
+    for z in pd.read_csv(WORK / "adr_anteile.csv").itertuples():
+        if z.betriebsnummer in IDX:
+            r = -1 if z.region == "(keine)" else namen_reg.index(z.region)
+            anteile.setdefault(IDX[z.betriebsnummer], []).append([r, z.ha, z.anteil])
+    for z in pd.read_csv(WORK / "adr_kombi.csv").itertuples():
+        if z.betriebsnummer in IDX:
+            rs = [] if z.regionen == "(keine)" else [namen_reg.index(x) for x in z.regionen.split(" + ")]
+            kombi.setdefault(IDX[z.betriebsnummer], []).append([rs, z.ha])
+    (ZIEL / "regionen.json").write_text(json.dumps({"regionen": namen_reg, "stand": list(reg.stand), "geojson": geo,
+                                                    "anteile": anteile, "kombi": kombi, "kacheln": KENNUNG},
+                                                   ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    meta["regionen"] = True
+    print(f"regionen.json: {len(namen_reg)} AdR-Regionen, Anteile für {len(anteile)} Betriebe "
+          f"({(ZIEL / 'regionen.json').stat().st_size / 1e6:.1f} MB)")
+else:
+    (ZIEL / "regionen.json").unlink(missing_ok=True)
+    meta["regionen"] = False
 meta["kacheln"] = KENNUNG
 (ZIEL / "betriebe.json").write_text(json.dumps({"meta": meta, "b": eintraege}, ensure_ascii=False, separators=(",", ":")),
                                     encoding="utf-8")
@@ -144,9 +173,9 @@ for alt in [*ZIEL.glob("*.pmtiles"), ZIEL / "kacheln.txt"]:
         alt.unlink()
         print(f"alte Datei gelöscht: {alt.name}")
 
-# --- Vertraulicher Teil (Namen, interne Regionen)
+# --- Vertraulicher Teil (Namen)
 if pw:
-    intern = {"namen": {}, "adr": None}
+    intern = {"namen": {}}
     nf = INTERN / "namen.csv"
     if nf.exists():
         n = pd.read_csv(nf, dtype=str).fillna("")
@@ -154,27 +183,12 @@ if pw:
             if z.betriebsnummer in IDX:
                 intern["namen"].setdefault(IDX[z.betriebsnummer], []).append(
                     [z.art, z.name, z.person, z.detail, z.quelle, z.url, z.sicherheit, int(float(z.abstand_m or 0))])
-    if (WORK / "adr.gpkg").exists():
-        reg = gpd.read_file(WORK / "adr.gpkg", layer="regionen").to_crs(4326)
-        reg["geometry"] = reg.geometry.simplify(0.0004)
-        namen_reg = list(reg.region)
-        geo = json.loads(reg[["region", "stand", "geometry"]].to_json(drop_id=True))
-        for i, ft in enumerate(geo["features"]):
-            ft["properties"]["r"] = i
-        anteile = {}
-        a = pd.read_csv(WORK / "adr_anteile.csv")
-        for z in a.itertuples():
-            if z.betriebsnummer in IDX:
-                r = -1 if z.region == "(keine)" else namen_reg.index(z.region)
-                anteile.setdefault(IDX[z.betriebsnummer], []).append([r, z.ha, z.anteil])
-        intern["adr"] = {"regionen": namen_reg, "geojson": geo, "anteile": anteile}
     roh = gzip.compress(json.dumps(intern, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), 9)
     (ZIEL / "intern.bin").write_bytes(verschluesseln(roh, pw))
-    print(f"intern.bin: Namen für {len(intern['namen'])} Betriebe, Regionen {'ja' if intern['adr'] else 'nein'} "
-          f"({(ZIEL / 'intern.bin').stat().st_size / 1e6:.1f} MB, verschlüsselt)")
+    print(f"intern.bin: Namen für {len(intern['namen'])} Betriebe ({(ZIEL / 'intern.bin').stat().st_size / 1e6:.1f} MB, verschlüsselt)")
 else:
     (ZIEL / "intern.bin").unlink(missing_ok=True)
-    print("FELDKARTE_PASSWORT nicht gesetzt: Website ohne Namen und ohne interne Regionen.")
+    print("FELDKARTE_PASSWORT nicht gesetzt: Website ohne Namen.")
 
 # --- Website-Dateien
 robots = "" if CFG["online"].get("suchmaschinen") else '<meta name="robots" content="noindex, nofollow">'
@@ -182,7 +196,9 @@ html = (WEB / "karte" / "index.html").read_text(encoding="utf-8")
 # Version für ?v=: Kacheln + Programm + Daten (ein reines Datenupdate braucht eine neue Adresse, sonst liefert der
 # Browser-Cache die alte betriebe.json)
 version = KENNUNG + hashlib.sha256((WEB / "karte" / "app.js").read_bytes() + (WEB / "karte" / "app.css").read_bytes()
-                                   + (ZIEL / "betriebe.json").read_bytes()).hexdigest()[:6]
+                                   + (ZIEL / "betriebe.json").read_bytes()
+                                   + ((ZIEL / "regionen.json").read_bytes() if (ZIEL / "regionen.json").exists() else b"")
+                                   ).hexdigest()[:6]
 html = html.replace("__TITEL__", CFG["titel"]).replace("__STAND__", CFG["stand"]).replace("<!--__ROBOTS__-->", robots) \
     .replace("__VERSION__", version).replace("__KACHELN__", KENNUNG)
 (ZIEL / "index.html").write_text(html, encoding="utf-8")

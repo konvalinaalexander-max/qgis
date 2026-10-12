@@ -1,15 +1,17 @@
-"""Schritt 15: Interne Regionen (vertraulich) als Flächen und Anteile je Betrieb.
+"""Schritt 15: AdR-Regionen («Aus der Region», Migros) als Flächen und Anteile je Betrieb.
 
-Die Regionsdefinitionen liegen als Excel-Dateien in data/intern/adr/ (eine Datei je Region, je Zeile PLZ und Ort;
-nicht im Git). Der Regionsname ist der Dateiname ohne den Teil, den alle Dateinamen gemeinsam haben. Jede Zeile
+Die Regionsdefinitionen (öffentlich, von der Migros) liegen als Excel-Dateien in data/adr/ (früher data/intern/adr/;
+eine Datei je Region, je Zeile PLZ und Ort; nicht im Git). Der Regionsname ist der Dateiname ohne den Teil, den alle Dateinamen gemeinsam haben. Jede Zeile
 wird auf die amtlichen PLZ-Gebiete (Ortschaftenverzeichnis swisstopo) abgebildet: eine PLZ mit einem Gebiet ->
 dieses; mehrere Gebiete -> die mit passendem Ortsnamen, sonst alle; «NNxx» -> NN00–NN99; PLZ ohne Gebiet
 (Postfach u. ä.) -> Gemeinde gleichen Namens. Ortschaften einer gelisteten PLZ, die in keiner Liste mit eigenem
 Namen vorkommen, gehören zur Region, die die PLZ führt. Regionen können sich überschneiden – die Anteile eines
 Betriebs ergeben dann zusammen mehr als 100 %. Flächen im Ausland liegen in keiner Region.
 
-Liest  data/intern/adr/*.xls(x), data/basis/ (PLZ-Gebiete, Gemeindegrenzen), work/betriebe.gpkg (Schritt 13)
-Schreibt work/adr.gpkg: regionen, plz;  work/adr_anteile.csv: betriebsnummer, region, ha, anteil
+Liest  data/adr/*.xls(x), data/basis/ (PLZ-Gebiete, Gemeindegrenzen), work/betriebe.gpkg (Schritt 13)
+Schreibt work/adr.gpkg: regionen, plz;  work/adr_anteile.csv: betriebsnummer, region, ha, anteil (je Region; eine
+         Fläche in mehreren Regionen zählt für jede);  work/adr_kombi.csv: betriebsnummer, regionen (Kombination, mit
+         « + » verbunden, «(keine)» ausserhalb), ha, anteil – zusammen 100 %
 """
 import os
 import re
@@ -20,12 +22,12 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 
-from common import BASIS, BETRIEBE, INTERN, WORK
+from common import BASIS, BETRIEBE, INTERN, ROOT, WORK
 
-QUELLE = INTERN / "adr"
+QUELLE = next((d for d in (ROOT / "data" / "adr", INTERN / "adr") if list(d.glob("*.xls*"))), ROOT / "data" / "adr")
 dateien = sorted(QUELLE.glob("*.xls*"))
 if not dateien:
-    raise SystemExit(f"Keine Regionsdefinitionen in {QUELLE} – Excel-Dateien dorthin legen (vertraulich, nicht ins Git).")
+    raise SystemExit(f"Keine Regionsdefinitionen in {QUELLE} – Excel-Dateien der Migros dorthin legen (nicht ins Git).")
 
 
 def norm(s):
@@ -130,6 +132,13 @@ ha_reg = pd.concat([ha_reg, keine[keine.ha > 0]], ignore_index=True)
 ha_reg["anteil"] = (ha_reg.ha / ha_reg.betriebsnummer.map(total)).round(4)
 ha_reg["ha"] = ha_reg.ha.round(2)
 ha_reg.to_csv(WORK / "adr_anteile.csv", index=False)
+# Aufteilung ohne Doppelzählung: je Fläche die Kombination ihrer Regionen (zusammen 100 %)
+kombi_fl = j.groupby(level=0).region.agg(lambda s: " + ".join(sorted(set(s)))).reindex(fl.index).fillna("(keine)")
+kombi = fl.assign(regionen=kombi_fl).groupby(["betriebsnummer", "regionen"]).flaeche_m2.sum().div(1e4).rename("ha").reset_index()
+kombi["anteil"] = (kombi.ha / kombi.betriebsnummer.map(total)).round(4)
+kombi["ha"] = kombi.ha.round(2)
+kombi.to_csv(WORK / "adr_kombi.csv", index=False)
+assert (kombi.groupby("betriebsnummer").anteil.sum() - 1).abs().max() < 0.01, "Aufteilung ergibt nicht 100 %"
 for reg, f in offen.items():
     if f:
         print(f"  {reg} ohne PLZ-Gebiet: {', '.join(f[:12])}")

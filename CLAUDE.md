@@ -9,8 +9,9 @@ ein GeoPackage und ein QGIS-Projekt.
 Seit 12.10.2026 ist die Startseite der Website eine **Karte der ganzen Region**: alle rund 10'700 Betriebe, die im
 Gebiet (Flächen der 4 Betriebe + 20 km) Flächen bewirtschaften, aus allen frei erhältlichen Kantonen. Klick auf eine
 Fläche zeigt den ganzen Betrieb. Die 4 Betriebe sind dort Favoriten (zuoberst, Imhof grün); ihre bisherige
-Detailansicht liegt als `betriebe.html` daneben. Namen und interne Regionen sind vertraulich und nur
-verschlüsselt auf der Website (Passwort, mind. 16 Zeichen).
+Detailansicht liegt als `betriebe.html` daneben. Die AdR-Regionen der Migros («Aus der Region») sind öffentlich und als
+Layer einschaltbar (mit Anteil je Betrieb und Region). Namen sind vertraulich und nur verschlüsselt auf der Website
+(Passwort, mind. 16 Zeichen).
 
 Weiterführend: `docs/daten.md` (Quellen, Felder, Downloads), `docs/betriebe.md`
 (wie die Betriebsnummern zugeordnet wurden, offene Punkte) und `docs/region.md` (Karte der Region, Namen, Regionen,
@@ -87,7 +88,7 @@ FELDKARTE_PASSWORT=… ./run_region.sh   # dasselbe mit verschlüsseltem interne
 | 12 | `scripts/12_region.py` | `work/auswahl.gpkg`, alle Kantone | `work/region.gpkg` (Gebiet, Flächen, Betriebe, Produktionsstätten) |
 | 13 | `scripts/13_betriebe.py` | `work/region.gpkg`, `data/basis/` | `work/betriebe.gpkg`, `work/betriebe.csv` |
 | 14 | `scripts/14_namen.py` (`--personen` nur auf Wunsch) | Handelsregister (LINDAS), OSM | `data/intern/namen.csv` (vertraulich) |
-| 15 | `scripts/15_adr.py` | `data/intern/adr/*.xls(x)` (vertraulich), PLZ-Gebiete | `work/adr.gpkg`, `work/adr_anteile.csv` (vertraulich) |
+| 15 | `scripts/15_adr.py` | `data/adr/*.xls(x)` (AdR-Listen der Migros, öffentlich, nicht im Git), PLZ-Gebiete | `work/adr.gpkg`, `work/adr_anteile.csv`, `work/adr_kombi.csv` |
 | 16 | `scripts/16_karte.py` (`--schnell`: Kacheln nur bei geändertem Inhalt neu) | Schritte 13–15, `web/karte/` | `output/karte/` |
 | – | `scripts/intern.py sichern\|entpacken` | `data/intern/` | `data/intern.enc` (verschlüsselt) |
 | – | `scripts/pruefen_qgis.py` (PyQGIS) | `output/*.qgz` | Prüfausgabe |
@@ -132,12 +133,13 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 
 ## Häufige Aufgaben
 
-- **Karte der Region neu bauen:** `./run_region.sh` (mit `FELDKARTE_PASSWORT` für Namen + Regionen), dann `output/`
+- **Karte der Region neu bauen:** `./run_region.sh` (mit `FELDKARTE_PASSWORT` für die Namen), dann `output/`
   committen und auf `main` pushen. Gebiet ändern: `region.puffer_km` in `config/projekt.json`; es richtet sich nach den
   Flächen der Betriebe in `betriebe`. Kontrollwerte und Regeln: `docs/region.md`.
-- **Vertraulicher Teil:** Regionsdefinitionen (Excel) nach `data/intern/adr/` legen (nie ins Git, auch nicht
-  verschlüsselt; öffentliche Dateien und Commit-Texte nennen weder Herkunft noch Inhalt). Ohne Passwort baut
-  `16_karte.py` die Karte ohne Namen und ohne Regionen und löscht ein altes `intern.bin`.
+- **AdR-Regionen:** Excel-Dateien der Migros (je Region eine Liste PLZ + Ort) nach `data/adr/` legen (nicht im Git),
+  dann Schritte 15 und 16. Öffentlich (Entscheid Alex 12.10.2026): `output/karte/regionen.json`.
+- **Vertraulicher Teil:** nur noch die Namen (`data/intern/`). Ohne Passwort baut `16_karte.py` die Karte ohne Namen
+  und löscht ein altes `intern.bin`.
 
 - **Website online aktualisieren:** `./run_all.sh`, committen, auf `main` pushen. Der Workflow
   `.github/workflows/website.yml` baut mit `06_online.py --url <Pages-Adresse>` den Ordner `_site` aus der
@@ -254,7 +256,7 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 
 ## Stand (12.10.2026)
 
-Karte der Region (12.10.2026): Gebiet, alle Kantone, Betriebsverzeichnis (Hof, Adresse, Kulturen), interne Regionen,
+Karte der Region (12.10.2026): Gebiet, alle Kantone, Betriebsverzeichnis (Hof, Adresse, Kulturen), AdR-Regionen (öffentlich),
 neue Website mit Favoriten (Imhof grün) gebaut und im Browser getestet (Desktop, Handy). Online seit 12.10.2026
 (PR #5, Korrekturen nach der Live-Prüfung in #6 und #7). Offen:
 - Personennamen (Betriebsleitung, Einzelunternehmen): `14_namen.py --personen` erst, wenn Alex das ausdrücklich will;
