@@ -102,6 +102,21 @@ def raw_gpkg(art, kt):
     return path
 
 
+KANTONE_DIR = ROOT / "data" / "kantone"  # weitere Kantone für die Region (nicht im Git, scripts/11_kantone.py)
+BASIS = ROOT / "data" / "basis"           # swisstopo-Grundlagen (nicht im Git, scripts/11_kantone.py)
+INTERN = ROOT / "data" / "intern"         # vertrauliche Quellen (nicht im Git; verschlüsselt in data/intern.enc)
+REGION = WORK / "region.gpkg"             # Schritt 12: Gebiet, alle Betriebe darin und alle ihre Flächen
+BETRIEBE = WORK / "betriebe.gpkg"         # Schritt 13: ein Punkt je Betrieb mit Kennzahlen
+
+
+def kanton_gpkg(art, kt):
+    """GeoPackage eines Kantons: Projektkantone (config «kantone») aus data/raw, alle übrigen aus data/kantone/<KT>/."""
+    if kt in CFG["kantone"]:
+        return raw_gpkg(art, kt)
+    treffer = sorted((KANTONE_DIR / kt / "geopackage").glob(f"lwb_{art}_*_{kt}_2056.gpkg"))
+    return treffer[-1] if treffer else None
+
+
 def gemeinde(bfs):
     """BFS-Nummer -> (Gemeindename, Kanton). Unbekannte Nummern: ('BFS 1234', '')."""
     try:

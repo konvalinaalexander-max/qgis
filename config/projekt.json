@@ -21,13 +21,18 @@
   "online": {
     "suchmaschinen": false
   },
+  "region": {
+    "bezugsjahr": 2025,
+    "puffer_km": 20,
+    "hinweis": "Gebiet = konvexe Hülle aller Flächen der Betriebe unten + puffer_km, nur Schweiz"
+  },
   "betriebe": [
     {
       "key": "imhof",
       "name": "Imhof",
       "sub": "Eichhof, Schwerzenbach",
       "nrs": ["ZH0197/ 1/  1", "ZH0197/ 1/702"],
-      "color": "#3E9BD6",
+      "color": "#1E9E5A",
       "note": "",
       "weitere_firmen": [
         {"name": "Imhofbio AG", "was": "Topfkräuter, Handel", "bio": "deklariert"}
@@ -41,7 +46,7 @@
           "sub": "Bio-Gemüse · Eichhof Schwerzenbach; Bewirtschafter vermutet",
           "nrs": ["ZH0197/ 1/  1"],
           "bio": "deklariert",
-          "color": "#3E9BD6",
+          "color": "#1E9E5A",
           "bio_text": "Bio Suisse (Knospe) und Demeter; Flächen 2025 als Bioproduktion gemeldet"
         },
         {
@@ -51,7 +56,7 @@
           "sub": "Beet- und Balkonpflanzen · Gewächshaus Eichhof Schwerzenbach",
           "nrs": ["ZH0197/ 1/702"],
           "bio": "nein",
-          "color": "#1C5F8E",
+          "color": "#0F6B3A",
           "bio_text": "nicht Bio (Swiss GAP, Suisse Garantie)"
         }
       ]

@@ -16,6 +16,17 @@ Landwirtschaftsdaten der Kantone Zürich, Thurgau und Schaffhausen (Bezugsjahr 2
 
 Adresse: **https://konvalinaalexander-max.github.io/qgis/** (GitHub Pages, seit 5.10.2026)
 
+**Startseite: Karte der Region** (seit 12.10.2026, Details in `docs/region.md`). Sie zeigt alle landwirtschaftlichen
+Flächen der rund 10'700 Betriebe, die im Gebiet (Flächen der 4 Betriebe + 20 km) Land bewirtschaften – aus allen
+Kantonen, deren Daten frei erhältlich sind. Eine Fläche antippen: Alle Flächen desselben Betriebs leuchten auf,
+dazu Hof (amtlicher Standort mit Adresse), Fläche, Kulturen und Gemeinden. Die Liste zeigt die Favoriten zuoberst
+(Imhof grün, Beerstecher, Gerber, Rathgeb), darunter die Betriebe im Kartenausschnitt; Suche nach Nummer, Ort,
+Adresse oder Name, Filter Gemüse / Gewächshaus / Bio. Namen der Betriebe und interne Regionen
+(mit Anteil jedes Betriebs je Region) sind verschlüsselt und erscheinen erst nach Eingabe des Passworts (Tab Info).
+Neu bauen: `./run_region.sh`, ansehen: `python3 scripts/server.py`.
+
+Die bisherige Detailansicht der 4 Betriebe liegt unter `betriebe.html` (Link im Tab Info):
+
 Die Website läuft auf Laptop und Handy. Auf dem Handy füllt die Karte den Bildschirm, unten liegt ein
 Bereich mit *Betriebe · Kulturen · Flächen · Info*, den man mit dem Griff hochziehen oder antippen kann.
 Eine Fläche antippen zeigt zuoberst den Betrieb (farbig, mit Ort und Betriebsnummer), darunter Kultur,

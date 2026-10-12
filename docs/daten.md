@@ -74,3 +74,23 @@ Anzahl Objekte (Bezugsjahr 2025):
   `OSNR_liegenschaften` (zeichnet erst bei starkem Hineinzoomen, ab Zoom 17).
 - Gemeindegrenzen/-namen: `api3.geo.admin.ch` identify, Layer
   `ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill` (siehe CLAUDE.md).
+
+## Region: weitere Kantone und Grundlagen (seit 12.10.2026)
+
+Für die Karte der Region (`docs/region.md`) lädt `scripts/11_kantone.py` die Nutzungsflächen und
+Bewirtschaftungseinheiten **aller** Kantone, die geodienste.ch frei abgibt (Liste über
+`https://www.geodienste.ch/info/services.json?base_topics=lwb_nutzungsflaechen,lwb_bewirtschaftungseinheit&language=de`),
+nach `data/kantone/<KT>/` (nicht im Git, ca. 2.8 GB). Stand 12.10.2026:
+
+- frei erhältlich: AG, AI, AR, BE, BL, BS (leer), FR, GE, GL, GR, JU, LU, SG, SH, SO, SZ, TG, UR, VS, ZG, ZH
+- nicht frei (Registrierung oder Freigabe): NE (Nutzungsflächen), TI, NW, OW, VD
+- Jahrgang: überall 2025, nur GL und GR liefern ausschliesslich 2026 (wird dann verwendet); AI enthält
+  in den Bewirtschaftungseinheiten 2025 und 2026 (gefiltert auf 2025)
+
+Dazu von swisstopo (data.geo.admin.ch, nach `data/basis/`):
+- swissBOUNDARIES3D 2026-01 (Landes- und Gemeindegrenzen; Achtung: mit Höhen, für Berechnungen auf 2D reduzieren)
+- Amtliches Ortschaftenverzeichnis mit PLZ und Perimeter (PLZ-Gebiete, für die internen Regionen)
+- Amtliches Gebäudeadressverzeichnis (CSV, 3.3 Mio. Adressen; nächste Adresse am Betriebspunkt ausserhalb ZH)
+
+Namen (`scripts/14_namen.py`, vertraulich): Handelsregister als offene Daten über LINDAS (SPARQL
+`https://ld.admin.ch/query`, Klasse `ZefixOrganisation`), OpenStreetMap über Overpass. Regeln: `docs/region.md`.
