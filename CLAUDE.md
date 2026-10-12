@@ -6,8 +6,15 @@ Beerstecher, Gerber, Rathgeb) auf einer Karte. Grundlage sind die öffentlichen 
 Website (eine HTML-Datei, auch online über GitHub Pages, für Laptop und Handy), eine Excel-Tabelle,
 ein GeoPackage und ein QGIS-Projekt.
 
-Weiterführend: `docs/daten.md` (Quellen, Felder, Downloads) und `docs/betriebe.md`
-(wie die Betriebsnummern zugeordnet wurden, offene Punkte).
+Seit 12.10.2026 ist die Startseite der Website eine **Karte der ganzen Region**: alle rund 10'700 Betriebe, die im
+Gebiet (Flächen der 4 Betriebe + 20 km) Flächen bewirtschaften, aus allen frei erhältlichen Kantonen. Klick auf eine
+Fläche zeigt den ganzen Betrieb. Die 4 Betriebe sind dort Favoriten (zuoberst, Imhof grün); ihre bisherige
+Detailansicht liegt als `betriebe.html` daneben. Namen und interne Regionen sind vertraulich und nur
+verschlüsselt auf der Website (Passwort, mind. 16 Zeichen).
+
+Weiterführend: `docs/daten.md` (Quellen, Felder, Downloads), `docs/betriebe.md`
+(wie die Betriebsnummern zugeordnet wurden, offene Punkte) und `docs/region.md` (Karte der Region, Namen, Regionen,
+Verschlüsselung).
 
 ## Arbeitsweise mit Alex
 
@@ -32,14 +39,20 @@ config/gemeinden.json  BFS-Nummer -> [Gemeindename, Kanton] (alle 381 Nummern, d
 data/raw_zip/          die 6 Downloads von geodienste.ch als ZIP (ca. 140 MB) – so im Git-Repo
 data/raw/              entpackt (ca. 330 MB, nicht im Git). Fehlt ein Ordner, entpacken die
                        Skripte ihn automatisch aus data/raw_zip/
+data/kantone/          alle übrigen Kantone von geodienste.ch (Region, ca. 2.8 GB, nicht im Git, 11_kantone.py)
+data/basis/            swisstopo: Gemeindegrenzen, PLZ-Gebiete, Gebäudeadressen (nicht im Git, 11_kantone.py)
+data/intern/           VERTRAULICH, nicht im Git: adr/ (interne Regionsdefinitionen, Excel), namen.csv, quellen/
 scripts/               Datenaufbereitung, nummeriert in Ausführungsreihenfolge
 web/template.html      Vorlage der Website (Leaflet), web/vendor/leaflet/ = Leaflet 1.9.4,
                        web/vendor/fonts/ = IBM Plex Sans (variabel) + Mono, latin, OFL-Lizenz
+web/karte/             Karte der Region (index.html, app.js, app.css); web/vendor/maplibre/ = MapLibre GL 4.7.1,
+                       web/vendor/pmtiles/ = PMTiles 3.2.1
 web/online/            Dateien nur für die Online-Fassung: icon.svg (Quelle, auch Favicon), App-Icons,
                        vorschau.jpg (Link-Vorschau 1200×630)
 .github/workflows/     website.yml: veröffentlicht die Website bei jedem Push auf main (GitHub Pages)
 work/                  Zwischenstände (auswahl.gpkg, Screenshots, online/) – darf gelöscht werden
-output/                Ergebnisse: Website, Excel, GeoPackage, QGIS-Projekt
+output/                Ergebnisse: Website, Excel, GeoPackage, QGIS-Projekt; output/karte/ = Karte der Region
+                       (Vektorkacheln *.pmtiles, betriebe.json, ggf. intern.bin verschlüsselt)
 anleitungen/           HTML-Quellen + Render-Skript der beiden QGIS-PDF-Anleitungen
 docs/                  Hintergrund zu Daten und Betrieben
 ```
@@ -57,6 +70,9 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 
 ```bash
 ./run_all.sh          # Schritte 1–4 und 6: Auswahl, Website, GeoPackage, Excel, Online-Fassung (work/online)
+./run_region.sh       # Karte der Region: Schritte 11–16 und 6 (lädt beim ersten Mal ca. 3.5 GB, ca. 10 Minuten)
+FELDKARTE_PASSWORT=… ./run_region.sh   # dasselbe mit verschlüsseltem internem Teil (Namen, Regionen)
+.venv/bin/python scripts/server.py     # ansehen: http://localhost:8000 (Webserver mit Range-Anfragen)
 ```
 
 | Schritt | Skript | liest | schreibt |
@@ -67,6 +83,13 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 | 4 | `scripts/04_excel.py` | `output/*.gpkg` | `output/Feldkarte_Flaechen_4_Betriebe.xlsx` |
 | 5 | `scripts/05_qgis_projekt.py` (PyQGIS) | `output/*.gpkg`, `data/raw/` | `output/QGIS_Feldkarte_lokal.qgz` |
 | 6 | `scripts/06_online.py` (nur Standardbibliothek) | `output/*.html`, `web/online/` | `work/online/` (bzw. `--out`) |
+| 11 | `scripts/11_kantone.py` | geodienste.ch, data.geo.admin.ch | `data/kantone/`, `data/basis/` |
+| 12 | `scripts/12_region.py` | `work/auswahl.gpkg`, alle Kantone | `work/region.gpkg` (Gebiet, Flächen, Betriebe, Produktionsstätten) |
+| 13 | `scripts/13_betriebe.py` | `work/region.gpkg`, `data/basis/` | `work/betriebe.gpkg`, `work/betriebe.csv` |
+| 14 | `scripts/14_namen.py` (`--personen` nur auf Wunsch) | Handelsregister (LINDAS), OSM | `data/intern/namen.csv` (vertraulich) |
+| 15 | `scripts/15_adr.py` | `data/intern/adr/*.xls(x)` (vertraulich), PLZ-Gebiete | `work/adr.gpkg`, `work/adr_anteile.csv` (vertraulich) |
+| 16 | `scripts/16_karte.py` (`--schnell`: Kacheln nur bei geändertem Inhalt neu) | Schritte 13–15, `web/karte/` | `output/karte/` |
+| – | `scripts/intern.py sichern\|entpacken` | `data/intern/` | `data/intern.enc` (verschlüsselt) |
 | – | `scripts/pruefen_qgis.py` (PyQGIS) | `output/*.qgz` | Prüfausgabe |
 | – | `scripts/screenshots.py` (optional, Playwright) | `output/*.html` | `work/screenshots/`; mit `--vorschau` auch `web/online/vorschau.jpg` |
 | – | `scripts/icons.py` (optional, Playwright) | `web/online/icon.svg` | `web/online/*.png` |
@@ -108,6 +131,13 @@ Teilbetriebe (nach Betriebsnummer bzw. amtlicher Produktionsstätte, `01_auswahl
 Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha).
 
 ## Häufige Aufgaben
+
+- **Karte der Region neu bauen:** `./run_region.sh` (mit `FELDKARTE_PASSWORT` für Namen + Regionen), dann `output/`
+  committen und auf `main` pushen. Gebiet ändern: `region.puffer_km` in `config/projekt.json`; es richtet sich nach den
+  Flächen der Betriebe in `betriebe`. Kontrollwerte und Regeln: `docs/region.md`.
+- **Vertraulicher Teil:** Regionsdefinitionen (Excel) nach `data/intern/adr/` legen (nie ins Git, auch nicht
+  verschlüsselt; öffentliche Dateien und Commit-Texte nennen weder Herkunft noch Inhalt). Ohne Passwort baut
+  `16_karte.py` die Karte ohne Namen und ohne Regionen und löscht ein altes `intern.bin`.
 
 - **Website online aktualisieren:** `./run_all.sh`, committen, auf `main` pushen. Der Workflow
   `.github/workflows/website.yml` baut mit `06_online.py --url <Pages-Adresse>` den Ordner `_site` aus der
@@ -168,6 +198,17 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 
 ## Technische Eigenheiten
 
+- **Karte der Region** (`web/karte/`, Startseite online): MapLibre GL + PMTiles statt einer einzigen HTML-Datei.
+  `grob-<Kennung>.pmtiles` (Zoom 10–11, Flächen ab 0.3 ha) und `flaechen-<Kennung>.pmtiles` (Zoom 12–14, alle Flächen
+  mit Nutzung, Fläche, Gemeinde, Bio); unter Zoom 10 keine Flächen. Kennung = Fingerabdruck des Inhalts (auch in
+  index.html und betriebe.json; alte Seiten melden nach einem Update «Neu laden»). Braucht einen Webserver mit
+  Range-Anfragen (GitHub Pages oder `scripts/server.py`; `python3 -m http.server` geht nicht). Kachelattribut `i` =
+  Index in `betriebe.json`, `p` = Fläche. Personenfilter für Adressen und Namen: `common.hat_person()` (c/o, z. Hd.,
+  Familie, Herr/Frau, Initiale + Name, Vorname aus der Schweizer Vornamenliste des Pakets gender-guesser).
+  Link auf einen Betrieb `#b=<Betriebsnummer>`, Favorit `#b=imhof`. `intern.bin`: gzip + AES-256-GCM, PBKDF2-SHA256
+  600'000 Runden; der Browser entschlüsselt nach Passworteingabe (Tab Info), Schlüssel nur für die Sitzung oder auf
+  Wunsch 30 Tage. `betriebe.json` enthält keine Namen (auch nicht die Bezeichnung der Kantonsdaten).
+
 - Website = **eine** HTML-Datei: Leaflet, Schriften (IBM Plex, base64) und alle Flächen sind eingebettet,
   kein Server nötig. Aus dem Internet kommen nur die Hintergrundkarten und die Parzellen (keine Google Fonts).
   - Layout: Desktop = Seitenleiste links (Tabs Betriebe/Kulturen/Flächen/Info) + Karte; Details als Popup.
@@ -211,7 +252,15 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
   *Projekt → Eigenschaften… → Variablen*.
 - Die Kantonsdaten sind in LV95 (EPSG:2056); das QGIS-Projekt ebenfalls.
 
-## Stand (6.10.2026)
+## Stand (12.10.2026)
+
+Karte der Region (12.10.2026): Gebiet, alle Kantone, Betriebsverzeichnis (Hof, Adresse, Kulturen), interne Regionen,
+neue Website mit Favoriten (Imhof grün) gebaut und im Browser getestet (Desktop, Handy). Offen:
+- Personennamen (Betriebsleitung, Einzelunternehmen): `14_namen.py --personen` erst, wenn Alex das ausdrücklich will;
+  ohne das nur Firmen (AG/GmbH/Genossenschaft), Hofnamen und Bezeichnungen der Kantonsdaten.
+- Passwort für den internen Teil wählt Alex; ohne Passwort ist online kein interner Teil vorhanden.
+
+Stand 6.10.2026 (Favoriten):
 
 Erledigt:
 - Website für Handy optimiert (Panel unten, Tabs, Details, Standort, Route, Teilen-Link, Zurück-Taste),

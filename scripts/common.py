@@ -102,6 +102,72 @@ def raw_gpkg(art, kt):
     return path
 
 
+KANTONE_DIR = ROOT / "data" / "kantone"  # weitere Kantone für die Region (nicht im Git, scripts/11_kantone.py)
+BASIS = ROOT / "data" / "basis"           # swisstopo-Grundlagen (nicht im Git, scripts/11_kantone.py)
+INTERN = ROOT / "data" / "intern"         # vertrauliche Quellen (nicht im Git; verschlüsselt in data/intern.enc)
+REGION = WORK / "region.gpkg"             # Schritt 12: Gebiet, alle Betriebe darin und alle ihre Flächen
+BETRIEBE = WORK / "betriebe.gpkg"         # Schritt 13: ein Punkt je Betrieb mit Kennzahlen
+
+
+def kanton_gpkg(art, kt):
+    """GeoPackage eines Kantons: Projektkantone (config «kantone») aus data/raw, alle übrigen aus data/kantone/<KT>/."""
+    if kt in CFG["kantone"]:
+        return raw_gpkg(art, kt)
+    treffer = sorted((KANTONE_DIR / kt / "geopackage").glob(f"lwb_{art}_*_{kt}_2056.gpkg"))
+    return treffer[-1] if treffer else None
+
+
+# Personenangaben in Namen und Adressen (Kantonsdaten, OpenStreetMap): Wörter (ohne Gross-/Kleinschreibung) oder
+# Initiale + Name («J. Muster»); dazu Vornamen (vornamen()).
+PERSON = (r"(?i:\bc/o\b|\bz\.?\s?hd\b|\bzu\s?h[aä]nden\b|\bz\.\s?h\.|\bfam\.|\bfamilie\b|\bdr\.|\bherr\b|\bfrau\b)"
+          r"|(?:^|[\s,(])[A-ZÄÖÜ]\.\s?[A-ZÄÖÜ][a-zäöüé]")
+FLURWOERTER = {"Linde", "Linden", "Rose", "Rosen"}  # Vornamen, die hier als Hof-, Flur- oder Gasthofnamen vorkommen
+_VORNAMEN = []
+
+
+def vor_plz(s):
+    """Text vor der letzten PLZ: 'Postfach 1234 z. H. X, 8000 Ort' -> 'Postfach 1234 z. H. X'; ohne PLZ der ganze Text."""
+    import re
+    return re.sub(r",?\s*\b\d{4}\s+[^\d,][^,]*$", "", str(s)).strip()
+
+
+def vornamen(s):
+    """Wörter in s, die Vornamen sind (Schweizer Liste des Pakets gender-guesser, ohne FLURWOERTER).
+    Nur ganze, gross geschriebene Wörter: «Hans Muster» ja, «Hans-Muster-Weg» oder «Jakobstrasse» nein."""
+    import re
+    if not _VORNAMEN:
+        try:
+            import gender_guesser.detector as gg
+        except ImportError:
+            raise SystemExit("Paket gender-guesser fehlt (Personenfilter): .venv/bin/pip install -r requirements.txt")
+        _VORNAMEN.append(gg.Detector(case_sensitive=False))
+    d = _VORNAMEN[0]
+    return [w for w in re.split(r"[\s,;/()]+", str(s))
+            if re.fullmatch(r"[A-ZÄÖÜ][a-zäöüéèàç]{2,}", w) and w not in FLURWOERTER
+            and d.get_gender(w, "swiss") in ("male", "female", "mostly_male", "mostly_female")]
+
+
+def hat_person(s):
+    """True, wenn der Text vor der PLZ Personenangaben enthält (c/o, z. Hd., Familie, Herr/Frau, Initiale + Name, Vorname)."""
+    import re
+    t = vor_plz(s)
+    return bool(re.search(PERSON, t) or vornamen(t))
+
+
+def strasse_key(s):
+    """Strassenname vergleichbar machen: 'Schloss-Str.' und 'Schlossstrasse' -> 'schlossstr'."""
+    import re
+    s = re.sub(r"[^a-zäöüéèàç0-9]", "", str(s).lower())
+    return re.sub(r"str(asse)?$", "str", s.replace("strasse", "str"))
+
+
+def adresse_key(a):
+    """'Schloss-Str. 55, 8600 Dübendorf' -> 'schlossstr|55|8600' (leer, wenn keine Hausnummer)."""
+    import re
+    m = re.match(r"^(.*?)\s+(\d+[a-zA-Z]?(?:\.\d+)?)\s*,\s*(\d{4})\b", str(a))
+    return f"{strasse_key(m.group(1))}|{m.group(2).lower()}|{m.group(3)}" if m else ""
+
+
 def gemeinde(bfs):
     """BFS-Nummer -> (Gemeindename, Kanton). Unbekannte Nummern: ('BFS 1234', '')."""
     try:

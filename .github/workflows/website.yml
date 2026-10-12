@@ -1,8 +1,9 @@
 # Veröffentlicht die Website auf GitHub Pages, sobald auf main etwas an Website, Vorlage oder
 # Konfiguration geändert wird (oder von Hand: Actions → «Website veröffentlichen» → Run workflow).
 # Einmalig nötig: Settings → Pages → Build and deployment → Source: «GitHub Actions».
-# Gebaut wird nichts neu: veröffentlicht wird output/<website>.html, so wie es im Repository liegt
-# (ergänzt durch scripts/06_online.py um Icons, Manifest und Link-Vorschau).
+# Gebaut wird nichts neu: veröffentlicht werden output/karte/ (Startseite, Karte der Region) und
+# output/<website>.html (betriebe.html), so wie sie im Repository liegen (scripts/06_online.py ergänzt Icons,
+# Manifest und Link-Vorschau).
 name: Website veröffentlichen
 
 on:
@@ -10,6 +11,7 @@ on:
     branches: [main]
     paths:
       - "output/*.html"
+      - "output/karte/**"
       - "web/**"
       - "config/**"
       - "scripts/06_online.py"

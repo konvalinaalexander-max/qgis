@@ -1,8 +1,12 @@
 """Schritt 6: Online-Fassung der Website zusammenstellen (für GitHub Pages oder einen anderen Webspace).
 
-Liest  output/<dateinamen.website> (Schritt 2), web/online/*
+Liest  output/karte/ (Schritt 16, falls vorhanden), output/<dateinamen.website> (Schritt 2), web/online/*
 Schreibt work/online/ (Standard) bzw. den Ordner aus --out:
-  index.html             die Website aus output/, ergänzt um Angaben für Handy-Startbildschirm und Link-Vorschau
+  index.html             die Karte aller Betriebe der Region (output/karte/, Schritt 16) – fehlt sie, die Website
+                         der Favoriten; ergänzt um Angaben für Handy-Startbildschirm und Link-Vorschau
+  betriebe.html          die Detailansicht der Favoriten (Schritt 2), wenn die Karte der Region die Startseite ist
+  flaechen-<Kennung>.pmtiles, grob-<Kennung>.pmtiles, betriebe.json, app.js, app.css, vendor/, intern.bin (verschlüsselt,
+                         falls gebaut)
   manifest.webmanifest   App-Name und Icons («Zum Home-Bildschirm»)
   icon-*.png, apple-touch-icon.png, vorschau.jpg (falls vorhanden)
 
@@ -10,7 +14,8 @@ Aufruf: python3 scripts/06_online.py [--url https://…/] [--out Ordner]
 Braucht nur Python ohne Zusatzpakete. Auf GitHub erledigt das der Workflow .github/workflows/website.yml
 bei jedem Push auf main. --url (öffentliche Adresse mit / am Ende) braucht es nur für die Link-Vorschau,
 weil das Vorschaubild mit vollständiger Adresse angegeben werden muss.
-Lokal ansehen: python3 -m http.server -d work/online 8000  →  http://localhost:8000
+Lokal ansehen: python3 scripts/server.py  →  http://localhost:8000 (die Vektorkacheln der Karte brauchen
+Range-Anfragen; python3 -m http.server kann das nicht)
 """
 import argparse
 import json
@@ -29,6 +34,8 @@ if not quelle.exists():
     raise SystemExit(f"{quelle} fehlt – zuerst scripts/02_website.py ausführen (oder ./run_all.sh).")
 html = quelle.read_text(encoding="utf-8")
 assert "<!--__ONLINE__-->" in html, "Platzhalter <!--__ONLINE__--> fehlt – Website mit aktueller Vorlage neu bauen (02_website.py)."
+karte = out_path("website").parent / "karte"
+mit_karte = (karte / "index.html").exists()
 
 ziel = Path(args.out).resolve()
 if ziel.exists():
@@ -59,7 +66,21 @@ if url:
                  '<meta property="og:image:height" content="630">',
                  '<meta name="twitter:card" content="summary_large_image">']
 html = html.replace("<!--__ONLINE__-->", "\n".join(kopf))
-(ziel / "index.html").write_text(html, encoding="utf-8")
+if mit_karte:
+    # nur diese Dateien veröffentlichen (keine Zwischendateien abgebrochener Läufe)
+    erlaubt = [karte / n for n in ("app.js", "app.css", "betriebe.json", "intern.bin")]
+    erlaubt += sorted(p for p in karte.glob("*.pmtiles") if p.name.startswith(("flaechen-", "grob-")) and ".tmp" not in p.name)
+    erlaubt += sorted((karte / "vendor").glob("*"))
+    for p in erlaubt:
+        if p.is_file():
+            (ziel / p.relative_to(karte)).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(p, ziel / p.relative_to(karte))
+    start = (karte / "index.html").read_text(encoding="utf-8")
+    assert "<!--__ONLINE__-->" in start, "Platzhalter <!--__ONLINE__--> fehlt in output/karte/index.html (16_karte.py)."
+    (ziel / "index.html").write_text(start.replace("<!--__ONLINE__-->", "\n".join(kopf)), encoding="utf-8")
+    (ziel / "betriebe.html").write_text(html, encoding="utf-8")
+else:
+    (ziel / "index.html").write_text(html, encoding="utf-8")
 
 manifest = {
     "name": CFG["titel"],
@@ -83,6 +104,7 @@ if fehlend:
     print("WARNUNG – Icons fehlen in web/online/ (scripts/icons.py):", fehlend)
 (ziel / "manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
-groesse = sum(p.stat().st_size for p in ziel.iterdir())
-print(f"Online-Fassung: {len(list(ziel.iterdir()))} Dateien, {round(groesse / 1e6, 2)} MB -> {ziel}"
+dateien = [p for p in ziel.rglob("*") if p.is_file()]
+groesse = sum(p.stat().st_size for p in dateien)
+print(f"Online-Fassung{' mit Karte der Region' if mit_karte else ''}: {len(dateien)} Dateien, {round(groesse / 1e6, 2)} MB -> {ziel}"
       + (f"  (Adresse {url})" if url else "  (ohne --url: keine Link-Vorschau)"))
