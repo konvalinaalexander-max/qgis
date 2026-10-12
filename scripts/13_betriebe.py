@@ -100,21 +100,28 @@ for c in k.columns:
         k[c] = k[c].round(2)
 
 
-def top_gemeinden(d):
+def alle_gemeinden(d):
+    """Alle Gemeinden der Flächen, nach Fläche absteigend: «Fehraltorf (ZH) 63.0 ha; …»."""
     s = d.groupby(["gemeinde_name", "gemeinde_kt"]).ha.sum().sort_values(ascending=False)
     # Kantonszusatz nur, wenn der amtliche Name ihn nicht schon trägt («Berg (TG)»)
-    return "; ".join(f"{n}{f' ({kt})' if kt and not n.endswith(')') else ''} {v:.1f} ha" for (n, kt), v in s.head(4).items())
+    return "; ".join(f"{n}{f' ({kt})' if kt and not n.endswith(')') else ''} {v:.1f} ha" for (n, kt), v in s.items())
 
 
-k["gemeinden"] = g.apply(top_gemeinden, include_groups=False)
+k["gemeinden"] = g.apply(alle_gemeinden, include_groups=False)
 k["kantone_flaechen"] = g.gemeinde_kt.apply(lambda s: ",".join(sorted(set(x for x in s if x))))
 # Schwerpunkt (flächengewichtet), Ausdehnung
 c = fl.geometry.centroid
 fl["_wx"], fl["_wy"] = c.x * fl.flaeche_m2, c.y * fl.flaeche_m2
 s = fl.groupby("betriebsnummer")[["_wx", "_wy", "flaeche_m2"]].sum()
 k["sx"], k["sy"] = (s._wx / s.flaeche_m2).round(), (s._wy / s.flaeche_m2).round()
-b4326 = fl.to_crs(4326).bounds.groupby(fl.betriebsnummer).agg({"minx": "min", "miny": "min", "maxx": "max", "maxy": "max"})
+grenzen = fl.to_crs(4326).bounds
+AGG = {"minx": "min", "miny": "min", "maxx": "max", "maxy": "max"}
+b4326 = grenzen.groupby(fl.betriebsnummer).agg(AGG)
 k["bbox"] = [f"{a:.5f},{b:.5f},{c_:.5f},{d:.5f}" for a, b, c_, d in b4326.loc[k.index].values]
+# Ausdehnung nur der Flächen im Gebiet (leer, wenn gleich wie bbox): für Betriebe, die weit über das Gebiet hinaus reichen
+bg = grenzen[fl.in_gebiet.values].groupby(fl.betriebsnummer[fl.in_gebiet.values]).agg(AGG).reindex(k.index)
+k["bbox_gebiet"] = ["" if pd.isna(a) else f"{a:.5f},{b:.5f},{c_:.5f},{d:.5f}" for a, b, c_, d in bg.values]
+k.loc[k.bbox_gebiet == k.bbox, "bbox_gebiet"] = ""
 
 bt = bt.set_index("betriebsnummer").join(k, how="left")
 bt["kanton_sitz"] = bt.kanton
@@ -173,7 +180,7 @@ bt["lon"], bt["lat"] = w.x.round(6), w.y.round(6)
 bt = bt.drop(columns=["kanton"]).reset_index()
 spalten = ["betriebsnummer", "kanton_sitz", "bezugsjahr", "favorit", "standort_quelle", "adresse", "adresse_quelle", "adresse_dist_m", "bezeichnung",
            "gemeinde", "lon", "lat", "n_flaechen", "ha", "n_gebiet", "ha_gebiet", "ha_bio", "ha_2km", "dist_flaeche_m",
-           "dist_schwerpunkt_m", "gemeinden", "kantone_flaechen", "produktionsstaetten", "bbox", "bur_nr"] + \
+           "dist_schwerpunkt_m", "gemeinden", "kantone_flaechen", "produktionsstaetten", "bbox", "bbox_gebiet", "bur_nr"] + \
          [f"ha_g{i}" for i in range(len(GROUPS))]
 bt = gpd.GeoDataFrame(bt[spalten + ["geometry"]], geometry="geometry", crs=2056)
 if BETRIEBE.exists():

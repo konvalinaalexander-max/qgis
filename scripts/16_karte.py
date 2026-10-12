@@ -27,7 +27,7 @@ import pyogrio
 import shapely
 
 from common import BETRIEBE, CFG, FARMS, GROUP_COLORS, GROUPS, INTERN, OUT, WEB, WORK, teile
-from intern import verschluesseln
+from intern import pruefen, verschluesseln
 
 import argparse
 
@@ -35,6 +35,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--schnell", action="store_true", help="Vektorkacheln nicht neu schreiben, wenn sie zum Inhalt passen")
 args = ap.parse_args()
 ZIEL = OUT / "karte"
+pw = os.environ.get("FELDKARTE_PASSWORT", "")
+if pw:
+    pruefen(pw)  # vor dem Bau: zu kurzes Passwort bricht sofort ab
 (ZIEL / "vendor").mkdir(parents=True, exist_ok=True)
 
 bt = gpd.read_file(BETRIEBE, layer="betriebe").sort_values(["kanton_sitz", "betriebsnummer"]).reset_index(drop=True)
@@ -64,13 +67,14 @@ SQ = {"amtlich": 0, "Produktionsstätte": 1, "Adresse (amtlich verortet)": 2, "g
 eintraege = []
 for r in bt.itertuples():
     bbox = [round(float(v), 5) for v in r.bbox.split(",")]
+    bbox_gebiet = [round(float(v), 5) for v in r.bbox_gebiet.split(",")] if isinstance(r.bbox_gebiet, str) and r.bbox_gebiet else 0
     eintraege.append([
         r.betriebsnummer, r.kanton_sitz, SQ.get(r.standort_quelle, 0), r.adresse or "", AQ.get(r.adresse_quelle, -1),
         int(r.adresse_dist_m), r.gemeinde or "",
         round(r.lon, 5), round(r.lat, 5), int(r.n_flaechen), r2(r.ha), r2(r.ha_gebiet), r2(r.ha_bio),
         [r2(getattr(r, f"ha_g{g}")) for g in range(len(GROUPS))], bbox, fav_von.get(IDX[r.betriebsnummer], ""),
         r.gemeinden or "", int(r.dist_flaeche_m) if pd.notna(r.dist_flaeche_m) else -1,
-        r.produktionsstaetten or "", int(r.bezugsjahr),
+        r.produktionsstaetten or "", int(r.bezugsjahr), bbox_gebiet,
     ])
 gebiet = gpd.read_file(WORK / "region.gpkg", layer="gebiet").set_index("name").to_crs(4326).geometry["gebiet"]
 meta = {
@@ -80,7 +84,8 @@ meta = {
     "gebiet": [round(v, 4) for v in gebiet.bounds], "puffer_km": CFG["region"]["puffer_km"],
     "kantone": sorted(set(bt.kanton_sitz)),
     "felder": ["nr", "kt", "sq", "adresse", "aq", "ad", "gemeinde", "lon", "lat", "n", "ha", "ha_gebiet", "ha_bio",
-               "gruppen_ha", "bbox", "favorit", "gemeinden", "dist_flaeche_m", "produktionsstaetten", "jahr"],
+               "gruppen_ha", "bbox", "favorit", "gemeinden", "dist_flaeche_m", "produktionsstaetten", "jahr", "bbox_gebiet"],
+    "intern": bool(pw),   # gibt es intern.bin? (ohne: die Seite fragt gar nicht erst danach)
 }
 
 # --- Vektorkacheln
@@ -139,7 +144,6 @@ for alt in [*ZIEL.glob("*.pmtiles"), ZIEL / "kacheln.txt"]:
         print(f"alte Datei gelöscht: {alt.name}")
 
 # --- Vertraulicher Teil (Namen, interne Regionen)
-pw = os.environ.get("FELDKARTE_PASSWORT", "")
 if pw:
     intern = {"namen": {}, "adr": None}
     nf = INTERN / "namen.csv"
