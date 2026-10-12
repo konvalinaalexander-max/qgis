@@ -121,7 +121,11 @@ def kanton_gpkg(art, kt):
 # Initiale + Name («J. Muster»); dazu Vornamen (vornamen()).
 PERSON = (r"(?i:\bc/o\b|\bz\.?\s?hd\b|\bzu\s?h[aä]nden\b|\bz\.\s?h\.|\bfam\.|\bfamilie\b|\bdr\.|\bherr\b|\bfrau\b)"
           r"|(?:^|[\s,(])[A-ZÄÖÜ]\.\s?[A-ZÄÖÜ][a-zäöüé]")
-FLURWOERTER = {"Linde", "Linden", "Rose", "Rosen"}  # Vornamen, die hier als Hof-, Flur- oder Gasthofnamen vorkommen
+# Wörter, die in der Vornamenliste stehen, hier aber als Flur-, Hof-, Orts- oder gewöhnliche Wörter vorkommen
+FLURWOERTER = {"Linde", "Linden", "Rose", "Rosen", "Alp", "Moos", "Burg", "Riet", "Rain", "Brand", "Stein", "Buck", "Bach",
+               "Tal", "Wies", "Erlen", "Wanne", "Heui", "Eichi", "Torkel", "Auli", "Anker", "Landi", "Weine", "Egge",
+               "Spring", "Aspen", "Engel", "Friedberg", "Alter", "Märt", "Val", "Les", "Alle", "Bei", "Sol", "Lee", "Matt",
+               "Hoi", "Than", "Wiel"}
 _VORNAMEN = []
 
 
@@ -132,8 +136,9 @@ def vor_plz(s):
 
 
 def vornamen(s):
-    """Wörter in s, die Vornamen sind (Schweizer Liste des Pakets gender-guesser, ohne FLURWOERTER).
-    Nur ganze, gross geschriebene Wörter: «Hans Muster» ja, «Hans-Muster-Weg» oder «Jakobstrasse» nein."""
+    """Wörter in s, die Vornamen sind (Schweizer Liste des Pakets gender-guesser, auch die für beide Geschlechter,
+    ohne FLURWOERTER). Nur ganze, gross geschriebene Wörter: «Hans Muster» ja, «Hans-Muster-Weg» oder «Jakobstrasse»
+    nein. Lieber zu streng: Ein Treffer in einer Adresse heisst nur, dass die amtliche Gebäudeadresse gilt."""
     import re
     if not _VORNAMEN:
         try:
@@ -144,7 +149,7 @@ def vornamen(s):
     d = _VORNAMEN[0]
     return [w for w in re.split(r"[\s,;/()]+", str(s))
             if re.fullmatch(r"[A-ZÄÖÜ][a-zäöüéèàç]{2,}", w) and w not in FLURWOERTER
-            and d.get_gender(w, "swiss") in ("male", "female", "mostly_male", "mostly_female")]
+            and d.get_gender(w, "swiss") in ("male", "female", "mostly_male", "mostly_female", "andy")]
 
 
 def hat_person(s):

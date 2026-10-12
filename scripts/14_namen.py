@@ -287,6 +287,15 @@ for i, (nr, kt) in enumerate(zip(bt.betriebsnummer, bt.kanton_sitz)):
         eintrag(i, "bezeichnung", b, "", "Bezeichnung des Betriebs in den Kantonsdaten", f"Kantonsdaten {kt} (betriebsname)",
                 "", 0, "amtlich")
 
+# 4b. Bezeichnungen der Produktionsstätten (ps_name ohne PLZ, v. a. TG/ZG/SZ) – nie öffentlich, nur hier (verschlüsselt)
+ps = gpd.read_file(REGION, layer="produktionsstaetten", ignore_geometry=True)
+NR_I = {nr: i for i, nr in enumerate(bt.betriebsnummer)}
+for z in ps.itertuples():
+    b = z.ps_name.strip() if isinstance(z.ps_name, str) else ""
+    if z.betriebsnummer in NR_I and b and not re.search(r"\b\d{4}\b", b) and (args.personen or not hat_person(b)):
+        eintrag(NR_I[z.betriebsnummer], "bezeichnung", b, "", f"Bezeichnung der Produktionsstätte {z.ps_nr} in den Kantonsdaten",
+                f"Kantonsdaten {z.kanton} (Produktionsstätte)", "", 0, "amtlich")
+
 # 5. Favoriten (config) und 6. Recherche
 NR = {nr: i for i, nr in enumerate(bt.betriebsnummer)}
 for f in FARMS:
