@@ -53,8 +53,8 @@ von Hand starten.
 `./run_all.sh` ausführen, Änderungen committen und auf `main` pushen – GitHub veröffentlicht die neue
 Fassung automatisch. Von Hand: *Actions → Website veröffentlichen → Run workflow*.
 
-Lokal genau so ansehen wie online: `python3 -m http.server -d work/online 8000`, dann
-http://localhost:8000 öffnen.
+Lokal genau so ansehen wie online: `python3 scripts/server.py`, dann http://localhost:8000 öffnen
+(`python3 -m http.server` reicht nicht: die Vektorkacheln der Karte brauchen Range-Anfragen).
 
 ### Sichtbarkeit
 
