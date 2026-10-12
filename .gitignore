@@ -2,13 +2,15 @@
 __pycache__/
 work/
 data/raw/
-# Region (Schritte 11–16): Downloads und vertrauliche Quellen nicht ins Git
+# Region (Schritte 11–16): Downloads, AdR-Listen (Migros) und vertrauliche Quellen nicht ins Git
 data/kantone/
 data/basis/
 data/intern/
+data/adr/
 data/intern.enc
 output/karte/*.tmp*
 *.tmp
 .DS_Store
 ~$*
 _site/
+*.log

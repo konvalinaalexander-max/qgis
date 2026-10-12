@@ -25,7 +25,7 @@
   <header class="top">
     <div class="title">
       <h1>__TITEL__</h1>
-      <span id="lock" class="lock" title="Interner Teil (Namen, Regionen)"></span>
+      <span id="lock" class="lock" title="Interner Teil (Namen)"></span>
     </div>
     <div class="searchbox">
       <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Suchen: Name, Betriebsnummer, Ort, Adresse">
@@ -66,6 +66,8 @@
       </div>
       <label class="check"><input type="checkbox" id="favon"> Favoriten immer farbig zeigen</label>
       <label class="check"><input type="checkbox" id="parz"> Parzellen Kanton Zürich (ab Zoom 17)</label>
+      <label class="check" id="adr-wahl" hidden><input type="checkbox" id="adr"> AdR-Regionen (Migros «Aus der Region»)
+        <small>– bei einem Betrieb mit Anteil je Region</small></label>
       <div id="legende"></div>
     </div>
 

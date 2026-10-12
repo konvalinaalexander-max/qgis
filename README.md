@@ -21,8 +21,9 @@ Flächen der rund 10'700 Betriebe, die im Gebiet (Flächen der 4 Betriebe + 20 k
 Kantonen, deren Daten frei erhältlich sind. Eine Fläche antippen: Alle Flächen desselben Betriebs leuchten auf,
 dazu Hof (amtlicher Standort mit Adresse), Fläche, Kulturen und Gemeinden. Die Liste zeigt die Favoriten zuoberst
 (Imhof grün, Beerstecher, Gerber, Rathgeb), darunter die Betriebe im Kartenausschnitt; Suche nach Nummer, Ort,
-Adresse oder Name, Filter Gemüse / Gewächshaus / Bio. Namen der Betriebe und interne Regionen
-(mit Anteil jedes Betriebs je Region) sind verschlüsselt und erscheinen erst nach Eingabe des Passworts (Tab Info).
+Adresse oder Name, Filter Gemüse / Gewächshaus / Bio. Im Tab Karte lassen sich die AdR-Regionen der Migros
+(«Aus der Region») einblenden; dann zeigen die Details eines Betriebs seinen Flächenanteil je Region. Namen der
+Betriebe sind verschlüsselt und erscheinen erst nach Eingabe des Passworts (Tab Info).
 Neu bauen: `./run_region.sh`, ansehen: `python3 scripts/server.py`.
 
 Die bisherige Detailansicht der 4 Betriebe liegt unter `betriebe.html` (Link im Tab Info):

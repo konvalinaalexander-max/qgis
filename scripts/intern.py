@@ -1,9 +1,9 @@
 """Vertrauliche Daten verschlüsseln (Repo und Website sind öffentlich).
 
-Vertraulich sind die internen Regionsdefinitionen (data/intern/adr/) und die zugeordneten Namen (data/intern/namen.csv,
-data/intern/quellen/). Sie liegen unverschlüsselt nur in data/intern/ (nicht im Git). Auf die Website kommt nur die
-verschlüsselte Datei intern.bin (Schritt 16). Eine Sicherung von data/intern/ (data/intern.enc) bleibt ebenfalls
-ausserhalb des Git – sie gehört auf einen privaten Speicher, nicht in das öffentliche Repo.
+Vertraulich sind die zugeordneten Namen (data/intern/namen.csv, data/intern/quellen/). Sie liegen unverschlüsselt nur
+in data/intern/ (nicht im Git). Auf die Website kommt nur die verschlüsselte Datei intern.bin (Schritt 16). Eine
+Sicherung von data/intern/ (data/intern.enc) bleibt ebenfalls ausserhalb des Git – sie gehört auf einen privaten
+Speicher, nicht in das öffentliche Repo.
 
 Verfahren (wie im Browser mit WebCrypto): PBKDF2-HMAC-SHA256 (600'000 Runden, 16 Byte Salz) -> AES-256-GCM
 (12 Byte IV). Datei = «FKv2» + Runden (4 Byte) + Salz + IV + Chiffretext mit Prüfsumme; Kennung und Runden sind
