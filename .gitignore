@@ -13,3 +13,4 @@ output/karte/*.tmp*
 .DS_Store
 ~$*
 _site/
+*.log
