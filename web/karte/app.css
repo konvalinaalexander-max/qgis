@@ -120,13 +120,16 @@ a { color: var(--accent); }
     border-right: 0; border-top: 1px solid var(--line);
     border-radius: 16px 16px 0 0; box-shadow: 0 -4px 18px rgba(0,0,0,.18); height: 52vh; transition: height .22s ease;
     padding-bottom: env(safe-area-inset-bottom); }
-  #side[data-state="peek"] { height: 112px; }
+  #side[data-state="peek"] { height: calc(112px + env(safe-area-inset-bottom)); }
   #side[data-state="full"] { height: calc(100% - 56px); }
   #side.ziehen { transition: none; }
   #grip { display: flex; justify-content: center; padding: 8px 0 2px; cursor: grab; touch-action: none; flex: none; }
   #grip span { width: 40px; height: 5px; border-radius: 3px; background: var(--line); }
   header.top { padding-top: 2px; touch-action: none; }
   #q { font-size: 16px; }
-  .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { bottom: 112px; }
+  .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { bottom: calc(112px + env(safe-area-inset-bottom)); }
 }
 @media (max-height: 540px) and (min-width: 761px) { :root { --w-side: 330px; } }
+/* Touch-Geräte (auch iPhone quer, iPad): 16 px, sonst zoomt Safari beim Antippen des Suchfelds hinein */
+@media (pointer: coarse) { #q { font-size: 16px; } }
+.mehr-gem { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; font-size: 14px; text-decoration: underline; }

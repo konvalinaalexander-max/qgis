@@ -46,11 +46,14 @@ Geräte im Netz, z. B. das Handy im WLAN). Die Vektorkacheln (PMTiles) brauchen 
 - Adresse: der `betriebsname` der Kantonsdaten, wenn er eine Adresse ist (ZH immer, AG/SG/AR/AI meist im Format
   «Strasse Nr, PLZ Ort»). Enthält der Text vor der PLZ Personenangaben, wird er nicht übernommen (`common.hat_person`:
   c/o, z. Hd., Familie, Fam., Herr, Frau, Dr., Initiale + Name, Vorname aus der Schweizer Vornamenliste des Pakets
-  gender-guesser, ausser Flurwörtern wie «Linde»; Stand 2025: 28 Einträge). Dann und in TG/SH/SZ/ZG u. a. gilt die
-  nächste amtliche Gebäudeadresse am Standort (swisstopo, höchstens 60 m entfernt, sonst keine Adresse; Abstand in
-  `adresse_dist_m`). Stand 2025: 5'889 Adressen aus den Kantonsdaten, 4'760 nächste Gebäudeadresse, 36 ohne Adresse.
+  gender-guesser, auch die für beide Geschlechter, ausser Flurwörtern wie «Linde», «Moos», «Alp»; Stand 2025:
+  46 Einträge). Dann und in TG/SH/SZ/ZG u. a. gilt die nächste amtliche Gebäudeadresse am Standort (swisstopo,
+  höchstens 60 m entfernt, sonst keine Adresse; Abstand in `adresse_dist_m`). Stand 2025: 5'882 Adressen aus den
+  Kantonsdaten, 4'767 nächste Gebäudeadresse, 36 ohne Adresse.
   Amtliche Strassennamen nach Personen («Hans-…-Strasse») sind keine Personenangaben und bleiben.
 - `bezeichnung`: der `betriebsname`, wenn er weder Adresse noch Personenangabe ist (Hof-, Flur- oder Firmenname, v. a. TG/SH).
+- Produktionsstätten: öffentlich nur Nummer und Adresse (Text mit PLZ, ohne Personenangaben). Bezeichnungen ohne PLZ
+  (TG, ZG, SZ u. a., z. B. «Pouletstall <Name>») enthalten oft Namen und stehen nur im verschlüsselten Teil.
 - Favoriten mit `standort_ps` (Gerber): Standort, Adresse und Gemeinde der Produktionsstätte statt der Wohnadresse
   (schon in `13_betriebe.py`).
 - Ungültige Standorte (ausserhalb der Schweiz, z. B. ein Ersatzpunkt in Frankreich, oder mehr als 50 km von allen
@@ -125,6 +128,10 @@ Schlüssel hält sie standardmässig nur für die laufende Sitzung; mit «Auf di
   offene alte Seite ihre Kacheln nicht mehr und bietet «Neu laden» an, statt Flächen falschen Betrieben zuzuordnen.
   `16_karte.py --schnell` schreibt die Kacheln nur neu, wenn sich die Kennung geändert hat.
 - `betriebe.json`: ein Eintrag je Betrieb (Betriebsnummer, Adresse ohne Personenangaben mit Quelle `aq` und Abstand
-  `ad`, Gemeinde, Kennzahlen; keine Namen). Link auf einen Betrieb: `#b=<Betriebsnummer>`,
-  auf einen Favoriten `#b=imhof`.
+  `ad`, Gemeinde, Kennzahlen, alle Gemeinden der Flächen, Ausdehnung `bbox` und – wenn anders – `bbox_gebiet` der
+  Flächen im Gebiet; keine Namen). `meta.intern` sagt, ob es `intern.bin` gibt; ohne fragt die Seite nicht danach und
+  zeigt keine Passwort-Hinweise. Link auf einen Betrieb: `#b=<Betriebsnummer>`, auf einen Favoriten `#b=imhof`.
+  Links der früheren Startseite (`#flaeche=…`) leitet die Karte an `betriebe.html` weiter.
+- Passt ein Betrieb bei Zoom 10 nicht ins Bild, zeigt die Karte die Flächen ohne Hof, sonst die Flächen im Gebiet
+  (mit Hinweis). Details: die 4 grössten Gemeinden, die übrigen aufklappbar.
 - Handy: Karte bildschirmfüllend, Panel unten (ziehen: klein / halb / voll).

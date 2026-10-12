@@ -255,10 +255,13 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 ## Stand (12.10.2026)
 
 Karte der Region (12.10.2026): Gebiet, alle Kantone, Betriebsverzeichnis (Hof, Adresse, Kulturen), interne Regionen,
-neue Website mit Favoriten (Imhof grün) gebaut und im Browser getestet (Desktop, Handy). Offen:
+neue Website mit Favoriten (Imhof grün) gebaut und im Browser getestet (Desktop, Handy). Online seit 12.10.2026
+(PR #5, Korrekturen nach der Live-Prüfung in #6 und #7). Offen:
 - Personennamen (Betriebsleitung, Einzelunternehmen): `14_namen.py --personen` erst, wenn Alex das ausdrücklich will;
   ohne das nur Firmen (AG/GmbH/Genossenschaft), Hofnamen und Bezeichnungen der Kantonsdaten.
 - Passwort für den internen Teil wählt Alex; ohne Passwort ist online kein interner Teil vorhanden.
+- Ältere Commits (PR #5 und davor, u. a. caf6b3a auf main) enthalten noch einzelne Personenangaben aus den Kantonsdaten,
+  die inzwischen entfernt sind. Ganz löschen nur über den GitHub Support; Entscheid bei Alex.
 
 Stand 6.10.2026 (Favoriten):
 

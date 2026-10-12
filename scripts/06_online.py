@@ -78,7 +78,9 @@ if mit_karte:
     start = (karte / "index.html").read_text(encoding="utf-8")
     assert "<!--__ONLINE__-->" in start, "Platzhalter <!--__ONLINE__--> fehlt in output/karte/index.html (16_karte.py)."
     (ziel / "index.html").write_text(start.replace("<!--__ONLINE__-->", "\n".join(kopf)), encoding="utf-8")
-    (ziel / "betriebe.html").write_text(html, encoding="utf-8")
+    # Detailansicht der Favoriten: Link zurück zur Karte der Region (Platzhalter in web/template.html)
+    link = '<p><a href="./">← Karte der Region: alle Betriebe im Gebiet</a></p>'
+    (ziel / "betriebe.html").write_text(html.replace("<!--__KARTE__-->", link), encoding="utf-8")
 else:
     (ziel / "index.html").write_text(html, encoding="utf-8")
 
