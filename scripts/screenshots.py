@@ -5,14 +5,18 @@ Schreibt work/screenshots/*.png. Hintergrundkacheln erscheinen nur mit Internetz
 
   python scripts/screenshots.py              Screenshots + Prüfung der Bedienung
   python scripts/screenshots.py --vorschau   zusätzlich web/online/vorschau.jpg neu erzeugen
-                                             (Bild für die Link-Vorschau in WhatsApp, Mail usw.)
+                                             (Bild für die Link-Vorschau in WhatsApp, Mail usw.): die Karte der
+                                             Region (output/karte, über scripts/server.py), Favoriten farbig
 """
 import asyncio
+import socket
+import subprocess
 import sys
+import time
 
 from playwright.async_api import async_playwright
 
-from common import WEB, WORK, out_path
+from common import OUT, ROOT, WEB, WORK, out_path
 
 SHOTS = WORK / "screenshots"
 SHOTS.mkdir(exist_ok=True)
@@ -65,16 +69,34 @@ async def main():
         await c.close()
 
         if "--vorschau" in sys.argv:
-            c, pg, msgs = await seite(b, viewport={"width": 1200, "height": 630})
-            await pg.click(".lyr summary")                 # Kartenauswahl zuklappen
-            await pg.click("[data-zoom=beerstecher]")      # Ausschnitt Greifensee: drei Betriebe nebeneinander
-            await pg.evaluate("document.querySelector('#panels').scrollTop = 0")   # Seitenleiste wieder oben
-            await pg.mouse.move(700, 600)
-            await pg.wait_for_timeout(4000)
-            ziel = WEB / "online" / "vorschau.jpg"
-            await pg.screenshot(path=str(ziel), type="jpeg", quality=82)
-            print("Vorschaubild:", ziel.relative_to(WEB.parent))
-            await c.close()
+            # Startseite online ist die Karte der Region: sie braucht einen Webserver mit Range-Anfragen
+            with socket.socket() as so:
+                so.bind(("127.0.0.1", 0))
+                port = so.getsockname()[1]
+            server = subprocess.Popen([sys.executable, str(ROOT / "scripts" / "server.py"), str(OUT / "karte"), "--port", str(port)],
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            try:
+                for _ in range(50):
+                    try:
+                        socket.create_connection(("127.0.0.1", port), timeout=0.2).close()
+                        break
+                    except OSError:
+                        time.sleep(0.2)
+                c = await b.new_context(viewport={"width": 1200, "height": 630})
+                pg = await c.new_page()
+                await pg.goto(f"http://127.0.0.1:{port}/")
+                await pg.wait_for_function("!!window.feldkarte", timeout=60000)
+                await pg.evaluate("document.querySelector('#favon').click()")                  # Favoriten farbig
+                await pg.evaluate("window.feldkarte.map.jumpTo({center: [8.735, 47.43], zoom: 10.6})")  # Zürich–Winterthur
+                await pg.wait_for_function("window.feldkarte.map.loaded()", timeout=60000)
+                await pg.wait_for_timeout(2500)
+                await pg.mouse.move(1190, 620)
+                ziel = WEB / "online" / "vorschau.jpg"
+                await pg.screenshot(path=str(ziel), type="jpeg", quality=82)
+                print("Vorschaubild:", ziel.relative_to(WEB.parent))
+                await c.close()
+            finally:
+                server.terminate()
 
         await b.close()
     print("Screenshots in", SHOTS)

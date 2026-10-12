@@ -53,7 +53,8 @@ for f in FARMS:
     nrs = [IDX[n] for n in f["nrs"] if n in IDX]
     favoriten.append({"key": f["key"], "name": f["name"], "sub": f.get("sub", ""), "color": f["color"], "i": nrs,
                       "note": f.get("note", ""),
-                      "teile": [{"name": t["name"], "kurz": t["kurz"], "color": t["color"], "bio": t.get("bio_text", "")}
+                      "teile": [{"name": t["name"], "kurz": t["kurz"], "sub": t.get("sub", ""), "color": t["color"],
+                                 "bio": t.get("bio_text", "")}
                                 for t in teile(f)]})
 fav_von = {i: f["key"] for f in favoriten for i in f["i"]}
 
@@ -178,7 +179,10 @@ else:
 # --- Website-Dateien
 robots = "" if CFG["online"].get("suchmaschinen") else '<meta name="robots" content="noindex, nofollow">'
 html = (WEB / "karte" / "index.html").read_text(encoding="utf-8")
-version = KENNUNG + hashlib.sha256((WEB / "karte" / "app.js").read_bytes() + (WEB / "karte" / "app.css").read_bytes()).hexdigest()[:6]
+# Version für ?v=: Kacheln + Programm + Daten (ein reines Datenupdate braucht eine neue Adresse, sonst liefert der
+# Browser-Cache die alte betriebe.json)
+version = KENNUNG + hashlib.sha256((WEB / "karte" / "app.js").read_bytes() + (WEB / "karte" / "app.css").read_bytes()
+                                   + (ZIEL / "betriebe.json").read_bytes()).hexdigest()[:6]
 html = html.replace("__TITEL__", CFG["titel"]).replace("__STAND__", CFG["stand"]).replace("<!--__ROBOTS__-->", robots) \
     .replace("__VERSION__", version).replace("__KACHELN__", KENNUNG)
 (ZIEL / "index.html").write_text(html, encoding="utf-8")
