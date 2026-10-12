@@ -46,11 +46,17 @@ Geräte im Netz, z. B. das Handy im WLAN). Die Vektorkacheln (PMTiles) brauchen 
 - Adresse: der `betriebsname` der Kantonsdaten, wenn er eine Adresse ist (ZH immer, AG/SG/AR/AI meist im Format
   «Strasse Nr, PLZ Ort»). Enthält er Personenangaben (c/o, Familie, Dr., Initialen; ZH: 92 Einträge), wird er nicht
   übernommen. Dann und in TG/SH/SZ/ZG u. a. gilt die nächste amtliche Gebäudeadresse am Standort (swisstopo,
-  höchstens 250 m entfernt; Abstand in `adresse_dist_m`).
+  höchstens 60 m entfernt, sonst keine Adresse; Abstand in `adresse_dist_m`). Stand 2025: 5'896 Adressen aus den
+  Kantonsdaten, 4'754 nächste Gebäudeadresse, 35 ohne Adresse.
 - `bezeichnung`: der `betriebsname`, wenn er weder Adresse noch Personenangabe ist (Hof-, Flur- oder Firmenname, v. a. TG/SH).
 - Favoriten mit `standort_ps` (Gerber): Standort, Adresse und Gemeinde der Produktionsstätte statt der Wohnadresse
   (schon in `13_betriebe.py`).
-- Liegt der Standort mehr als 3 km von den eigenen Flächen entfernt (rund 120 Betriebe), zeigt die Karte einen Hinweis.
+- Ungültige Standorte (ausserhalb der Schweiz, z. B. ein Ersatzpunkt in Frankreich, oder mehr als 50 km von allen
+  eigenen Flächen): Ersatz durch die amtlich verortete Adresse aus `betriebsname` («Adresse (amtlich verortet)», 19
+  Betriebe), sonst einen Punkt in der grössten eigenen Fläche («grösste eigene Fläche (Standort fehlt)», 6 Betriebe;
+  ohne Route-Knopf). Die Karte zeichnet diese Höfe gestrichelt und nennt die Herkunft (`standort_quelle`, in
+  `betriebe.json` als `sq`).
+- Liegt der Standort mehr als 3 km von den eigenen Flächen entfernt (rund 105 Betriebe), zeigt die Karte einen Hinweis.
 - AG meldet bei einigen Flächen zusätzlich Code 595 auf genau derselben Geometrie wie die Hauptkultur, ohne sie als
   überlagernd zu kennzeichnen; solche deckungsgleichen Doppelflächen zählen nur einmal (`12_region.py`).
 
