@@ -106,7 +106,12 @@ nicht im Git. `15_adr.py` bildet jede Zeile auf die amtlichen PLZ-Gebiete ab und
   Listen überschneiden sich (z. B. 108 PLZ bei Ostschweiz und Zürich), eine Fläche dort zählt für beide, die Summe
   kann über 100 % liegen;
 - die Aufteilung ohne Doppelzählung nach Kombination der Regionen (`adr_kombi.csv`, zusammen 100 %).
-Flächen im Ausland liegen in keiner Region. Regeln im Kopf von `15_adr.py`. `16_karte.py` schreibt daraus
+Büsingen (DE) zählt zu Ostschweiz (steht in der Liste). In keiner Region liegen Flächen in PLZ, die keine Liste
+führt: v. a. im Tessin (für Migros Ticino liegt keine Liste vor, 11 Betriebe, 246 ha) und Kloster Fahr (8109). Die
+Listen enthalten alte PLZ und Ortsnamen; `15_adr.py` ordnet sie über den Ortsnamen zu und meldet das (z. B. «8370
+Busswil TG» -> 8371, «8842 Egg» -> Egg SZ 8847, «5422 Oberehrendingen» -> Gemeinde Ehrendingen, «1211 Ville de
+Genève» -> Stadt Genf). Genève und Valais sind Gemeindelisten: dort zählt die ganze Gemeinde. Regeln im Kopf von
+`15_adr.py`; geprüft durch eine unabhängige Nachrechnung (12.10.2026). `16_karte.py` schreibt daraus
 `regionen.json` (Umrisse, Stand, Anteile). Auf der Website: Schalter «AdR-Regionen» im Tab Karte (Layer + Legende);
 ist er an, zeigen die Details eines Betriebs den Anteil je Region und die Aufteilung. Beispiel Imhof: Zürich 100 %,
 Ostschweiz 23 % (nur Zürich 77 %, Zürich + Ostschweiz 23 %).
@@ -120,7 +125,7 @@ Datei `output/karte/intern.bin`: Namen, gzip, AES-256-GCM, Schlüssel per PBKDF2
 zufälliges Passwort wählen und es nur intern weitergeben; ein neues Passwort schützt ältere intern.bin in der
 Git-Historie nicht. Die Website entschlüsselt im Browser (WebCrypto) nach Eingabe des Passworts (Tab Info). Den
 Schlüssel hält sie standardmässig nur für die laufende Sitzung; mit «Auf diesem Gerät 30 Tage merken» auch länger
-(«Sperren» löscht ihn). Ohne Passwort wird die Karte ohne Namen und ohne Regionen gebaut.
+(«Sperren» löscht ihn). Ohne Passwort wird die Karte ohne Namen gebaut (die AdR-Regionen sind davon unabhängig).
 
 `python3 scripts/intern.py sichern|entpacken` legt bzw. holt eine verschlüsselte Sicherung von `data/intern/`
 (`data/intern.enc`, ebenfalls nicht im Git – privat aufbewahren, nicht ins öffentliche Repo).
@@ -145,7 +150,7 @@ Schlüssel hält sie standardmässig nur für die laufende Sitzung; mit «Auf di
 - Suche: Treffer am Wortanfang vor Treffern mitten im Wort (Ellikon vor Bellikon); Enter öffnet den ersten Treffer;
   die Listen sind mit der Tastatur bedienbar. Direktlinks legen einen Verlaufseintrag ohne Auswahl an (Zurück schliesst
   die Details).
-- Version `?v=` = Kachel-Kennung + Prüfsumme von app.js, app.css und betriebe.json: Ein reines Datenupdate bekommt so
+- Version `?v=` = Kachel-Kennung + Prüfsumme von app.js, app.css, betriebe.json und regionen.json: Ein reines Datenupdate bekommt so
   neue Adressen. GitHub Pages liefert index.html mit `max-age=600`, ein neu geöffneter Tab kann also bis 10 Minuten den
   alten Stand zeigen.
 - Link-Vorschau: `web/online/vorschau.jpg` zeigt die Karte der Region (neu erzeugen: `scripts/screenshots.py --vorschau`).

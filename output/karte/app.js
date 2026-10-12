@@ -1,7 +1,7 @@
 'use strict';
 // Feldkarte – alle Flächen im Gebiet; ein Klick zeigt den ganzen Betrieb (Hof, Flächen, Kulturen).
 // Daten: betriebe.json (öffentlich), flaechen-<Kennung>.pmtiles + grob-<Kennung>.pmtiles (Vektorkacheln),
-// intern.bin (verschlüsselt).
+// regionen.json (AdR-Regionen, öffentlich, beim Einschalten geladen), intern.bin (Namen, verschlüsselt).
 (async function () {
   const $ = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
@@ -46,7 +46,7 @@
   const FAV_IDX = META.favoriten.flatMap(f => f.i);
   let internDa = META.intern === false ? false : null;  // intern.bin: null = unbekannt, false = keine Datei, true = vorhanden
   let REG = null, regLadend = null;               // AdR-Regionen (regionen.json, erst beim Einschalten geladen)
-  let INTERN = null;                              // {namen:{i:[[art,name,person,detail,quelle,url,sicherheit,abstand]]}, adr:{…}}
+  let INTERN = null;                              // {namen:{i:[[art,name,person,detail,quelle,url,sicherheit,abstand]]}}
   const nrKurz = nr => nr.replace(/\s+/g, '');
 
   function anzeigeName(b) {
@@ -192,7 +192,8 @@
     let h = '';
     if (modus === 'kultur') h += '<h3>Kulturen</h3>' + GR.map(x => zeile(x[1], x[0])).join('');
     h += '<h3>Favoriten</h3>' + META.favoriten.map(f => zeile(f.color, f.name)).join('');
-    if (REG && adrAn()) h += '<h3>AdR-Regionen (Migros)</h3>' + REG.regionen.map((r, j) => zeile(ADR_FARBEN[j % ADR_FARBEN.length], regName(r))).join('');
+    if (REG && adrAn()) h += '<h3>AdR-Regionen (Migros)</h3>' + REG.regionen.map((r, j) => zeile(ADR_FARBEN[j % ADR_FARBEN.length], regName(r) + (REG.stand[j] ? ' · ' + REG.stand[j] : ''))).join('')
+      + '<p class="hint">Listen der Migros-Genossenschaften; für Migros Ticino liegt keine Liste vor.</p>';
     L.innerHTML = h;
   }
 
@@ -322,19 +323,26 @@
   function adrBlock(is) {   // Anteil der Fläche je AdR-Region (nur bei eingeschaltetem Layer)
     if (!adrAn()) return '';
     if (!REG) return '<h3>AdR-Regionen (Migros)</h3><p class="hint">wird geladen …</p>';
-    const tot = is.reduce((a, i) => a + B[i].ha, 0), pct = ha => Math.round(100 * ha / tot);
     const summe = {}, kombi = {};
     for (const i of is) for (const [r, ha] of (REG.anteile[i] || [])) summe[r] = (summe[r] || 0) + ha;
     for (const i of is) for (const [rs, ha] of (REG.kombi[i] || [])) { const k = rs.join(','); kombi[k] = (kombi[k] || 0) + ha; }
+    const tot = Object.values(kombi).reduce((a, x) => a + x, 0) || is.reduce((a, i) => a + B[i].ha, 0);
+    const pct = ha => { const x = 100 * ha / tot; return x > 0 && x < 0.5 ? '< 1' : String(Math.round(x)); };
+    const haTxt = ha => ha > 0 && ha < 0.05 ? '< 0.1' : zahl(ha, 1);
     const farbe = r => r < 0 ? 'var(--line)' : ADR_FARBEN[r % ADR_FARBEN.length];
-    const zeilen = Object.entries(summe).map(([r, ha]) => [+r, ha]).sort((a, b) => (a[0] < 0) - (b[0] < 0) || b[1] - a[1])
-      .map(([r, ha]) => `<tr><td${r < 0 ? ' class="unbekannt"' : ''}><span class="q" style="background:${farbe(r)}"></span>${r < 0 ? 'in keiner AdR-Region' : esc(regName(REG.regionen[r]))}</td>
-        <td class="z">${zahl(ha, 1)} ha</td><td class="z">${r < 0 ? pct(ha) + ' %' : `<b>${pct(ha)} %</b>`}</td></tr>`).join('');
-    const mehrfach = Object.keys(kombi).some(k => k.includes(','));
-    const teile = Object.entries(kombi).sort((a, b) => b[1] - a[1]).map(([k, ha]) =>
-      `${k === '' ? 'keine Region' : (k.includes(',') ? '' : 'nur ') + k.split(',').map(r => esc(regName(REG.regionen[+r]))).join(' + ')} ${pct(ha)} %`).join(' · ');
+    const reihen = Object.entries(summe).map(([r, ha]) => [+r, ha]).sort((a, b) => (a[0] < 0) - (b[0] < 0) || b[1] - a[1]);
+    const zeilen = reihen.map(([r, ha]) => `<tr><td${r < 0 ? ' class="unbekannt"' : ''}><span class="q" style="background:${farbe(r)}"></span>${r < 0 ? 'in keiner der Regionen' : esc(regName(REG.regionen[r]))}</td>
+        <td class="z">${haTxt(ha)} ha</td><td class="z">${r < 0 ? pct(ha) + ' %' : `<b>${pct(ha)} %</b>`}</td></tr>`).join('');
+    // Aufteilung ohne Doppelzählung, auf genau 100 % gerundet (Methode des grössten Rests)
+    const k = Object.entries(kombi).sort((a, b) => b[1] - a[1]);
+    const roh = k.map(([, ha]) => 100 * ha / tot), ganz = roh.map(Math.floor);
+    let rest = 100 - ganz.reduce((a, x) => a + x, 0);
+    roh.map((x, j) => [x - ganz[j], j]).sort((a, b) => b[0] - a[0]).forEach(([, j]) => { if (rest > 0) { ganz[j]++; rest--; } });
+    const teile = k.map(([key], j) => `${key === '' ? 'keine Region' : (key.includes(',') ? '' : 'nur ') + key.split(',').map(r => esc(regName(REG.regionen[+r]))).join(' + ')} ${ganz[j] === 0 && roh[j] > 0 ? '< 1' : ganz[j]} %`).join(' · ');
+    const mehrfach = k.some(([key]) => key.includes(','));
+    const ueber100 = reihen.reduce((a, [, ha]) => a + Math.round(100 * ha / tot), 0) > 100;
     return `<h3>AdR-Regionen (Migros)</h3>${zeilen ? `<table class="t">${zeilen}</table>` : '<p class="unbekannt">Keine Angaben.</p>'}
-      ${mehrfach ? `<p class="hint">Aufgeteilt ohne Doppelzählung: ${teile}.<br>Flächen in PLZ, die zu mehreren Regionen gehören, zählen für jede dieser Regionen – darum ist die Summe oben über 100 %.</p>`
+      ${mehrfach ? `<p class="hint">Aufgeteilt ohne Doppelzählung: ${teile}.${ueber100 ? '<br>Flächen in PLZ, die zu mehreren Regionen gehören, zählen für jede dieser Regionen – darum ist die Summe oben über 100 %.' : ''}</p>`
         : `<p class="hint">Anteil an ${zahl(tot, 1)} ha Fläche des Betriebs.</p>`}`;
   }
   const STANDORT = { 2: 'Standort in den Kantonsdaten ungültig – Lage aus der Adresse', 3: 'Standort fehlt in den Kantonsdaten – Lage der grössten Fläche' };
@@ -543,7 +551,7 @@
     <h3>Daten</h3>
     <p>Landwirtschaftliche Kulturflächen der Kantone (geodienste.ch), Bezugsjahr ${META.jahr} (GL, GR: 2026). Ohne überlagernde Elemente. Nicht frei erhältlich und deshalb nicht enthalten: Flächen von Betrieben aus NE, TI, NW, OW, VD.</p>
     <p><b>Hof:</b> Betriebsstandort der Kantonsdaten (fehlt er oder liegt er ausserhalb der Schweiz: Lage aus der Adresse bzw. der grössten Fläche). Adresse aus den Kantonsdaten (ohne Personenangaben), sonst die nächste amtliche Gebäudeadresse höchstens 60 m vom Standort (swisstopo). Die Adresse ist die des Betriebsstandorts und kann auch eine Wohnadresse sein. Wem eine Fläche gehört, zeigt nur die Eigentumsauskunft des Kantons.</p>
-    ${META.regionen ? '<p><b>AdR-Regionen:</b> Gebiete «Aus der Region» der Migros-Genossenschaften (Listen der Postleitzahlen, Stand je Region), übertragen auf die amtlichen PLZ-Gebiete (swisstopo). Einschalten im Tab Karte; ein Klick auf eine Fläche zeigt dann den Anteil des Betriebs je Region, nach Lage seiner Flächen. Gebiete können sich überschneiden.</p>' : ''}
+    ${META.regionen ? '<p><b>AdR-Regionen:</b> Gebiete «Aus der Region» der Migros-Genossenschaften (Listen der Postleitzahlen, Stand je Region in der Legende; für Migros Ticino liegt keine Liste vor), übertragen auf die amtlichen PLZ-Gebiete (swisstopo). Einschalten im Tab Karte; ein Klick auf eine Fläche zeigt dann den Anteil des Betriebs je Region, nach Lage seiner Flächen. Gebiete können sich überschneiden.</p>' : ''}
     <p><b>Bewirtschafter:</b> ${META.intern ? 'Namen gibt es nur mit Passwort. Sie sind abgeleitet (Handelsregister, Hofnamen, Bezeichnungen der Kantonsdaten) und je mit Quelle und Sicherheit angegeben.' : 'Die Karte zeigt keine Namen der Bewirtschafter; die Kantonsdaten enthalten keine.'}</p>
     <p>Karten © swisstopo · Parzellen © Kanton Zürich · Kartenbibliothek MapLibre, PMTiles · ${esc(META.stand)}</p>
     <p><a href="betriebe.html">Detailansicht der Favoriten</a> (Teilbetriebe, Bio, Kulturen)</p>`;
@@ -605,7 +613,7 @@
     const wert = JSON.stringify({ salz: b64(salz), key: b64(await crypto.subtle.exportKey('raw', key)), bis: Date.now() + MERKEN_TAGE * 864e5 });
     sitzung.merke('fk-schluessel', wert);
     if (geraet) merke('fk-schluessel', wert);
-    toast('Entsperrt: Namen und Regionen sind sichtbar.');
+    toast('Entsperrt: Namen sind sichtbar.');
   }
   async function automatisch() {
     const s = sitzung.lies('fk-schluessel') || lies('fk-schluessel'); if (!s) return;
@@ -621,7 +629,8 @@
   function sperrenOhneNeuladen() { merke('fk-schluessel', null); sitzung.merke('fk-schluessel', null); }
   function sperren() { sperrenOhneNeuladen(); location.reload(); }
   async function adrSchalten(an) {
-    if (an && !(await regLaden())) { $('#adr').checked = false; return; }
+    if (an && !(await regLaden())) { $('#adr').checked = false; merke('fk-adr', null); legende(); return; }
+    an = adrAn();   // der Schalter kann während des Ladens wieder ausgeschaltet worden sein
     if (an && !map.getSource('adr')) {
       await stilBereit;
       map.addSource('adr', { type: 'geojson', data: REG.geojson });

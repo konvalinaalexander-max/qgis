@@ -42,7 +42,8 @@ data/raw/              entpackt (ca. 330 MB, nicht im Git). Fehlt ein Ordner, en
                        Skripte ihn automatisch aus data/raw_zip/
 data/kantone/          alle übrigen Kantone von geodienste.ch (Region, ca. 2.8 GB, nicht im Git, 11_kantone.py)
 data/basis/            swisstopo: Gemeindegrenzen, PLZ-Gebiete, Gebäudeadressen (nicht im Git, 11_kantone.py)
-data/intern/           VERTRAULICH, nicht im Git: adr/ (interne Regionsdefinitionen, Excel), namen.csv, quellen/
+data/adr/              AdR-Listen der Migros (Excel, je Region PLZ + Ort; öffentlich, nicht im Git; Schritt 15)
+data/intern/           VERTRAULICH, nicht im Git: namen.csv, quellen/ (Namen, Schritt 14)
 scripts/               Datenaufbereitung, nummeriert in Ausführungsreihenfolge
 web/template.html      Vorlage der Website (Leaflet), web/vendor/leaflet/ = Leaflet 1.9.4,
                        web/vendor/fonts/ = IBM Plex Sans (variabel) + Mono, latin, OFL-Lizenz
@@ -53,7 +54,8 @@ web/online/            Dateien nur für die Online-Fassung: icon.svg (Quelle, au
 .github/workflows/     website.yml: veröffentlicht die Website bei jedem Push auf main (GitHub Pages)
 work/                  Zwischenstände (auswahl.gpkg, Screenshots, online/) – darf gelöscht werden
 output/                Ergebnisse: Website, Excel, GeoPackage, QGIS-Projekt; output/karte/ = Karte der Region
-                       (Vektorkacheln *.pmtiles, betriebe.json, ggf. intern.bin verschlüsselt)
+                       (Vektorkacheln *.pmtiles, betriebe.json, regionen.json = AdR-Regionen, ggf. intern.bin
+                       verschlüsselt mit den Namen)
 anleitungen/           HTML-Quellen + Render-Skript der beiden QGIS-PDF-Anleitungen
 docs/                  Hintergrund zu Daten und Betrieben
 ```
@@ -72,7 +74,7 @@ Falls `python3` fehlt: Xcode Command Line Tools (`xcode-select --install`) oder 
 ```bash
 ./run_all.sh          # Schritte 1–4 und 6: Auswahl, Website, GeoPackage, Excel, Online-Fassung (work/online)
 ./run_region.sh       # Karte der Region: Schritte 11–16 und 6 (lädt beim ersten Mal ca. 3.5 GB, ca. 10 Minuten)
-FELDKARTE_PASSWORT=… ./run_region.sh   # dasselbe mit verschlüsseltem internem Teil (Namen, Regionen)
+FELDKARTE_PASSWORT=… ./run_region.sh   # dasselbe mit verschlüsseltem internem Teil (Namen)
 .venv/bin/python scripts/server.py     # ansehen: http://localhost:8000 (Webserver mit Range-Anfragen)
 ```
 

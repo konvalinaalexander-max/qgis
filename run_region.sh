@@ -13,7 +13,8 @@ run 11_kantone.py
 run 12_region.py
 run 13_betriebe.py
 run 14_namen.py
-if ls data/adr/*.xls* data/intern/adr/*.xls* >/dev/null 2>&1; then run 15_adr.py; else echo "== 15_adr übersprungen (keine AdR-Listen in data/adr/)"; fi
+if ls data/adr/*.xls* >/dev/null 2>&1 || ls data/intern/adr/*.xls* >/dev/null 2>&1; then run 15_adr.py
+else echo "== 15_adr übersprungen (keine AdR-Listen in data/adr/)"; fi
 run 16_karte.py
 run 06_online.py
 echo "Fertig. Ansehen: $PY scripts/server.py  →  http://localhost:8000"

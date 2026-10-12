@@ -141,12 +141,17 @@ else:
                       .to_crs(3857), grob, "f", 10, 11, 2)
 # --- AdR-Regionen (öffentlich): eigene Datei, die Seite lädt sie erst, wenn der Layer eingeschaltet wird
 if (WORK / "adr.gpkg").exists():
+    for f in ("adr_anteile.csv", "adr_kombi.csv"):
+        if not (WORK / f).exists() or (WORK / f).stat().st_mtime < (WORK / "adr.gpkg").stat().st_mtime - 60:
+            raise SystemExit(f"work/{f} fehlt oder ist älter als work/adr.gpkg – zuerst scripts/15_adr.py laufen lassen.")
+    if (WORK / "adr_anteile.csv").stat().st_mtime < BETRIEBE.stat().st_mtime:
+        print("WARNUNG: AdR-Anteile älter als das Betriebsverzeichnis – scripts/15_adr.py neu laufen lassen.")
     reg = gpd.read_file(WORK / "adr.gpkg", layer="regionen").to_crs(4326)
-    reg["geometry"] = reg.geometry.simplify(0.0004)
+    reg["geometry"] = shapely.set_precision(reg.geometry.simplify(0.0004).values, 1e-5)   # ~1 m genügt für die Umrisse
     namen_reg = list(reg.region)
-    geo = json.loads(reg[["region", "stand", "geometry"]].to_json(drop_id=True))
+    geo = json.loads(reg[["geometry"]].to_json(drop_id=True))
     for i, ft in enumerate(geo["features"]):
-        ft["properties"]["r"] = i
+        ft["properties"] = {"r": i}
     anteile, kombi = {}, {}
     for z in pd.read_csv(WORK / "adr_anteile.csv").itertuples():
         if z.betriebsnummer in IDX:

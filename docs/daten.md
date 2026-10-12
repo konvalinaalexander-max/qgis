@@ -89,8 +89,13 @@ nach `data/kantone/<KT>/` (nicht im Git, ca. 2.8 GB). Stand 12.10.2026:
 
 Dazu von swisstopo (data.geo.admin.ch, nach `data/basis/`):
 - swissBOUNDARIES3D 2026-01 (Landes- und Gemeindegrenzen; Achtung: mit Höhen, für Berechnungen auf 2D reduzieren)
-- Amtliches Ortschaftenverzeichnis mit PLZ und Perimeter (PLZ-Gebiete, für die internen Regionen)
+- Amtliches Ortschaftenverzeichnis mit PLZ und Perimeter (PLZ-Gebiete, für die AdR-Regionen)
 - Amtliches Gebäudeadressverzeichnis (CSV, 3.3 Mio. Adressen; nächste Adresse am Betriebspunkt ausserhalb ZH)
+
+AdR-Regionen (`scripts/15_adr.py`, öffentlich): Gebietsdefinitionen «Aus der Region» der Migros-Genossenschaften als
+Excel-Listen (je Region PLZ + Ort, Kopf mit «gültig ab» bzw. «Stand»), von Alex erhalten (12.10.2026), abgelegt in
+`data/adr/` (nicht im Git): Aare, Basel, Genève, Luzern, Neuchâtel Fribourg, Ostschweiz, Valais, Vaud, Zürich; Migros
+Ticino fehlt. Stand je Liste zwischen 01.01.2021 und 01.08.2025 (in der Legende der Karte angezeigt).
 
 Namen (`scripts/14_namen.py`, vertraulich): Handelsregister als offene Daten über LINDAS (SPARQL
 `https://ld.admin.ch/query`, Klasse `ZefixOrganisation`), OpenStreetMap über Overpass. Regeln: `docs/region.md`.
