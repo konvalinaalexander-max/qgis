@@ -18,13 +18,15 @@ import pandas as pd
 import shapely
 
 from common import (BASIS, BETRIEBE, CFG, FARMS, GROUPS, NR2FARM, REGION, WORK, adresse_key, hat_person, kulturgruppe,
-                    strasse_key)
+                    strasse_key, vor_plz)
 
 KT_NR = {1: "ZH", 2: "BE", 3: "LU", 4: "UR", 5: "SZ", 6: "OW", 7: "NW", 8: "GL", 9: "ZG", 10: "FR", 11: "SO", 12: "BS",
          13: "BL", 14: "SH", 15: "AR", 16: "AI", 17: "SG", 18: "GR", 19: "AG", 20: "TG", 21: "TI", 22: "VD", 23: "VS",
          24: "NE", 25: "GE", 26: "JU"}
 ADRESSE_MAX_M = 60   # so weit darf die nächste Gebäudeadresse vom Betriebspunkt entfernt sein (sonst keine Adresse)
 STRASSE_NR = r"^[^,]*\d+[a-zA-Z]?(?:\.\d+)?\s*,\s*\d{4}\s+\S"      # «Strasse 12, 8000 Ort»
+# Firmennamen gehören nicht in die öffentliche Adresse (Namen nur im verschlüsselten Teil)
+RECHTSFORM = r"\b(?:AG|GmbH|Genossenschaft|Gen\.|SA|S\.A\.|Sàrl|Sarl|Verein|Stiftung|KlG|KG|Co\.)(?=\W|$)"
 # Personenangaben (c/o, z. Hd., Familie, Herr/Frau, Initiale + Name, Vorname): common.hat_person(), geprüft wird der
 # ganze Text vor der letzten PLZ
 
@@ -149,8 +151,9 @@ gwr["adresse"] = (a.STN_LABEL.fillna("") + " " + a.ADR_NUMBER.fillna("")).str.st
 # Gebäudeadresse am Punkt.
 name = bt.betriebsname.fillna("").str.strip()
 person = name.map(hat_person)
+firma = name.map(lambda t: bool(re.search(RECHTSFORM, vor_plz(t))))   # «Muster AG, 8000 Ort»: keine öffentliche Adresse
 mit_plz = name.str.contains(r"\b\d{4}\b")
-aus_daten = ~person & (name.str.match(STRASSE_NR) | ((bt.kanton == "ZH") & mit_plz))
+aus_daten = ~person & ~firma & (name.str.match(STRASSE_NR) | ((bt.kanton == "ZH") & mit_plz))
 gwr_adr = gwr.adresse.reindex(bt.index).fillna("")
 bt["adresse"] = np.where(aus_daten, name, gwr_adr)
 bt["adresse_quelle"] = np.where(aus_daten, "Kantonsdaten (betriebsname)",
@@ -158,7 +161,7 @@ bt["adresse_quelle"] = np.where(aus_daten, "Kantonsdaten (betriebsname)",
 bt["adresse_dist_m"] = np.where(aus_daten, 0, gwr.d.reindex(bt.index).round().fillna(-1)).astype(int)
 bt["bezeichnung"] = np.where(~person & ~mit_plz, name, "")
 print(f"Adresse aus den Kantonsdaten: {int(aus_daten.sum())}, nächste Gebäudeadresse: {int((~aus_daten & (gwr_adr != '')).sum())}, "
-      f"betriebsname mit Personenangaben nicht übernommen: {int(person.sum())}")
+      f"betriebsname mit Personenangaben nicht übernommen: {int(person.sum())}, mit Firmenname: {int((firma & ~person).sum())}")
 
 # --- Produktionsstätten, Favoriten
 # Öffentlich nur Nummer und Adresse (ps_name mit PLZ, ohne Personenangaben). Bezeichnungen ohne PLZ (in TG, ZG, SZ u. a.
@@ -167,7 +170,8 @@ print(f"Adresse aus den Kantonsdaten: {int(aus_daten.sum())}, nächste Gebäudea
 
 def ps_text(nr, name):
     name = str(name or "").strip().lstrip(",").strip()
-    return f"{nr} {name}" if re.search(r"\b\d{4}\b", name) and not hat_person(name) else nr
+    adresse = re.search(r"\b\d{4}\b", name) and not hat_person(name) and not re.search(RECHTSFORM, vor_plz(name))
+    return f"{nr} {name}" if adresse else nr
 
 
 ps_txt = ps.groupby("betriebsnummer").apply(lambda d: "; ".join(ps_text(a, b) for a, b in zip(d.ps_nr, d.ps_name)),

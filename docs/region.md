@@ -52,8 +52,10 @@ Geräte im Netz, z. B. das Handy im WLAN). Die Vektorkacheln (PMTiles) brauchen 
   Kantonsdaten, 4'767 nächste Gebäudeadresse, 36 ohne Adresse.
   Amtliche Strassennamen nach Personen («Hans-…-Strasse») sind keine Personenangaben und bleiben.
 - `bezeichnung`: der `betriebsname`, wenn er weder Adresse noch Personenangabe ist (Hof-, Flur- oder Firmenname, v. a. TG/SH).
-- Produktionsstätten: öffentlich nur Nummer und Adresse (Text mit PLZ, ohne Personenangaben). Bezeichnungen ohne PLZ
-  (TG, ZG, SZ u. a., z. B. «Pouletstall <Name>») enthalten oft Namen und stehen nur im verschlüsselten Teil.
+- Produktionsstätten: öffentlich nur Nummer und Adresse (Text mit PLZ, ohne Personenangaben und ohne Firmennamen mit
+  Rechtsform vor der PLZ). Bezeichnungen ohne PLZ (TG, ZG, SZ u. a., z. B. «Pouletstall <Name>») enthalten oft Namen
+  und stehen nur im verschlüsselten Teil. Dasselbe gilt für `betriebsname`: «Muster AG, 8000 Ort» wird nicht als
+  Adresse übernommen.
 - Favoriten mit `standort_ps` (Gerber): Standort, Adresse und Gemeinde der Produktionsstätte statt der Wohnadresse
   (schon in `13_betriebe.py`).
 - Ungültige Standorte (ausserhalb der Schweiz, z. B. ein Ersatzpunkt in Frankreich, oder mehr als 50 km von allen
@@ -134,4 +136,11 @@ Schlüssel hält sie standardmässig nur für die laufende Sitzung; mit «Auf di
   Links der früheren Startseite (`#flaeche=…`) leitet die Karte an `betriebe.html` weiter.
 - Passt ein Betrieb bei Zoom 10 nicht ins Bild, zeigt die Karte die Flächen ohne Hof, sonst die Flächen im Gebiet
   (mit Hinweis). Details: die 4 grössten Gemeinden, die übrigen aufklappbar.
+- Suche: Treffer am Wortanfang vor Treffern mitten im Wort (Ellikon vor Bellikon); Enter öffnet den ersten Treffer;
+  die Listen sind mit der Tastatur bedienbar. Direktlinks legen einen Verlaufseintrag ohne Auswahl an (Zurück schliesst
+  die Details).
+- Version `?v=` = Kachel-Kennung + Prüfsumme von app.js, app.css und betriebe.json: Ein reines Datenupdate bekommt so
+  neue Adressen. GitHub Pages liefert index.html mit `max-age=600`, ein neu geöffneter Tab kann also bis 10 Minuten den
+  alten Stand zeigen.
+- Link-Vorschau: `web/online/vorschau.jpg` zeigt die Karte der Region (neu erzeugen: `scripts/screenshots.py --vorschau`).
 - Handy: Karte bildschirmfüllend, Panel unten (ziehen: klein / halb / voll).

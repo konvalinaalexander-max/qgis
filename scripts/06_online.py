@@ -80,6 +80,8 @@ if mit_karte:
     (ziel / "index.html").write_text(start.replace("<!--__ONLINE__-->", "\n".join(kopf)), encoding="utf-8")
     # Detailansicht der Favoriten: Link zurück zur Karte der Region (Platzhalter in web/template.html)
     link = '<p><a href="./">← Karte der Region: alle Betriebe im Gebiet</a></p>'
+    if url:   # eigene Adresse für Link-Vorschauen (sonst zeigen Dienste beim Teilen die Startseite)
+        html = html.replace(f'<meta property="og:url" content="{attr(url)}">', f'<meta property="og:url" content="{attr(url)}betriebe.html">')
     (ziel / "betriebe.html").write_text(html.replace("<!--__KARTE__-->", link), encoding="utf-8")
 else:
     (ziel / "index.html").write_text(html, encoding="utf-8")

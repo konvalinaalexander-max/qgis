@@ -128,16 +128,19 @@
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
   const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false, fitBoundsOptions: { maxZoom: 15 } });
   map.addControl(geo, 'top-right');
-  if (SCHMAL()) {   // aufgeklappt deckt sie Flächen über dem Panel ab; die Quellen stehen auch im Tab Info
+  // Quellenangabe auf schmalen Bildschirmen zuklappen: aufgeklappt deckt sie Flächen über dem Panel ab (die Quellen
+  // stehen auch im Tab Info). Beim Start (MapLibre klappt sie nach dem Laden auf) und beim Wechsel auf schmal (Drehen).
+  function quelleZu() {
     const a = $('.maplibregl-ctrl-attrib');
+    if (!a) return;
     const zu = () => { a.classList.remove('maplibregl-compact-show'); a.removeAttribute('open'); };
-    if (a && a.classList.contains('maplibregl-compact-show')) zu();
-    else if (a) {
-      const mo = new MutationObserver(() => { if (a.classList.contains('maplibregl-compact-show')) { zu(); mo.disconnect(); } });
-      mo.observe(a, { attributes: true, attributeFilter: ['class'] });
-      setTimeout(() => mo.disconnect(), 20000);
-    }
+    if (a.classList.contains('maplibregl-compact-show')) { zu(); return; }
+    const mo = new MutationObserver(() => { if (a.classList.contains('maplibregl-compact-show')) { zu(); mo.disconnect(); } });
+    mo.observe(a, { attributes: true, attributeFilter: ['class'] });
+    setTimeout(() => mo.disconnect(), 20000);
   }
+  if (SCHMAL()) quelleZu();
+  matchMedia('(max-width: 760px)').addEventListener('change', e => { if (e.matches) quelleZu(); });
   map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
   map.on('error', e => {
     const text = String(e.error && e.error.message || '');
@@ -230,22 +233,32 @@
   }
   function zeigeAlle(st) {
     if (!SEL) return;
-    const pad = polster(st);
-    const passtIns = bb => { const c = map.cameraForBounds(bb, { padding: pad, maxZoom: 16 }); return !!c && c.zoom >= map.getMinZoom(); };
-    let bb = bboxVon(SEL.is);
-    if (!passtIns(bb)) {   // zu gross für den Ausschnitt: ohne den Hof, dann nur die Flächen im Gebiet
-      const ohneHof = bboxFlaechen(SEL.is, false), imGebiet = bboxFlaechen(SEL.is, true);
-      if (passtIns(ohneHof)) { bb = ohneHof; toast('Der Hof liegt ausserhalb des Ausschnitts.'); }
-      else { bb = imGebiet; toast(SEL.is.some(i => B[i].bbox_gebiet) ? 'Gezeigt sind die Flächen im Gebiet; weitere liegen ausserhalb.' : 'Die Flächen reichen über den Ausschnitt hinaus.'); }
+    const pad = polster(st), z0 = map.getMinZoom(), c = map.getContainer(), welt = 512 * Math.pow(2, z0);
+    const passtIns = bb => { const k = map.cameraForBounds(bb, { padding: pad, maxZoom: 16 }); return !!k && k.zoom >= z0; };
+    const merc = ll => maplibregl.MercatorCoordinate.fromLngLat(ll);
+    // passt die Ausdehnung bei Mindestzoom in den sichtbaren Teil (ohne Seitenränder, über dem Panel)?
+    const passtBeiMin = bb => {
+      const a = merc(bb[0]), b = merc(bb[1]);
+      return Math.abs(b.x - a.x) * welt <= c.clientWidth - 8 && Math.abs(b.y - a.y) * welt <= c.clientHeight - pad.top - pad.bottom + 30;
+    };
+    const zentriere = bb => {   // Mitte selbst setzen (fitBounds rechnet das Polster für den ungeklemmten Zoom)
+      const mitte = merc([(bb[0][0] + bb[1][0]) / 2, (bb[0][1] + bb[1][1]) / 2]);
+      const dx = (pad.right - pad.left) / 2 / welt, dy = (pad.bottom - pad.top) / 2 / welt;
+      map.easeTo({ center: new maplibregl.MercatorCoordinate(mitte.x + dx, mitte.y + dy).toLngLat(), zoom: z0, duration: 700 });
+    };
+    const mitGebiet = SEL.is.some(i => B[i].bbox_gebiet);
+    const stufen = [   // ganzer Betrieb mit Hof, Flächen ohne Hof, Flächen im Gebiet
+      [bboxVon(SEL.is), ''],
+      [bboxFlaechen(SEL.is, false), 'Der Hof liegt ausserhalb des Ausschnitts.'],
+      ...(mitGebiet ? [[bboxFlaechen(SEL.is, true), 'Gezeigt sind die Flächen im Gebiet; weitere liegen ausserhalb.']] : []),
+    ];
+    for (const [bb, text] of stufen) {
+      if (passtIns(bb)) { map.fitBounds(bb, { padding: pad, maxZoom: 16, duration: 700 }); if (text) toast(text); return; }
+      if (passtBeiMin(bb)) { zentriere(bb); if (text) toast(text); return; }
     }
-    if (passtIns(bb)) { map.fitBounds(bb, { padding: pad, maxZoom: 16, duration: 700 }); return; }
-    // grösser als die Karte bei minZoom: Mitte selbst setzen (fitBounds rechnet das Polster für den ungeklemmten Zoom
-    // und schiebt die Auswahl sonst über den Bildrand)
-    const z = map.getMinZoom(), welt = 512 * Math.pow(2, z), c = map.getContainer();
-    const mitte = maplibregl.MercatorCoordinate.fromLngLat([(bb[0][0] + bb[1][0]) / 2, (bb[0][1] + bb[1][1]) / 2]);
-    const dx = (c.clientWidth / 2 - (pad.left + c.clientWidth - pad.right) / 2) / welt;
-    const dy = (c.clientHeight / 2 - (pad.top + c.clientHeight - pad.bottom) / 2) / welt;
-    map.easeTo({ center: new maplibregl.MercatorCoordinate(mitte.x + dx, mitte.y + dy).toLngLat(), zoom: z, duration: 700 });
+    const [bb, text] = stufen[stufen.length - 1];
+    zentriere(bb);
+    toast(mitGebiet ? text : 'Die Flächen reichen über den Ausschnitt hinaus.');
   }
 
   function waehle(is, opt = {}) {
@@ -348,7 +361,7 @@
     }
     if (f) {
       if (f.note) h += `<p class="hint">${esc(f.note)}</p>`;
-      h += '<h3>Firmen</h3>' + f.teile.map(t => `<div class="row" style="cursor:default"><span class="farbe" style="background:${t.color}"></span><span class="txt"><div class="n">${esc(t.name)}</div><div class="s">${esc(t.bio)}</div></span></div>`).join('');
+      h += '<h3>Firmen / Teilbetriebe</h3>' + f.teile.map(t => `<div class="row" style="cursor:default"><span class="farbe" style="background:${t.color}"></span><span class="txt"><div class="n">${esc(t.name)}</div>${t.sub ? `<div class="s">${esc(t.sub)}</div>` : ''}<div class="s">${esc(t.bio)}</div></span></div>`).join('');
     }
     h += namenBlock(is);
     h += '<h3>Hof (Betriebsstandort)</h3>' + is.map(i => {
@@ -388,14 +401,15 @@
     const f = b.favorit ? FAV[b.favorit] : null;
     const name = titel(b);
     const unter = [b.nr, name === b.adresse ? b.gemeinde : (b.adresse || b.gemeinde)].filter(Boolean).join(' · ');
-    return `<div class="row" data-i="${b.i}"><span class="farbe" style="background:${f ? f.color : 'var(--line)'}"></span><span class="txt"><div class="n">${esc(name)}</div><div class="s">${esc(unter)}</div></span><span class="ha">${zahl(b.ha, 1)} ha</span></div>`;
+    return `<div class="row" data-i="${b.i}" tabindex="0" role="button"><span class="farbe" style="background:${f ? f.color : 'var(--line)'}"></span><span class="txt"><div class="n">${esc(name)}</div><div class="s">${esc(unter)}</div></span><span class="ha">${zahl(b.ha, 1)} ha</span></div>`;
   }
+  function taste(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }
   function favListe() {
     $('#favs').innerHTML = META.favoriten.map(f => {
       const ha = f.i.reduce((a, i) => a + B[i].ha, 0);
-      return `<div class="row fav" data-fav="${f.key}"><span class="farbe" style="background:${f.color}"></span><span class="txt"><div class="n">${esc(f.name)}</div><div class="s">${esc(f.sub)}</div></span><span class="ha">${zahl(ha, 1)} ha</span></div>`;
+      return `<div class="row fav" data-fav="${f.key}" tabindex="0" role="button"><span class="farbe" style="background:${f.color}"></span><span class="txt"><div class="n">${esc(f.name)}</div><div class="s">${esc(f.sub)}</div></span><span class="ha">${zahl(ha, 1)} ha</span></div>`;
     }).join('');
-    $$('#favs .row').forEach(r => r.onclick = () => waehle(FAV[r.dataset.fav].i, { fav: r.dataset.fav, zoom: true }));
+    $$('#favs .row').forEach(r => { r.onclick = () => waehle(FAV[r.dataset.fav].i, { fav: r.dataset.fav, zoom: true }); r.onkeydown = taste; });
   }
   function liste() {
     const q = norm($('#q').value.trim());
@@ -404,7 +418,9 @@
       const woerter = q.split(/\s+/);
       const qk = q.replace(/\s+/g, '');
       treffer = B.filter(b => passt(b) && (woerter.every(w => b.such.includes(w)) || b.such.includes(qk)));
-      treffer.sort((a, b) => (b.favorit ? 1 : 0) - (a.favorit ? 1 : 0) || b.ha - a.ha);
+      const anfang = woerter.map(w => new RegExp('(?:^|[^a-z0-9])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+      const amAnfang = b => anfang.every(r => r.test(b.such));
+      treffer.sort((a, b) => (b.favorit ? 1 : 0) - (a.favorit ? 1 : 0) || amAnfang(b) - amAnfang(a) || b.ha - a.ha);
       titelText = `Suchergebnisse (${treffer.length})`;
     } else {
       const bb = map.getBounds();
@@ -416,11 +432,16 @@
     $('#liste-titel').textContent = titelText;
     $('#liste').innerHTML = treffer.length ? treffer.map(zeile).join('') : '<p class="hint">Keine Betriebe.</p>';
     $('#liste-mehr').textContent = mehr;
-    $$('#liste .row').forEach(r => r.onclick = () => waehle([+r.dataset.i], { zoom: true }));
+    $$('#liste .row').forEach(r => { r.onclick = () => waehle([+r.dataset.i], { zoom: true }); r.onkeydown = taste; });
   }
   let lt; const listeSpaeter = () => { clearTimeout(lt); lt = setTimeout(liste, 150); };
   const sucheGross = () => { if (SCHMAL() && zustand() === 'peek') blatt('full'); };
   $('#q').addEventListener('focus', sucheGross);
+  $('#q').addEventListener('keydown', e => {   // Enter öffnet den ersten Treffer
+    if (e.key !== 'Enter') return;
+    clearTimeout(lt); liste();
+    const r = $('#liste .row'); if (r) { e.preventDefault(); r.click(); }
+  });
   $('#q').addEventListener('input', () => { if ($('#side').classList.contains('detail')) schliessen(); tab('liste'); sucheGross(); listeSpaeter(); $('#panels').scrollTop = 0; });
   $$('#filter button').forEach(b => b.onclick = () => { filter = b.dataset.f; $$('#filter button').forEach(x => x.classList.toggle('on', x === b)); liste(); });
 
@@ -491,12 +512,18 @@
     if (/^#flaeche=/.test(location.hash)) { location.replace('betriebe.html' + location.hash); return; }
     const m = location.hash.match(/^#b=(.+)$/);
     if (!m) { if (SEL) schliessen(true); return; }
-    const k = decodeURIComponent(m[1]);
+    let k;
+    try { k = decodeURIComponent(m[1]); } catch (e) { toast('Link ungültig'); return; }
     if (FAV[k]) { waehle(FAV[k].i, { fav: k, zoom: true, ersetzen }); return; }
     const b = B.find(x => x.nr === k || nrKurz(x.nr) === nrKurz(k));
     if (b) waehle([b.i], { zoom: true, ersetzen }); else toast('Betrieb nicht gefunden: ' + k);
   }
   addEventListener('popstate', () => ausHash(true));
+  if (/^#b=/.test(location.hash) && !(history.state && history.state.fk)) {
+    const h = location.hash;
+    history.replaceState(null, '', location.pathname + location.search);
+    history.pushState({ fk: 1 }, '', h);
+  }
   ausHash(true);
   window.feldkarte = { map, waehle, B };   // für Tests und die Konsole
 
