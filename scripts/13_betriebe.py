@@ -10,6 +10,7 @@ Schreibt work/betriebe.gpkg mit den Layern
   flaechen  alle Flächen mit Kulturgruppe, Gemeinde (räumlich, Gemeindestand swissBOUNDARIES3D) und Bio-Kennzeichen
 und work/betriebe.csv (dasselbe ohne Geometrie, für die Recherche).
 """
+import re
 
 import geopandas as gpd
 import numpy as np
@@ -101,7 +102,8 @@ for c in k.columns:
 
 def top_gemeinden(d):
     s = d.groupby(["gemeinde_name", "gemeinde_kt"]).ha.sum().sort_values(ascending=False)
-    return "; ".join(f"{n}{' (' + kt + ')' if kt else ''} {v:.1f} ha" for (n, kt), v in s.head(4).items())
+    # Kantonszusatz nur, wenn der amtliche Name ihn nicht schon trägt («Berg (TG)»)
+    return "; ".join(f"{n}{f' ({kt})' if kt and not n.endswith(')') else ''} {v:.1f} ha" for (n, kt), v in s.head(4).items())
 
 
 k["gemeinden"] = g.apply(top_gemeinden, include_groups=False)
@@ -152,9 +154,17 @@ print(f"Adresse aus den Kantonsdaten: {int(aus_daten.sum())}, nächste Gebäudea
       f"betriebsname mit Personenangaben nicht übernommen: {int(person.sum())}")
 
 # --- Produktionsstätten, Favoriten
-ps_txt = ps.groupby("betriebsnummer").apply(
-    lambda d: "; ".join(f"{a} {b}".strip() if not hat_person(b) else a for a, b in zip(d.ps_nr, d.ps_name.fillna(""))),
-    include_groups=False)
+# Öffentlich nur Nummer und Adresse (ps_name mit PLZ, ohne Personenangaben). Bezeichnungen ohne PLZ (in TG, ZG, SZ u. a.
+# z. B. «Pouletstall <Name>») kommen nur in den verschlüsselten Teil (14_namen.py).
+
+
+def ps_text(nr, name):
+    name = str(name or "").strip().lstrip(",").strip()
+    return f"{nr} {name}" if re.search(r"\b\d{4}\b", name) and not hat_person(name) else nr
+
+
+ps_txt = ps.groupby("betriebsnummer").apply(lambda d: "; ".join(ps_text(a, b) for a, b in zip(d.ps_nr, d.ps_name)),
+                                            include_groups=False)
 bt["produktionsstaetten"] = ps_txt.reindex(bt.index).fillna("")
 bt["favorit"] = [NR2FARM[nr]["key"] if nr in NR2FARM else "" for nr in bt.index]
 w = bt.to_crs(4326).geometry
