@@ -117,6 +117,20 @@ def kanton_gpkg(art, kt):
     return treffer[-1] if treffer else None
 
 
+def strasse_key(s):
+    """Strassenname vergleichbar machen: 'Schloss-Str.' und 'Schlossstrasse' -> 'schlossstr'."""
+    import re
+    s = re.sub(r"[^a-zäöüéèàç0-9]", "", str(s).lower())
+    return re.sub(r"str(asse)?$", "str", s.replace("strasse", "str"))
+
+
+def adresse_key(a):
+    """'Schloss-Str. 55, 8600 Dübendorf' -> 'schlossstr|55|8600' (leer, wenn keine Hausnummer)."""
+    import re
+    m = re.match(r"^(.*?)\s+(\d+[a-zA-Z]?(?:\.\d+)?)\s*,\s*(\d{4})\b", str(a))
+    return f"{strasse_key(m.group(1))}|{m.group(2).lower()}|{m.group(3)}" if m else ""
+
+
 def gemeinde(bfs):
     """BFS-Nummer -> (Gemeindename, Kanton). Unbekannte Nummern: ('BFS 1234', '')."""
     try:

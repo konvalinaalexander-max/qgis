@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import shapely
 
-from common import BASIS, BETRIEBE, CFG, FARMS, GROUPS, NR2FARM, REGION, WORK, kulturgruppe
+from common import BASIS, BETRIEBE, CFG, FARMS, GROUPS, NR2FARM, REGION, WORK, adresse_key, kulturgruppe, strasse_key
 
 KT_NR = {1: "ZH", 2: "BE", 3: "LU", 4: "UR", 5: "SZ", 6: "OW", 7: "NW", 8: "GL", 9: "ZG", 10: "FR", 11: "SO", 12: "BS",
          13: "BL", 14: "SH", 15: "AR", 16: "AI", 17: "SG", 18: "GR", 19: "AG", 20: "TG", 21: "TI", 22: "VD", 23: "VS",
@@ -31,6 +31,7 @@ fl = gpd.read_file(REGION, layer="flaechen")
 bt = gpd.read_file(REGION, layer="betriebe")
 ps = gpd.read_file(REGION, layer="produktionsstaetten")
 print(f"{len(bt)} Betriebe, {len(fl)} Flächen")
+bt["standort_quelle"] = "amtlich"
 # Favoriten: Standort an einer Produktionsstätte statt an der Wohnadresse (config «standort_ps»)
 for f in FARMS:
     p = ps[ps.ps_nr == f.get("standort_ps")]
@@ -38,6 +39,34 @@ for f in FARMS:
         k = bt.betriebsnummer == p.betriebsnummer.iloc[0]
         bt.loc[k, "geometry"] = p.geometry.iloc[0]
         bt.loc[k, "betriebsname"] = p.ps_name.iloc[0]
+        bt.loc[k, "standort_quelle"] = "Produktionsstätte"
+
+# --- amtliche Gebäudeadressen (Geocodierung, nächste Adresse)
+adr_csv = next(BASIS.glob("amtliches-gebaeudeadressverzeichnis_ch_2056.csv/*.csv"))
+adr = pd.read_csv(adr_csv, sep=";", dtype=str, encoding="utf-8-sig",
+                  usecols=["STN_LABEL", "ADR_NUMBER", "ZIP_LABEL", "COM_NAME", "ADR_STATUS", "ADR_EASTING", "ADR_NORTHING"])
+adr = adr[adr.ADR_STATUS == "real"]
+ax, ay = adr.ADR_EASTING.astype(float).values, adr.ADR_NORTHING.astype(float).values
+GEO = {f"{strasse_key(s_)}|{str(n).lower().replace(' ', '')}|{str(z)[:4]}": (x_, y_)
+       for s_, n, z, x_, y_ in zip(adr.STN_LABEL, adr.ADR_NUMBER, adr.ZIP_LABEL, ax, ay)}
+
+# Ungültige Standorte: einige Kantone liefern einen Platzhalterpunkt ausserhalb der Schweiz (z. B. 25 Betriebe auf
+# demselben Punkt in Frankreich). Ersatz: die Adresse aus betriebsname amtlich verorten, sonst die grösste eigene Fläche.
+pkt_fl = bt.set_index("betriebsnummer").geometry.reindex(fl.betriebsnummer).values
+d_eigen = pd.Series(shapely.distance(pkt_fl, fl.geometry.values), index=fl.betriebsnummer.values).groupby(level=0).min()
+x, y = bt.geometry.x, bt.geometry.y
+ungueltig = ~x.between(2480000, 2840000) | ~y.between(1070000, 1300000) | (bt.betriebsnummer.map(d_eigen) > 50000)
+groesste = fl.loc[fl.groupby("betriebsnummer").flaeche_m2.idxmax()].set_index("betriebsnummer").geometry
+for i in bt.index[ungueltig]:
+    k = adresse_key(bt.at[i, "betriebsname"])
+    if k in GEO:
+        bt.at[i, "geometry"] = shapely.Point(GEO[k])
+        bt.at[i, "standort_quelle"] = "Adresse (amtlich verortet)"
+    else:
+        bt.at[i, "geometry"] = groesste[bt.at[i, "betriebsnummer"]].representative_point()
+        bt.at[i, "standort_quelle"] = "grösste eigene Fläche (Standort fehlt)"
+if ungueltig.any():
+    print(f"Ungültige Standorte ersetzt: {int(ungueltig.sum())} ({bt[ungueltig].standort_quelle.value_counts().to_dict()})")
 
 # --- Flächen: Kulturgruppe, Bio, Gemeinde (Lage des Flächenpunkts)
 fl["gruppe"] = [kulturgruppe(c, n) for c, n in zip(fl.lnf_code, fl.nutzung)]
@@ -100,11 +129,6 @@ bt["ha_2km"] = pd.Series(np.where(nah, fl.ha.values, 0), index=fl.betriebsnummer
     .groupby(level=0).sum().reindex(bt.index).round(2)
 
 # --- Adresse: ZH aus betriebsname, sonst nächste amtliche Gebäudeadresse
-adr_csv = next(BASIS.glob("amtliches-gebaeudeadressverzeichnis_ch_2056.csv/*.csv"))
-adr = pd.read_csv(adr_csv, sep=";", dtype=str, encoding="utf-8-sig",
-                  usecols=["STN_LABEL", "ADR_NUMBER", "ZIP_LABEL", "COM_NAME", "ADR_STATUS", "ADR_EASTING", "ADR_NORTHING"])
-adr = adr[adr.ADR_STATUS == "real"]
-ax, ay = adr.ADR_EASTING.astype(float).values, adr.ADR_NORTHING.astype(float).values
 baum = shapely.STRtree(shapely.points(ax, ay))
 idx, dist = baum.query_nearest(bt.geometry.values, max_distance=ADRESSE_MAX_M, return_distance=True, all_matches=False)
 gwr = pd.DataFrame({"i": idx[1], "d": dist}, index=bt.index[idx[0]])
@@ -136,7 +160,7 @@ w = bt.to_crs(4326).geometry
 bt["lon"], bt["lat"] = w.x.round(6), w.y.round(6)
 
 bt = bt.drop(columns=["kanton"]).reset_index()
-spalten = ["betriebsnummer", "kanton_sitz", "bezugsjahr", "favorit", "adresse", "adresse_quelle", "adresse_dist_m", "bezeichnung",
+spalten = ["betriebsnummer", "kanton_sitz", "bezugsjahr", "favorit", "standort_quelle", "adresse", "adresse_quelle", "adresse_dist_m", "bezeichnung",
            "gemeinde", "lon", "lat", "n_flaechen", "ha", "n_gebiet", "ha_gebiet", "ha_bio", "ha_2km", "dist_flaeche_m",
            "dist_schwerpunkt_m", "gemeinden", "kantone_flaechen", "produktionsstaetten", "bbox", "bur_nr"] + \
          [f"ha_g{i}" for i in range(len(GROUPS))]

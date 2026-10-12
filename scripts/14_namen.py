@@ -34,7 +34,7 @@ import numpy as np
 import pandas as pd
 import shapely
 
-from common import BASIS, BETRIEBE, CFG, FARMS, INTERN, REGION, teile
+from common import BASIS, BETRIEBE, CFG, FARMS, INTERN, REGION, adresse_key, strasse_key, teile
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--laden", action="store_true", help="Quellen neu abfragen (sonst data/intern/quellen/ verwenden)")
@@ -148,23 +148,12 @@ adr = pd.read_csv(next(BASIS.glob("amtliches-gebaeudeadressverzeichnis_ch_2056.c
 adr = adr[adr.ADR_STATUS == "real"]
 
 
-def strasse_key(s):
-    s = re.sub(r"[^a-zäöüéèàç0-9]", "", str(s).lower())
-    return re.sub(r"str(asse)?$", "str", s.replace("strasse", "str"))
-
-
 adr["key"] = [f"{strasse_key(s)}|{str(n).lower().replace(' ', '')}|{str(z)[:4]}"
               for s, n, z in zip(adr.STN_LABEL, adr.ADR_NUMBER, adr.ZIP_LABEL)]
 GEO = dict(zip(adr.key, zip(adr.ADR_EASTING.astype(float), adr.ADR_NORTHING.astype(float))))
 
 PUNKTE = shapely.STRtree(bt.geometry.values)
 PERSON_WORT = re.compile(r"(?i:\bc/o\b|\bfam\.|\bfamilie\b|\bdr\.|\bherr\b|\bfrau\b)|(?:^|\s)[A-ZÄÖÜ]\.\s?[A-ZÄÖÜ][a-zäöüé]")
-
-
-def adresse_key(a):
-    """'Schloss-Str. 55, 8600 Dübendorf' -> 'schlossstr|55|8600' (leer, wenn keine Hausnummer)."""
-    m = re.match(r"^(.*?)\s+(\d+[a-zA-Z]?(?:\.\d+)?)\s*,\s*(\d{4})\b", str(a))
-    return f"{strasse_key(m.group(1))}|{m.group(2).lower()}|{m.group(3)}" if m else ""
 
 
 ADR_BETRIEB = {}

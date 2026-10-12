@@ -57,11 +57,13 @@ def r2(x):
 
 
 AQ = {"Kantonsdaten (betriebsname)": 0, "nächste Gebäudeadresse (amtl. Verzeichnis)": 1}
+SQ = {"amtlich": 0, "Produktionsstätte": 1, "Adresse (amtlich verortet)": 2, "grösste eigene Fläche (Standort fehlt)": 3}
 eintraege = []
 for r in bt.itertuples():
     bbox = [round(float(v), 5) for v in r.bbox.split(",")]
     eintraege.append([
-        r.betriebsnummer, r.kanton_sitz, r.adresse or "", AQ.get(r.adresse_quelle, -1), int(r.adresse_dist_m), r.gemeinde or "",
+        r.betriebsnummer, r.kanton_sitz, SQ.get(r.standort_quelle, 0), r.adresse or "", AQ.get(r.adresse_quelle, -1),
+        int(r.adresse_dist_m), r.gemeinde or "",
         round(r.lon, 5), round(r.lat, 5), int(r.n_flaechen), r2(r.ha), r2(r.ha_gebiet), r2(r.ha_bio),
         [r2(getattr(r, f"ha_g{g}")) for g in range(len(GROUPS))], bbox, fav_von.get(IDX[r.betriebsnummer], ""),
         r.gemeinden or "", int(r.dist_flaeche_m) if pd.notna(r.dist_flaeche_m) else -1,
@@ -74,7 +76,7 @@ meta = {
     "gemeinden": gemeinden, "favoriten": favoriten,
     "gebiet": [round(v, 4) for v in gebiet.bounds], "puffer_km": CFG["region"]["puffer_km"],
     "kantone": sorted(set(bt.kanton_sitz)),
-    "felder": ["nr", "kt", "adresse", "aq", "ad", "gemeinde", "lon", "lat", "n", "ha", "ha_gebiet", "ha_bio",
+    "felder": ["nr", "kt", "sq", "adresse", "aq", "ad", "gemeinde", "lon", "lat", "n", "ha", "ha_gebiet", "ha_bio",
                "gruppen_ha", "bbox", "favorit", "gemeinden", "dist_flaeche_m", "produktionsstaetten", "jahr"],
 }
 (ZIEL / "betriebe.json").write_text(json.dumps({"meta": meta, "b": eintraege}, ensure_ascii=False, separators=(",", ":")),
@@ -83,6 +85,7 @@ meta = {
 # --- Vektorkacheln
 GRUPPE = {g: i for i, g in enumerate(GROUPS)}
 kacheln = gpd.GeoDataFrame({
+    "p": pd.RangeIndex(len(fl)).astype("int32"),
     "i": fl.betriebsnummer.map(IDX).astype("int32"),
     "g": fl.gruppe.map(GRUPPE).astype("int16"),
     "k": fl.lnf_code.astype("int32"),
@@ -107,7 +110,7 @@ def kacheln_schreiben(df, pfad, layer, zmin, zmax, simpl):
 
 pm, grob = ZIEL / "flaechen.pmtiles", ZIEL / "grob.pmtiles"
 # Fingerabdruck: Kachelattribut i = Reihenfolge der Betriebe; passt er nicht mehr, Kacheln neu bauen
-fingerabdruck = hashlib.sha256(("\n".join(bt.betriebsnummer) + f"|{len(fl)}|{fl.flaeche_m2.sum():.0f}").encode()).hexdigest()
+fingerabdruck = hashlib.sha256(("v2|" + "\n".join(bt.betriebsnummer) + f"|{len(fl)}|{fl.flaeche_m2.sum():.0f}").encode()).hexdigest()
 fp_datei = ZIEL / "kacheln.txt"
 if args.schnell and pm.exists() and grob.exists() and fp_datei.exists() and fp_datei.read_text().strip() != fingerabdruck:
     print("Kacheln passen nicht mehr zum Betriebsverzeichnis – werden neu gebaut")
@@ -117,7 +120,7 @@ else:
     # ab Zoom 12: alle Flächen mit Angaben; Zoom 10–11: Übersicht (Flächen ab 0.3 ha, vereinfacht, nur Betrieb + Kultur)
     kacheln_schreiben(kacheln, pm, "f", 12, 14, 1)
     gr = fl.flaeche_m2 >= 3000
-    kacheln_schreiben(gpd.GeoDataFrame(kacheln.loc[gr.values, ["i", "g"]], geometry=fl.geometry[gr].simplify(8).values, crs=2056)
+    kacheln_schreiben(gpd.GeoDataFrame(kacheln.loc[gr.values, ["p", "i", "g"]], geometry=fl.geometry[gr].simplify(8).values, crs=2056)
                       .to_crs(3857), grob, "f", 10, 11, 2)
     fp_datei.write_text(fingerabdruck + "\n")
 
@@ -143,7 +146,8 @@ if pw:
         a = pd.read_csv(WORK / "adr_anteile.csv")
         for z in a.itertuples():
             if z.betriebsnummer in IDX:
-                anteile.setdefault(IDX[z.betriebsnummer], []).append([namen_reg.index(z.region), z.ha, z.anteil])
+                r = -1 if z.region == "(keine)" else namen_reg.index(z.region)
+                anteile.setdefault(IDX[z.betriebsnummer], []).append([r, z.ha, z.anteil])
         intern["adr"] = {"regionen": namen_reg, "geojson": geo, "anteile": anteile}
     roh = gzip.compress(json.dumps(intern, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), 9)
     (ZIEL / "intern.bin").write_bytes(verschluesseln(roh, pw))
@@ -156,7 +160,9 @@ else:
 # --- Website-Dateien
 robots = "" if CFG["online"].get("suchmaschinen") else '<meta name="robots" content="noindex, nofollow">'
 html = (WEB / "karte" / "index.html").read_text(encoding="utf-8")
-html = html.replace("__TITEL__", CFG["titel"]).replace("__STAND__", CFG["stand"]).replace("<!--__ROBOTS__-->", robots)
+version = fingerabdruck[:12] + hashlib.sha256((WEB / "karte" / "app.js").read_bytes() + (WEB / "karte" / "app.css").read_bytes()).hexdigest()[:6]
+html = html.replace("__TITEL__", CFG["titel"]).replace("__STAND__", CFG["stand"]).replace("<!--__ROBOTS__-->", robots) \
+    .replace("__VERSION__", version)
 (ZIEL / "index.html").write_text(html, encoding="utf-8")
 for name in ("app.js", "app.css"):
     shutil.copy2(WEB / "karte" / name, ZIEL / name)

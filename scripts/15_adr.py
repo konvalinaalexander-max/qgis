@@ -123,6 +123,10 @@ j = gpd.sjoin(punkte, plz_reg[["ZIP_ID", "region", "geometry"]], how="inner", pr
 j = j[~pd.Index(list(zip(j.index, j.region))).duplicated()]
 ha_reg = j.groupby(["betriebsnummer", "region"]).flaeche_m2.sum().div(1e4).rename("ha").reset_index()
 total = fl.groupby("betriebsnummer").flaeche_m2.sum().div(1e4)
+# Fläche in keiner Region (Region «(keine)»)
+in_einer = fl.index.isin(j.index)
+keine = fl[~in_einer].groupby("betriebsnummer").flaeche_m2.sum().div(1e4).rename("ha").reset_index().assign(region="(keine)")
+ha_reg = pd.concat([ha_reg, keine[keine.ha > 0]], ignore_index=True)
 ha_reg["anteil"] = (ha_reg.ha / ha_reg.betriebsnummer.map(total)).round(4)
 ha_reg["ha"] = ha_reg.ha.round(2)
 ha_reg.to_csv(WORK / "adr_anteile.csv", index=False)
