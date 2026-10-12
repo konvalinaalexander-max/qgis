@@ -10,22 +10,22 @@ Schreibt work/betriebe.gpkg mit den Layern
   flaechen  alle Flächen mit Kulturgruppe, Gemeinde (räumlich, Gemeindestand swissBOUNDARIES3D) und Bio-Kennzeichen
 und work/betriebe.csv (dasselbe ohne Geometrie, für die Recherche).
 """
-import re
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import shapely
 
-from common import BASIS, BETRIEBE, CFG, FARMS, GROUPS, NR2FARM, REGION, WORK, adresse_key, kulturgruppe, strasse_key
+from common import (BASIS, BETRIEBE, CFG, FARMS, GROUPS, NR2FARM, REGION, WORK, adresse_key, hat_person, kulturgruppe,
+                    strasse_key)
 
 KT_NR = {1: "ZH", 2: "BE", 3: "LU", 4: "UR", 5: "SZ", 6: "OW", 7: "NW", 8: "GL", 9: "ZG", 10: "FR", 11: "SO", 12: "BS",
          13: "BL", 14: "SH", 15: "AR", 16: "AI", 17: "SG", 18: "GR", 19: "AG", 20: "TG", 21: "TI", 22: "VD", 23: "VS",
          24: "NE", 25: "GE", 26: "JU"}
 ADRESSE_MAX_M = 60   # so weit darf die nächste Gebäudeadresse vom Betriebspunkt entfernt sein (sonst keine Adresse)
 STRASSE_NR = r"^[^,]*\d+[a-zA-Z]?(?:\.\d+)?\s*,\s*\d{4}\s+\S"      # «Strasse 12, 8000 Ort»
-# Personenangaben vor der PLZ: Wörter (ohne Gross-/Kleinschreibung) oder Initiale + Name («J. Muster»)
-PERSON = r"(?i:\bc/o\b|\bfam\.|\bfamilie\b|\bdr\.|\bherr\b|\bfrau\b)|(?:^|[\s,(])[A-ZÄÖÜ]\.\s?[A-ZÄÖÜ][a-zäöüé]"
+# Personenangaben (c/o, z. Hd., Familie, Herr/Frau, Initiale + Name, Vorname): common.hat_person(), geprüft wird der
+# ganze Text vor der letzten PLZ
 
 fl = gpd.read_file(REGION, layer="flaechen")
 bt = gpd.read_file(REGION, layer="betriebe")
@@ -136,9 +136,10 @@ gwr = gwr[~gwr.index.duplicated()]
 a = adr.iloc[gwr.i.values]
 gwr["adresse"] = (a.STN_LABEL.fillna("") + " " + a.ADR_NUMBER.fillna("")).str.strip().values + ", " + a.ZIP_LABEL.fillna("").values
 # betriebsname: in ZH immer eine Adresse, in AG/SG/AR u. a. meist; in TG/SH ein Hof- oder Flurname. Einträge mit
-# Personenangaben (c/o, Familie, Initialen …) werden nicht übernommen – dann die amtliche Gebäudeadresse am Punkt.
+# Personenangaben (c/o, z. Hd., Familie, Initialen, Vornamen …) werden nicht übernommen – dann die amtliche
+# Gebäudeadresse am Punkt.
 name = bt.betriebsname.fillna("").str.strip()
-person = name.str.replace(r",?\s*\b\d{4}\b.*$", "", regex=True).str.contains(PERSON)  # nur der Teil vor der PLZ
+person = name.map(hat_person)
 mit_plz = name.str.contains(r"\b\d{4}\b")
 aus_daten = ~person & (name.str.match(STRASSE_NR) | ((bt.kanton == "ZH") & mit_plz))
 gwr_adr = gwr.adresse.reindex(bt.index).fillna("")
@@ -152,8 +153,8 @@ print(f"Adresse aus den Kantonsdaten: {int(aus_daten.sum())}, nächste Gebäudea
 
 # --- Produktionsstätten, Favoriten
 ps_txt = ps.groupby("betriebsnummer").apply(
-    lambda d: "; ".join(f"{a} {b}".strip() if not re.search(PERSON, re.sub(r",?\s*\b\d{4}\b.*$", "", b)) else a
-                        for a, b in zip(d.ps_nr, d.ps_name.fillna(""))), include_groups=False)
+    lambda d: "; ".join(f"{a} {b}".strip() if not hat_person(b) else a for a, b in zip(d.ps_nr, d.ps_name.fillna(""))),
+    include_groups=False)
 bt["produktionsstaetten"] = ps_txt.reindex(bt.index).fillna("")
 bt["favorit"] = [NR2FARM[nr]["key"] if nr in NR2FARM else "" for nr in bt.index]
 w = bt.to_crs(4326).geometry

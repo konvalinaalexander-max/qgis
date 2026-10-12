@@ -10,10 +10,12 @@ Nur Quellen, in denen sich Betriebe selbst oder von Gesetzes wegen öffentlich a
 Nicht verwendet: UID-Register als Massenabfrage (UIDG Art. 11: öffentliche Abfragen nur zu einzelnen Einheiten),
 private Telefonbucheinträge, Angaben zu Familienmitgliedern.
 
-Ohne --personen (Standard) nur Namen, die keine Personendaten sind: Firmen mit eigener Rechtspersönlichkeit (AG, GmbH,
-Genossenschaft, Verein, Stiftung), Hofnamen und die Bezeichnung in den Kantonsdaten. Mit --personen zusätzlich
-Einzelunternehmen und Kollektivgesellschaften aus dem Handelsregister, die Hofsuche SBV (Betriebsleitung) und die
-Betreiber von Hofläden (OSM) – nur auf ausdrücklichen Wunsch (Personendaten).
+Ohne --personen (Standard) keine Namen natürlicher Personen als solche: Firmen mit eigener Rechtspersönlichkeit (AG,
+GmbH, Genossenschaft, Verein, Stiftung), Hofnamen (OSM) und die Bezeichnung in den Kantonsdaten, beide ohne Einträge mit
+Personenangaben (c/o, z. Hd., Familie, Herr/Frau, Initiale + Name, Vorname; common.hat_person). Firmen- und Hofnamen
+können trotzdem Familiennamen enthalten («Hof Muster»). Mit --personen zusätzlich Einzelunternehmen und
+Kollektivgesellschaften aus dem Handelsregister, die Hofsuche SBV (Betriebsleitung), die Betreiber von Hofläden (OSM),
+Bezeichnungen mit Personenangaben und die Web-Recherche – nur auf ausdrücklichen Wunsch (Personendaten).
 
 Zuordnung über die Lage: Eintrag (Koordinate bzw. amtlich geocodierte Adresse) beim amtlichen Betriebspunkt
 (Abstand in Metern). Mehrere Betriebe am selben Punkt -> alle bekommen den Eintrag, Sicherheit «unsicher».
@@ -34,7 +36,7 @@ import numpy as np
 import pandas as pd
 import shapely
 
-from common import BASIS, BETRIEBE, CFG, FARMS, INTERN, REGION, adresse_key, strasse_key, teile
+from common import BASIS, BETRIEBE, CFG, FARMS, INTERN, REGION, adresse_key, hat_person, strasse_key, teile
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--laden", action="store_true", help="Quellen neu abfragen (sonst data/intern/quellen/ verwenden)")
@@ -126,9 +128,11 @@ out center tags;"""
 bt = gpd.read_file(BETRIEBE, layer="betriebe")
 gebiet = gpd.read_file(REGION, layer="gebiet").set_index("name").geometry
 g4326 = gpd.GeoSeries([gebiet["gebiet"]], crs=2056).to_crs(4326).iloc[0]
-if args.laden or not (Q / "hr_lindas.csv").exists() or not (Q / "osm.json").exists():
+GEKUERZT = Q / "gekuerzt.txt"  # ein Standardlauf hat die Abzüge auf Daten ohne Personenangaben gekürzt
+if args.laden or not (Q / "hr_lindas.csv").exists() or not (Q / "osm.json").exists() or (args.personen and GEKUERZT.exists()):
     laden_hr()
     laden_osm(g4326)
+    GEKUERZT.unlink(missing_ok=True)
 if args.personen and (args.laden or not (Q / "sbv_hofsuche.json").exists()):
     laden_sbv(g4326)
 JURISTISCH = ("0106", "0107", "0108", "0109", "0110")  # AG, GmbH, Genossenschaft, Verein, Stiftung
@@ -141,6 +145,7 @@ if not args.personen:
         _e.get("tags", {}).pop("operator", None)
     (Q / "osm.json").write_text(json.dumps(_osm, ensure_ascii=False), encoding="utf-8")
     (Q / "sbv_hofsuche.json").unlink(missing_ok=True)
+    GEKUERZT.write_text("Abzüge ohne Personendaten (Standardlauf von 14_namen.py); --personen lädt sie neu.\n", encoding="utf-8")
 
 # --- amtliche Gebäudeadressen (zum Geocodieren der Registeradressen)
 adr = pd.read_csv(next(BASIS.glob("amtliches-gebaeudeadressverzeichnis_ch_2056.csv/*.csv")), sep=";", dtype=str,
@@ -153,7 +158,6 @@ adr["key"] = [f"{strasse_key(s)}|{str(n).lower().replace(' ', '')}|{str(z)[:4]}"
 GEO = dict(zip(adr.key, zip(adr.ADR_EASTING.astype(float), adr.ADR_NORTHING.astype(float))))
 
 PUNKTE = shapely.STRtree(bt.geometry.values)
-PERSON_WORT = re.compile(r"(?i:\bc/o\b|\bfam\.|\bfamilie\b|\bdr\.|\bherr\b|\bfrau\b)|(?:^|\s)[A-ZÄÖÜ]\.\s?[A-ZÄÖÜ][a-zäöüé]")
 
 
 ADR_BETRIEB = {}
@@ -196,7 +200,7 @@ def verteilen(treffer, sicher_m, adr_key="", **kw):
         eintrag(i, abstand=d, sicherheit=s, **kw)
 
 
-# 1. Handelsregister: Adresse amtlich geocodieren, Betriebspunkt innerhalb 150 m
+# 1. Handelsregister: Adresse amtlich geocodieren, Betriebspunkt innerhalb 60 m (oder gleiche Adresse)
 LF = {"0101": "Einzelunternehmen", "0103": "Kollektivgesellschaft", "0104": "Kommanditgesellschaft", "0106": "AG",
       "0107": "GmbH", "0108": "Genossenschaft", "0109": "Verein", "0110": "Stiftung", "0111": "Zweigniederlassung"}
 hr = pd.read_csv(Q / "hr_lindas.csv", dtype=str).fillna("")
@@ -226,7 +230,7 @@ for r in hr.itertuples():
                   quelle="Handelsregister (Zefix, LINDAS)", url=f"https://www.zefix.ch/de/search/entity/list/firm/{ehra}")
 print(f"Handelsregister: {len(hr)} Firmen mit landwirtschaftlichem Namen/Zweck, {n_hr} an einer Hofadresse")
 
-# 2. Hofsuche SBV: Lage des Eintrags, Betriebspunkt innerhalb 200 m
+# 2. Hofsuche SBV: Lage des Eintrags, Betriebspunkt innerhalb 150 m (oder gleiche Adresse)
 sbv = json.loads((Q / "sbv_hofsuche.json").read_text(encoding="utf-8")) if args.personen else []
 pts = gpd.GeoSeries(gpd.points_from_xy([s["lon"] for s in sbv], [s["lat"] for s in sbv]), crs=4326).to_crs(2056)
 n_sbv = 0
@@ -265,7 +269,7 @@ for e in osm:
             verteilen(treffer, 80, art="hofladen", name=name, person="",
                       detail=f"{t.get('name', '')} {('– ' + t['description']) if t.get('description') else ''}".strip()[:200],
                       quelle="OpenStreetMap (Hofladen/Betreiber)", url=url)
-    elif t.get("name") and (args.personen or not PERSON_WORT.search(t["name"])):
+    elif t.get("name") and (args.personen or not hat_person(t["name"])):
         treffer = zuordnen(p.x, p.y, 150)
         if treffer:
             n_osm += 1
@@ -273,9 +277,13 @@ for e in osm:
                       quelle="OpenStreetMap (Hofname)", url=url)
 print(f"OpenStreetMap: {len(osm)} Objekte, {n_osm} bei einem Betriebspunkt")
 
-# 4. Bezeichnung in den Kantonsdaten (nicht ZH: dort ist es die Adresse)
-for i, (b, kt) in enumerate(zip(bt.bezeichnung.fillna(""), bt.kanton_sitz)):
-    if b and not re.search(r"\b\d{4}\b", b) and (args.personen or not PERSON_WORT.search(b)):
+# 4. Bezeichnung in den Kantonsdaten: betriebsname ohne PLZ (mit PLZ ist es eine Adresse), ohne --personen nur ohne
+#    Personenangaben. Aus region.gpkg, weil 13_betriebe.py Bezeichnungen mit Personenangaben gar nicht übernimmt.
+roh = gpd.read_file(REGION, layer="betriebe", columns=["betriebsnummer", "betriebsname"], ignore_geometry=True) \
+    .set_index("betriebsnummer").betriebsname.fillna("").str.strip()
+for i, (nr, kt) in enumerate(zip(bt.betriebsnummer, bt.kanton_sitz)):
+    b = roh.get(nr, "")
+    if b and not re.search(r"\b\d{4}\b", b) and (args.personen or not hat_person(b)):
         eintrag(i, "bezeichnung", b, "", "Bezeichnung des Betriebs in den Kantonsdaten", f"Kantonsdaten {kt} (betriebsname)",
                 "", 0, "amtlich")
 

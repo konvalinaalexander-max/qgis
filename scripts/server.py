@@ -1,4 +1,4 @@
-"""Website lokal ansehen: kleiner Webserver mit Range-Anfragen (nötig für die Vektorkacheln flaechen.pmtiles).
+"""Website lokal ansehen: kleiner Webserver mit Range-Anfragen (nötig für die Vektorkacheln *.pmtiles).
 
 Aufruf: python3 scripts/server.py [Ordner] [--port 8000] [--netz]
 Standard-Ordner: work/online (Schritt 6), sonst output/karte. Dann im Browser http://localhost:8000 öffnen.

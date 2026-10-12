@@ -88,7 +88,7 @@ FELDKARTE_PASSWORT=… ./run_region.sh   # dasselbe mit verschlüsseltem interne
 | 13 | `scripts/13_betriebe.py` | `work/region.gpkg`, `data/basis/` | `work/betriebe.gpkg`, `work/betriebe.csv` |
 | 14 | `scripts/14_namen.py` (`--personen` nur auf Wunsch) | Handelsregister (LINDAS), OSM | `data/intern/namen.csv` (vertraulich) |
 | 15 | `scripts/15_adr.py` | `data/intern/adr/*.xls(x)` (vertraulich), PLZ-Gebiete | `work/adr.gpkg`, `work/adr_anteile.csv` (vertraulich) |
-| 16 | `scripts/16_karte.py` (`--schnell`: Kacheln behalten) | Schritte 13–15, `web/karte/` | `output/karte/` |
+| 16 | `scripts/16_karte.py` (`--schnell`: Kacheln nur bei geändertem Inhalt neu) | Schritte 13–15, `web/karte/` | `output/karte/` |
 | – | `scripts/intern.py sichern\|entpacken` | `data/intern/` | `data/intern.enc` (verschlüsselt) |
 | – | `scripts/pruefen_qgis.py` (PyQGIS) | `output/*.qgz` | Prüfausgabe |
 | – | `scripts/screenshots.py` (optional, Playwright) | `output/*.html` | `work/screenshots/`; mit `--vorschau` auch `web/online/vorschau.jpg` |
@@ -199,9 +199,12 @@ Treffer melden (z. B. ZH0197/ 1/  1: 77 BE / 90.61 ha; TG39621: 9 BE / 10.17 ha)
 ## Technische Eigenheiten
 
 - **Karte der Region** (`web/karte/`, Startseite online): MapLibre GL + PMTiles statt einer einzigen HTML-Datei.
-  `grob.pmtiles` (Zoom 10–11, Flächen ab 0.3 ha) und `flaechen.pmtiles` (Zoom 12–14, alle Flächen mit Nutzung, Fläche,
-  Gemeinde, Bio); unter Zoom 10 keine Flächen. Braucht einen Webserver mit Range-Anfragen (GitHub Pages oder
-  `scripts/server.py`; `python3 -m http.server` geht nicht). Kachelattribut `i` = Index in `betriebe.json`.
+  `grob-<Kennung>.pmtiles` (Zoom 10–11, Flächen ab 0.3 ha) und `flaechen-<Kennung>.pmtiles` (Zoom 12–14, alle Flächen
+  mit Nutzung, Fläche, Gemeinde, Bio); unter Zoom 10 keine Flächen. Kennung = Fingerabdruck des Inhalts (auch in
+  index.html und betriebe.json; alte Seiten melden nach einem Update «Neu laden»). Braucht einen Webserver mit
+  Range-Anfragen (GitHub Pages oder `scripts/server.py`; `python3 -m http.server` geht nicht). Kachelattribut `i` =
+  Index in `betriebe.json`, `p` = Fläche. Personenfilter für Adressen und Namen: `common.hat_person()` (c/o, z. Hd.,
+  Familie, Herr/Frau, Initiale + Name, Vorname aus der Schweizer Vornamenliste des Pakets gender-guesser).
   Link auf einen Betrieb `#b=<Betriebsnummer>`, Favorit `#b=imhof`. `intern.bin`: gzip + AES-256-GCM, PBKDF2-SHA256
   600'000 Runden; der Browser entschlüsselt nach Passworteingabe (Tab Info), Schlüssel nur für die Sitzung oder auf
   Wunsch 30 Tage. `betriebe.json` enthält keine Namen (auch nicht die Bezeichnung der Kantonsdaten).

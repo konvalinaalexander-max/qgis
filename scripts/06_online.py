@@ -5,7 +5,8 @@ Schreibt work/online/ (Standard) bzw. den Ordner aus --out:
   index.html             die Karte aller Betriebe der Region (output/karte/, Schritt 16) – fehlt sie, die Website
                          der Favoriten; ergänzt um Angaben für Handy-Startbildschirm und Link-Vorschau
   betriebe.html          die Detailansicht der Favoriten (Schritt 2), wenn die Karte der Region die Startseite ist
-  flaechen.pmtiles, grob.pmtiles, betriebe.json, app.js, app.css, vendor/, intern.bin (verschlüsselt, falls gebaut)
+  flaechen-<Kennung>.pmtiles, grob-<Kennung>.pmtiles, betriebe.json, app.js, app.css, vendor/, intern.bin (verschlüsselt,
+                         falls gebaut)
   manifest.webmanifest   App-Name und Icons («Zum Home-Bildschirm»)
   icon-*.png, apple-touch-icon.png, vorschau.jpg (falls vorhanden)
 
@@ -67,7 +68,8 @@ if url:
 html = html.replace("<!--__ONLINE__-->", "\n".join(kopf))
 if mit_karte:
     # nur diese Dateien veröffentlichen (keine Zwischendateien abgebrochener Läufe)
-    erlaubt = [karte / n for n in ("app.js", "app.css", "betriebe.json", "flaechen.pmtiles", "grob.pmtiles", "intern.bin")]
+    erlaubt = [karte / n for n in ("app.js", "app.css", "betriebe.json", "intern.bin")]
+    erlaubt += sorted(p for p in karte.glob("*.pmtiles") if p.name.startswith(("flaechen-", "grob-")) and ".tmp" not in p.name)
     erlaubt += sorted((karte / "vendor").glob("*"))
     for p in erlaubt:
         if p.is_file():

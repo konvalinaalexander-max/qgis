@@ -5,9 +5,11 @@ Liest  work/betriebe.gpkg (Schritt 13), web/karte/ (Vorlage), web/vendor/ (MapLi
 Schreibt output/karte/
   index.html, app.js, app.css, vendor/   die Website (statisch, braucht einen Webserver mit Range-Anfragen:
                                          GitHub Pages oder lokal scripts/server.py)
-  flaechen.pmtiles   Vektorkacheln aller Flächen der Betriebe, Zoom 12–14 (Layer «f»: i Betrieb, g Kulturgruppe,
-                     k LNF-Code, m m², b Bio, gm Gemeinde)
-  grob.pmtiles       Übersicht für Zoom 10–11: Flächen ab 0.3 ha, vereinfacht (i, g)
+  flaechen-<Kennung>.pmtiles   Vektorkacheln aller Flächen der Betriebe, Zoom 12–14 (Layer «f»: p Fläche, i Betrieb,
+                     g Kulturgruppe, k LNF-Code, m m², b Bio, gm Gemeinde)
+  grob-<Kennung>.pmtiles       Übersicht für Zoom 10–11: Flächen ab 0.3 ha, vereinfacht (p, i, g)
+                     Kennung = Fingerabdruck des Inhalts (auch in index.html und betriebe.json): Kacheln und
+                     betriebe.json passen so immer zusammen, ältere Kacheldateien werden gelöscht.
   betriebe.json      ein Eintrag je Betrieb: Betriebsnummer, Adresse (ohne Personenangaben), Gemeinde, Kennzahlen,
                      Favoriten aus der Konfiguration – keine Namen (auch nicht die Bezeichnung der Kantonsdaten)
   intern.bin         verschlüsselt (scripts/intern.py): Namen mit Quellen (inkl. Bezeichnung der Kantonsdaten) und die
@@ -22,6 +24,7 @@ import shutil
 import geopandas as gpd
 import pandas as pd
 import pyogrio
+import shapely
 
 from common import BETRIEBE, CFG, FARMS, GROUP_COLORS, GROUPS, INTERN, OUT, WEB, WORK, teile
 from intern import verschluesseln
@@ -29,7 +32,7 @@ from intern import verschluesseln
 import argparse
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--schnell", action="store_true", help="vorhandene Vektorkacheln behalten (nur Website-Dateien neu)")
+ap.add_argument("--schnell", action="store_true", help="Vektorkacheln nicht neu schreiben, wenn sie zum Inhalt passen")
 args = ap.parse_args()
 ZIEL = OUT / "karte"
 (ZIEL / "vendor").mkdir(parents=True, exist_ok=True)
@@ -79,8 +82,6 @@ meta = {
     "felder": ["nr", "kt", "sq", "adresse", "aq", "ad", "gemeinde", "lon", "lat", "n", "ha", "ha_gebiet", "ha_bio",
                "gruppen_ha", "bbox", "favorit", "gemeinden", "dist_flaeche_m", "produktionsstaetten", "jahr"],
 }
-(ZIEL / "betriebe.json").write_text(json.dumps({"meta": meta, "b": eintraege}, ensure_ascii=False, separators=(",", ":")),
-                                    encoding="utf-8")
 
 # --- Vektorkacheln
 GRUPPE = {g: i for i, g in enumerate(GROUPS)}
@@ -94,35 +95,48 @@ kacheln = gpd.GeoDataFrame({
     "gm": fl.gemeinde_name.map(GEM).fillna(-1).astype("int32"),
 }, geometry=fl.geometry.values, crs=2056).to_crs(3857)
 def kacheln_schreiben(df, pfad, layer, zmin, zmax, simpl):
-    pfad.unlink(missing_ok=True)
-    pyogrio.write_dataframe(df, pfad, layer=layer, driver="PMTiles",
+    tmp = pfad.with_name(pfad.stem + ".tmp.pmtiles")  # erst nach Erfolg umbenennen (--schnell prüft nur den Namen)
+    tmp.unlink(missing_ok=True)
+    pyogrio.write_dataframe(df, tmp, layer=layer, driver="PMTiles",
                             dataset_options={"MINZOOM": str(zmin), "MAXZOOM": str(zmax), "NAME": "Feldkarte Flächen",
                                              "DESCRIPTION": f"Landwirtschaftliche Kulturflächen {CFG['region']['bezugsjahr']}, geodienste.ch",
                                              "MAX_SIZE": "2000000", "MAX_FEATURES": "400000", "SIMPLIFICATION": str(simpl),
                                              "SIMPLIFICATION_MAX_ZOOM": "0.5"})
-    mb = pfad.stat().st_size / 1e6
+    mb = tmp.stat().st_size / 1e6
     print(f"Vektorkacheln {pfad.name}: {len(df)} Flächen, Zoom {zmin}–{zmax} ({mb:.1f} MB)")
     if mb > 95:
         raise SystemExit(f"{pfad.name} ist grösser als 95 MB – GitHub nimmt höchstens 100 MB je Datei an (Gebiet verkleinern).")
     if mb > 50:
         print(f"WARNUNG: {pfad.name} > 50 MB (GitHub warnt ab 50 MB, Grenze 100 MB)")
+    tmp.replace(pfad)
 
 
-pm, grob = ZIEL / "flaechen.pmtiles", ZIEL / "grob.pmtiles"
-# Fingerabdruck: Kachelattribut i = Reihenfolge der Betriebe; passt er nicht mehr, Kacheln neu bauen
-fingerabdruck = hashlib.sha256(("v2|" + "\n".join(bt.betriebsnummer) + f"|{len(fl)}|{fl.flaeche_m2.sum():.0f}").encode()).hexdigest()
-fp_datei = ZIEL / "kacheln.txt"
-if args.schnell and pm.exists() and grob.exists() and fp_datei.exists() and fp_datei.read_text().strip() != fingerabdruck:
-    print("Kacheln passen nicht mehr zum Betriebsverzeichnis – werden neu gebaut")
-if args.schnell and pm.exists() and grob.exists() and fp_datei.exists() and fp_datei.read_text().strip() == fingerabdruck:
-    print(f"Vektorkacheln behalten ({(pm.stat().st_size + grob.stat().st_size) / 1e6:.1f} MB)")
+# Kennung der Kacheln: Fingerabdruck von allem, was in ihnen steht (Attribute, Geometrien), und von dem, worauf ihre
+# Zahlen zeigen (i = Reihenfolge der Betriebe, gm = Gemeinden, g = Kulturgruppen). Sie steht im Dateinamen: Eine noch
+# offene Seite mit älterer betriebe.json findet nach einem Update ihre Kacheln nicht mehr und meldet «Neu laden»,
+# statt still fremde Betriebe zu zeigen. KACHELN_V erhöhen, wenn sich die Kachel-Parameter unten ändern.
+KACHELN_V = "3|f 12-14 s1|g 10-11 s2 >=3000 m2 v8"
+h = hashlib.sha256(KACHELN_V.encode())
+h.update(json.dumps([list(bt.betriebsnummer), gemeinden, GROUPS], ensure_ascii=False).encode())
+h.update(pd.util.hash_pandas_object(pd.DataFrame(kacheln.drop(columns="geometry")), index=False).values.tobytes())
+h.update(hashlib.sha256(b"".join(shapely.to_wkb(fl.geometry.values))).digest())
+KENNUNG = h.hexdigest()[:12]
+pm, grob = ZIEL / f"flaechen-{KENNUNG}.pmtiles", ZIEL / f"grob-{KENNUNG}.pmtiles"
+if args.schnell and pm.exists() and grob.exists():
+    print(f"Vektorkacheln passen zum Inhalt, behalten ({(pm.stat().st_size + grob.stat().st_size) / 1e6:.1f} MB)")
 else:
     # ab Zoom 12: alle Flächen mit Angaben; Zoom 10–11: Übersicht (Flächen ab 0.3 ha, vereinfacht, nur Betrieb + Kultur)
     kacheln_schreiben(kacheln, pm, "f", 12, 14, 1)
     gr = fl.flaeche_m2 >= 3000
     kacheln_schreiben(gpd.GeoDataFrame(kacheln.loc[gr.values, ["p", "i", "g"]], geometry=fl.geometry[gr].simplify(8).values, crs=2056)
                       .to_crs(3857), grob, "f", 10, 11, 2)
-    fp_datei.write_text(fingerabdruck + "\n")
+meta["kacheln"] = KENNUNG
+(ZIEL / "betriebe.json").write_text(json.dumps({"meta": meta, "b": eintraege}, ensure_ascii=False, separators=(",", ":")),
+                                    encoding="utf-8")
+for alt in [*ZIEL.glob("*.pmtiles"), ZIEL / "kacheln.txt"]:
+    if alt not in (pm, grob) and alt.exists():
+        alt.unlink()
+        print(f"alte Datei gelöscht: {alt.name}")
 
 # --- Vertraulicher Teil (Namen, interne Regionen)
 pw = os.environ.get("FELDKARTE_PASSWORT", "")
@@ -160,9 +174,9 @@ else:
 # --- Website-Dateien
 robots = "" if CFG["online"].get("suchmaschinen") else '<meta name="robots" content="noindex, nofollow">'
 html = (WEB / "karte" / "index.html").read_text(encoding="utf-8")
-version = fingerabdruck[:12] + hashlib.sha256((WEB / "karte" / "app.js").read_bytes() + (WEB / "karte" / "app.css").read_bytes()).hexdigest()[:6]
+version = KENNUNG + hashlib.sha256((WEB / "karte" / "app.js").read_bytes() + (WEB / "karte" / "app.css").read_bytes()).hexdigest()[:6]
 html = html.replace("__TITEL__", CFG["titel"]).replace("__STAND__", CFG["stand"]).replace("<!--__ROBOTS__-->", robots) \
-    .replace("__VERSION__", version)
+    .replace("__VERSION__", version).replace("__KACHELN__", KENNUNG)
 (ZIEL / "index.html").write_text(html, encoding="utf-8")
 for name in ("app.js", "app.css"):
     shutil.copy2(WEB / "karte" / name, ZIEL / name)

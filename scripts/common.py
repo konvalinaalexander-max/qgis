@@ -117,6 +117,43 @@ def kanton_gpkg(art, kt):
     return treffer[-1] if treffer else None
 
 
+# Personenangaben in Namen und Adressen (Kantonsdaten, OpenStreetMap): Wörter (ohne Gross-/Kleinschreibung) oder
+# Initiale + Name («J. Muster»); dazu Vornamen (vornamen()).
+PERSON = (r"(?i:\bc/o\b|\bz\.?\s?hd\b|\bzu\s?h[aä]nden\b|\bz\.\s?h\.|\bfam\.|\bfamilie\b|\bdr\.|\bherr\b|\bfrau\b)"
+          r"|(?:^|[\s,(])[A-ZÄÖÜ]\.\s?[A-ZÄÖÜ][a-zäöüé]")
+FLURWOERTER = {"Linde", "Linden", "Rose", "Rosen"}  # Vornamen, die hier als Hof-, Flur- oder Gasthofnamen vorkommen
+_VORNAMEN = []
+
+
+def vor_plz(s):
+    """Text vor der letzten PLZ: 'Postfach 1234 z. H. X, 8000 Ort' -> 'Postfach 1234 z. H. X'; ohne PLZ der ganze Text."""
+    import re
+    return re.sub(r",?\s*\b\d{4}\s+[^\d,][^,]*$", "", str(s)).strip()
+
+
+def vornamen(s):
+    """Wörter in s, die Vornamen sind (Schweizer Liste des Pakets gender-guesser, ohne FLURWOERTER).
+    Nur ganze, gross geschriebene Wörter: «Hans Muster» ja, «Hans-Muster-Weg» oder «Jakobstrasse» nein."""
+    import re
+    if not _VORNAMEN:
+        try:
+            import gender_guesser.detector as gg
+        except ImportError:
+            raise SystemExit("Paket gender-guesser fehlt (Personenfilter): .venv/bin/pip install -r requirements.txt")
+        _VORNAMEN.append(gg.Detector(case_sensitive=False))
+    d = _VORNAMEN[0]
+    return [w for w in re.split(r"[\s,;/()]+", str(s))
+            if re.fullmatch(r"[A-ZÄÖÜ][a-zäöüéèàç]{2,}", w) and w not in FLURWOERTER
+            and d.get_gender(w, "swiss") in ("male", "female", "mostly_male", "mostly_female")]
+
+
+def hat_person(s):
+    """True, wenn der Text vor der PLZ Personenangaben enthält (c/o, z. Hd., Familie, Herr/Frau, Initiale + Name, Vorname)."""
+    import re
+    t = vor_plz(s)
+    return bool(re.search(PERSON, t) or vornamen(t))
+
+
 def strasse_key(s):
     """Strassenname vergleichbar machen: 'Schloss-Str.' und 'Schlossstrasse' -> 'schlossstr'."""
     import re

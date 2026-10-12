@@ -1,6 +1,7 @@
 'use strict';
 // Feldkarte – alle Flächen im Gebiet; ein Klick zeigt den ganzen Betrieb (Hof, Flächen, Kulturen).
-// Daten: betriebe.json (öffentlich), flaechen.pmtiles + grob.pmtiles (Vektorkacheln), intern.bin (verschlüsselt).
+// Daten: betriebe.json (öffentlich), flaechen-<Kennung>.pmtiles + grob-<Kennung>.pmtiles (Vektorkacheln),
+// intern.bin (verschlüsselt).
 (async function () {
   const $ = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
@@ -18,12 +19,24 @@
   // Version (aus 16_karte.py): Daten, Kacheln und Programm immer aus demselben Bau laden
   const V = ($('meta[name="fk-version"]') || {}).content || '';
   const mitV = u => new URL(V ? `${u}?v=${V}` : u, location.href).href;
+  // Kacheln: Dateiname mit Kennung des Inhalts; nach einem Update findet eine alte Seite sie nicht mehr (→ Neu laden)
+  const K = ($('meta[name="fk-kacheln"]') || {}).content || '';
+  const kacheln = n => new URL(/^[0-9a-f]+$/.test(K) ? `${n}-${K}.pmtiles` : `${n}.pmtiles`, location.href).href;
+  function neuLaden(text) {
+    if ($('.ladefehler')) return;
+    const d = document.createElement('div');
+    d.className = 'ladefehler';
+    d.innerHTML = esc(text) + ' <button class="knopf">Neu laden</button>';
+    d.querySelector('button').onclick = () => location.reload();
+    document.body.appendChild(d);
+  }
 
   // ---------- Daten
   let D;
   try { D = await (await fetch(mitV('betriebe.json'))).json(); }
   catch (e) { document.body.innerHTML = '<p style="padding:20px">Daten konnten nicht geladen werden. Die Website über einen Webserver öffnen (lokal: <code>python3 scripts/server.py</code>).</p>'; return; }
   const META = D.meta, FELDER = META.felder;
+  if (K && META.kacheln && META.kacheln !== K) neuLaden('Die Karte wurde inzwischen aktualisiert.');
   const B = D.b.map((a, i) => { const o = { i }; FELDER.forEach((k, j) => { o[k] = a[j]; }); return o; });
   const GR = META.gruppen;                       // [[Name, Farbe], …]
   const FAV = Object.fromEntries(META.favoriten.map(f => [f.key, f]));
@@ -77,8 +90,8 @@
       luft: { type: 'raster', tiles: wmts('ch.swisstopo.swissimage'), tileSize: 256, maxzoom: 20, attribution: '© swisstopo' },
       parz: { type: 'raster', tileSize: 256, minzoom: 17, attribution: 'Parzellen © Kanton Zürich',
         tiles: ['https://wms.zh.ch/avwms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=true&LAYERS=Liegenschaften,OSNR_liegenschaften&STYLES=&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}'] },
-      f: { type: 'vector', url: 'pmtiles://' + mitV('flaechen.pmtiles'), attribution: quelle },
-      g: { type: 'vector', url: 'pmtiles://' + mitV('grob.pmtiles'), attribution: quelle },
+      f: { type: 'vector', url: 'pmtiles://' + kacheln('flaechen'), attribution: quelle },
+      g: { type: 'vector', url: 'pmtiles://' + kacheln('grob'), attribution: quelle },
     },
     layers: [
       { id: 'bg-grau', type: 'raster', source: 'grau' },
@@ -107,16 +120,10 @@
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
   map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), 'top-right');
   map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
-  let ladefehler = false;
   map.on('error', e => {
     const text = String(e.error && e.error.message || '');
-    if (ladefehler || !(e.sourceId === 'f' || e.sourceId === 'g' || /pmtiles|byte serving|content-length|range/i.test(text))) return;
-    ladefehler = true;
-    const d = document.createElement('div');
-    d.className = 'ladefehler';
-    d.innerHTML = 'Flächen konnten nicht geladen werden (Verbindung oder Webserver ohne Range-Anfragen). <button class="knopf">Neu laden</button>';
-    d.querySelector('button').onclick = () => location.reload();
-    document.body.appendChild(d);
+    if (!(e.sourceId === 'f' || e.sourceId === 'g' || /pmtiles|byte serving|content-length|range/i.test(text))) return;
+    neuLaden('Flächen konnten nicht geladen werden (Verbindung, Karte inzwischen aktualisiert oder Webserver ohne Range-Anfragen).');
   });
 
   // Panel-Höhe je Zustand (Handy): daraus das Polster – nicht aus der laufenden Animation
@@ -191,7 +198,19 @@
     for (const i of is) { const b = B[i].bbox; w = Math.min(w, b[0], B[i].lon); s = Math.min(s, b[1], B[i].lat); e = Math.max(e, b[2], B[i].lon); n = Math.max(n, b[3], B[i].lat); }
     return [[w, s], [e, n]];
   }
-  function zeigeAlle(st) { if (SEL) map.fitBounds(bboxVon(SEL.is), { padding: polster(st), maxZoom: 16, duration: 700 }); }
+  function zeigeAlle(st) {
+    if (!SEL) return;
+    const bb = bboxVon(SEL.is), pad = polster(st);
+    const cam = map.cameraForBounds(bb, { padding: pad, maxZoom: 16 });
+    if (cam && cam.zoom >= map.getMinZoom()) { map.fitBounds(bb, { padding: pad, maxZoom: 16, duration: 700 }); return; }
+    // grösser als die Karte bei minZoom: Mitte selbst setzen (fitBounds rechnet das Polster für den ungeklemmten Zoom
+    // und schiebt die Auswahl sonst über den Bildrand)
+    const z = map.getMinZoom(), welt = 512 * Math.pow(2, z), c = map.getContainer();
+    const mitte = maplibregl.MercatorCoordinate.fromLngLat([(bb[0][0] + bb[1][0]) / 2, (bb[0][1] + bb[1][1]) / 2]);
+    const dx = (c.clientWidth / 2 - (pad.left + c.clientWidth - pad.right) / 2) / welt;
+    const dy = (c.clientHeight / 2 - (pad.top + c.clientHeight - pad.bottom) / 2) / welt;
+    map.easeTo({ center: new maplibregl.MercatorCoordinate(mitte.x + dx, mitte.y + dy).toLngLat(), zoom: z, duration: 700 });
+  }
 
   function waehle(is, opt = {}) {
     const offen = !!SEL;

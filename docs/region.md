@@ -44,10 +44,12 @@ Geräte im Netz, z. B. das Handy im WLAN). Die Vektorkacheln (PMTiles) brauchen 
 
 - Hof = amtlicher Betriebsstandort (Layer `betrieb` der Kantonsdaten).
 - Adresse: der `betriebsname` der Kantonsdaten, wenn er eine Adresse ist (ZH immer, AG/SG/AR/AI meist im Format
-  «Strasse Nr, PLZ Ort»). Enthält er Personenangaben (c/o, Familie, Dr., Initialen; ZH: 92 Einträge), wird er nicht
-  übernommen. Dann und in TG/SH/SZ/ZG u. a. gilt die nächste amtliche Gebäudeadresse am Standort (swisstopo,
-  höchstens 60 m entfernt, sonst keine Adresse; Abstand in `adresse_dist_m`). Stand 2025: 5'896 Adressen aus den
-  Kantonsdaten, 4'754 nächste Gebäudeadresse, 35 ohne Adresse.
+  «Strasse Nr, PLZ Ort»). Enthält der Text vor der PLZ Personenangaben, wird er nicht übernommen (`common.hat_person`:
+  c/o, z. Hd., Familie, Fam., Herr, Frau, Dr., Initiale + Name, Vorname aus der Schweizer Vornamenliste des Pakets
+  gender-guesser, ausser Flurwörtern wie «Linde»; Stand 2025: 28 Einträge). Dann und in TG/SH/SZ/ZG u. a. gilt die
+  nächste amtliche Gebäudeadresse am Standort (swisstopo, höchstens 60 m entfernt, sonst keine Adresse; Abstand in
+  `adresse_dist_m`). Stand 2025: 5'889 Adressen aus den Kantonsdaten, 4'760 nächste Gebäudeadresse, 36 ohne Adresse.
+  Amtliche Strassennamen nach Personen («Hans-…-Strasse») sind keine Personenangaben und bleiben.
 - `bezeichnung`: der `betriebsname`, wenn er weder Adresse noch Personenangabe ist (Hof-, Flur- oder Firmenname, v. a. TG/SH).
 - Favoriten mit `standort_ps` (Gerber): Standort, Adresse und Gemeinde der Produktionsstätte statt der Wohnadresse
   (schon in `13_betriebe.py`).
@@ -71,12 +73,14 @@ Standard (ohne `--personen`): keine Namen natürlicher Personen als solche:
   (offene Daten des Bundes über LINDAS), deren Name oder Zweck landwirtschaftlich ist, an der Hofadresse (≤ 60 m);
   Firmennamen können Familiennamen enthalten;
 - Hofnamen aus OpenStreetMap (`place=farm` u. ä., ≤ 150 m) und die Bezeichnung in den Kantonsdaten – ohne Einträge
-  mit Personenangaben (Familie, Fam., c/o, Dr., Herr, Frau, Initiale + Name); Hofnamen wie «Hof Muster» enthalten
-  trotzdem oft einen Familiennamen.
+  mit Personenangaben (dieselbe Prüfung wie bei der Adresse, also auch «Vorname Name»); Hofnamen wie «Hof Muster»
+  enthalten trotzdem oft einen Familiennamen.
 Alle Namen stehen nur im verschlüsselten Teil, nie in den öffentlichen Dateien (auch die Bezeichnung der Kantonsdaten nicht).
 
 Mit `--personen` zusätzlich Einzelunternehmen und Kollektivgesellschaften aus dem Handelsregister, die Hofsuche des
-Schweizer Bauernverbands (freiwilliger Eintrag: Hofname, Betriebsleitung) und die Betreiber von Hofläden (OSM).
+Schweizer Bauernverbands (freiwilliger Eintrag: Hofname, Betriebsleitung), die Betreiber von Hofläden (OSM) und
+Bezeichnungen der Kantonsdaten mit Personenangaben. Ein späterer Lauf mit `--personen` lädt die im Standardlauf
+gekürzten Abzüge automatisch neu.
 Das sind Personendaten; nur auf ausdrücklichen Wunsch verwenden (Stand 12.10.2026: noch nicht freigegeben).
 Ebenso Ergebnisse einer Web-Recherche (`data/intern/namen_recherche.csv`). Ohne `--personen` bewahrt das Skript auch
 keine Personendaten auf: der Handelsregister-Abzug wird auf juristische Personen gekürzt, Betreiberangaben in den
@@ -114,8 +118,12 @@ Schlüssel hält sie standardmässig nur für die laufende Sitzung; mit «Auf di
 
 - MapLibre GL JS 4.7.1 + PMTiles 3.2.1 (in `web/vendor/`), Schriften IBM Plex lokal. Keine Daten von Dritten ausser den
   Hintergrundkarten (swisstopo) und den Parzellen ZH (WMS, ab Zoom 17).
-- Zwei Kachelsätze: `grob.pmtiles` (Zoom 10–11, Flächen ab 0.3 ha, vereinfacht) und `flaechen.pmtiles`
-  (Zoom 12–14, alle Flächen mit Nutzung, Fläche, Gemeinde, Bio). Darunter (Zoom < 10) keine Flächen.
+- Zwei Kachelsätze: `grob-<Kennung>.pmtiles` (Zoom 10–11, Flächen ab 0.3 ha, vereinfacht) und
+  `flaechen-<Kennung>.pmtiles` (Zoom 12–14, alle Flächen mit Nutzung, Fläche, Gemeinde, Bio). Darunter (Zoom < 10)
+  keine Flächen. Die Kennung ist ein Fingerabdruck des Inhalts (Attribute, Geometrien, Reihenfolge der Betriebe,
+  Gemeinden, Kulturgruppen) und steht auch in `index.html` und `betriebe.json`: Nach einem Update findet eine noch
+  offene alte Seite ihre Kacheln nicht mehr und bietet «Neu laden» an, statt Flächen falschen Betrieben zuzuordnen.
+  `16_karte.py --schnell` schreibt die Kacheln nur neu, wenn sich die Kennung geändert hat.
 - `betriebe.json`: ein Eintrag je Betrieb (Betriebsnummer, Adresse ohne Personenangaben mit Quelle `aq` und Abstand
   `ad`, Gemeinde, Kennzahlen; keine Namen). Link auf einen Betrieb: `#b=<Betriebsnummer>`,
   auf einen Favoriten `#b=imhof`.
