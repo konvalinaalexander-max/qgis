@@ -1,6 +1,6 @@
 'use strict';
 // Feldkarte – alle Flächen im Gebiet; ein Klick zeigt den ganzen Betrieb (Hof, Flächen, Kulturen).
-// Daten: betriebe.json (öffentlich), flaechen.pmtiles (Vektorkacheln), intern.bin (verschlüsselt: Namen, Regionen AdR).
+// Daten: betriebe.json (öffentlich), flaechen.pmtiles + grob.pmtiles (Vektorkacheln), intern.bin (verschlüsselt).
 (async function () {
   const $ = s => document.querySelector(s);
   const $$ = s => [...document.querySelectorAll(s)];
@@ -10,22 +10,25 @@
   const SCHMAL = () => matchMedia('(max-width: 760px)').matches;
   const SEL_FARBE = '#2563EB';
   const NEUTRAL = '#8DB255';
-  const adrAn = () => !!(document.getElementById('adr') && document.getElementById('adr').checked);
   const ADR_FARBEN = ['#D62828', '#1D4ED8', '#7C3AED', '#0F766E', '#B45309', '#BE185D', '#4D7C0F', '#0369A1', '#A16207'];
+  const adrAn = () => !!(document.getElementById('adr') && document.getElementById('adr').checked);
   const toast = (t, ms = 3500) => { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), ms); };
   const merke = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { /* privat */ } };
   const lies = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  // Version (aus 16_karte.py): Daten, Kacheln und Programm immer aus demselben Bau laden
+  const V = ($('meta[name="fk-version"]') || {}).content || '';
+  const mitV = u => new URL(V ? `${u}?v=${V}` : u, location.href).href;
 
   // ---------- Daten
   let D;
-  try { D = await (await fetch('betriebe.json')).json(); }
+  try { D = await (await fetch(mitV('betriebe.json'))).json(); }
   catch (e) { document.body.innerHTML = '<p style="padding:20px">Daten konnten nicht geladen werden. Die Website über einen Webserver öffnen (lokal: <code>python3 scripts/server.py</code>).</p>'; return; }
   const META = D.meta, FELDER = META.felder;
   const B = D.b.map((a, i) => { const o = { i }; FELDER.forEach((k, j) => { o[k] = a[j]; }); return o; });
   const GR = META.gruppen;                       // [[Name, Farbe], …]
   const FAV = Object.fromEntries(META.favoriten.map(f => [f.key, f]));
   const FAV_IDX = META.favoriten.flatMap(f => f.i);
-  let internDa = null;                            // intern.bin: null = noch nicht geladen, false = keine Datei
+  let internDa = null;                            // intern.bin: null = unbekannt, false = keine Datei, true = vorhanden
   let INTERN = null;                              // {namen:{i:[[art,name,person,detail,quelle,url,sicherheit,abstand]]}, adr:{…}}
   const nrKurz = nr => nr.replace(/\s+/g, '');
 
@@ -54,12 +57,18 @@
   // ---------- Karte
   const protokoll = new pmtiles.Protocol();
   maplibregl.addProtocol('pmtiles', protokoll.tile);
-  const PM = new URL('flaechen.pmtiles', location.href).href, PMG = new URL('grob.pmtiles', location.href).href;
   const zwei = id => [id, id + '-g'];          // je Ebene: Detail (ab Zoom 12) und Übersicht (Zoom 10–11)
   const wmts = l => [`https://wmts.geo.admin.ch/1.0.0/${l}/default/current/3857/{z}/{x}/{y}.jpeg`];
   const kultFarbe = ['match', ['get', 'g'], ...GR.flatMap((g, j) => [j, g[1]]), '#999999'];
   const favFarbe = ['match', ['get', 'i'], ...META.favoriten.flatMap(f => f.i.flatMap(i => [i, f.color])), '#000000'];
+  const favFilter = ['in', ['get', 'i'], ['literal', FAV_IDX]];
   const leer = ['in', ['get', 'i'], ['literal', []]];
+  const keineFlaeche = ['==', ['get', 'p'], -1];
+  const quelle = `Flächen: Kantone (geodienste.ch), Bezugsjahr ${META.jahr}`;
+  const beide = (id, typ, opt) => [
+    { id, type: typ, source: 'f', 'source-layer': 'f', minzoom: 12, ...opt },
+    { id: id + '-g', type: typ, source: 'g', 'source-layer': 'f', maxzoom: 12, ...opt },
+  ];
   const style = {
     version: 8,
     sources: {
@@ -68,30 +77,24 @@
       luft: { type: 'raster', tiles: wmts('ch.swisstopo.swissimage'), tileSize: 256, maxzoom: 20, attribution: '© swisstopo' },
       parz: { type: 'raster', tileSize: 256, minzoom: 17, attribution: 'Parzellen © Kanton Zürich',
         tiles: ['https://wms.zh.ch/avwms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=true&LAYERS=Liegenschaften,OSNR_liegenschaften&STYLES=&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}'] },
-      f: { type: 'vector', url: 'pmtiles://' + PM, attribution: `Flächen: Kantone (geodienste.ch), Bezugsjahr ${META.jahr}` },
-      g: { type: 'vector', url: 'pmtiles://' + PMG, attribution: `Flächen: Kantone (geodienste.ch), Bezugsjahr ${META.jahr}` },
-      klick: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+      f: { type: 'vector', url: 'pmtiles://' + mitV('flaechen.pmtiles'), attribution: quelle },
+      g: { type: 'vector', url: 'pmtiles://' + mitV('grob.pmtiles'), attribution: quelle },
     },
     layers: [
       { id: 'bg-grau', type: 'raster', source: 'grau' },
       { id: 'bg-farbe', type: 'raster', source: 'farbe', layout: { visibility: 'none' } },
       { id: 'bg-luft', type: 'raster', source: 'luft', layout: { visibility: 'none' } },
-      { id: 'f-fill', type: 'fill', source: 'f', 'source-layer': 'f', minzoom: 12, paint: { 'fill-color': NEUTRAL, 'fill-opacity': 0.4 } },
-      { id: 'f-fill-g', type: 'fill', source: 'g', 'source-layer': 'f', maxzoom: 12, paint: { 'fill-color': NEUTRAL, 'fill-opacity': 0.4 } },
+      ...beide('f-fill', 'fill', { paint: { 'fill-color': NEUTRAL, 'fill-opacity': 0.4 } }),
       { id: 'f-line', type: 'line', source: 'f', 'source-layer': 'f', minzoom: 12.5,
         paint: { 'line-color': '#34472C', 'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.4, 17, 1.2], 'line-opacity': 0.6 } },
-      { id: 'fav-fill', type: 'fill', source: 'f', 'source-layer': 'f', minzoom: 12, filter: ['in', ['get', 'i'], ['literal', FAV_IDX]],
-        layout: { visibility: 'none' }, paint: { 'fill-color': favFarbe, 'fill-opacity': 0.55 } },
-      { id: 'fav-fill-g', type: 'fill', source: 'g', 'source-layer': 'f', maxzoom: 12, filter: ['in', ['get', 'i'], ['literal', FAV_IDX]],
-        layout: { visibility: 'none' }, paint: { 'fill-color': favFarbe, 'fill-opacity': 0.55 } },
+      ...beide('fav-fill', 'fill', { filter: favFilter, layout: { visibility: 'none' }, paint: { 'fill-color': favFarbe, 'fill-opacity': 0.55 } }),
+      ...beide('fav-line', 'line', { filter: favFilter, layout: { visibility: 'none' }, paint: { 'line-color': favFarbe, 'line-width': 2.5 } }),
       { id: 'parz', type: 'raster', source: 'parz', layout: { visibility: 'none' } },
-      { id: 'sel-fill', type: 'fill', source: 'f', 'source-layer': 'f', minzoom: 12, filter: leer, paint: { 'fill-color': SEL_FARBE, 'fill-opacity': 0.62 } },
-      { id: 'sel-fill-g', type: 'fill', source: 'g', 'source-layer': 'f', maxzoom: 12, filter: leer, paint: { 'fill-color': SEL_FARBE, 'fill-opacity': 0.8 } },
-      { id: 'sel-line', type: 'line', source: 'f', 'source-layer': 'f', minzoom: 12, filter: leer,
-        paint: { 'line-color': SEL_FARBE, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.4, 16, 2.5] } },
-      { id: 'sel-line-g', type: 'line', source: 'g', 'source-layer': 'f', maxzoom: 12, filter: leer, paint: { 'line-color': SEL_FARBE, 'line-width': 1.2 } },
-      { id: 'klick-line', type: 'line', source: 'klick', paint: { 'line-color': '#FFFFFF', 'line-width': 3.5 } },
-      { id: 'klick-line2', type: 'line', source: 'klick', paint: { 'line-color': '#111111', 'line-width': 1.5, 'line-dasharray': [2, 1.5] } },
+      ...beide('sel-fill', 'fill', { filter: leer, paint: { 'fill-color': SEL_FARBE, 'fill-opacity': 0.62 } }),
+      ...beide('sel-line', 'line', { filter: leer, paint: { 'line-color': SEL_FARBE, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 16, 2.5] } }),
+      // angeklickte Fläche: über ihre Kennung p, damit der Umriss über Kachelgrenzen und Zoomstufen ganz bleibt
+      ...beide('klick-line', 'line', { filter: keineFlaeche, paint: { 'line-color': '#FFFFFF', 'line-width': 3.5 } }),
+      ...beide('klick-strich', 'line', { filter: keineFlaeche, paint: { 'line-color': '#111111', 'line-width': 1.5, 'line-dasharray': [2, 1.5] } }),
     ],
   };
   const g = META.gebiet;
@@ -99,17 +102,34 @@
     container: 'map', style, bounds: [[g[0], g[1]], [g[2], g[3]]], fitBoundsOptions: { padding: 20 },
     minZoom: 10, maxZoom: 20, dragRotate: false, pitchWithRotate: false, touchPitch: false, attributionControl: { compact: true },
   });
+  const stilBereit = new Promise(r => map.once('style.load', r));
   map.touchZoomRotate.disableRotation();
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
   map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), 'top-right');
   map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
-  map.on('error', e => { if (String(e.error && e.error.message).match(/pmtiles|range|Range/)) toast('Flächen konnten nicht geladen werden (Webserver ohne Range-Anfragen?).', 8000); });
-  const bereit = new Promise(r => map.on('load', r));
+  let ladefehler = false;
+  map.on('error', e => {
+    const text = String(e.error && e.error.message || '');
+    if (ladefehler || !(e.sourceId === 'f' || e.sourceId === 'g' || /pmtiles|byte serving|content-length|range/i.test(text))) return;
+    ladefehler = true;
+    const d = document.createElement('div');
+    d.className = 'ladefehler';
+    d.innerHTML = 'Flächen konnten nicht geladen werden (Verbindung oder Webserver ohne Range-Anfragen). <button class="knopf">Neu laden</button>';
+    d.querySelector('button').onclick = () => location.reload();
+    document.body.appendChild(d);
+  });
 
-  function polster() {
+  // Panel-Höhe je Zustand (Handy): daraus das Polster – nicht aus der laufenden Animation
+  const HOEHE = { peek: () => 112, half: () => innerHeight * 0.52, full: () => innerHeight - 56 };
+  const zustand = () => $('#side').dataset.state;
+  function polster(st) {
     if (!SCHMAL()) return { top: 40, bottom: 40, left: 40, right: 40 };
-    const h = $('#side').getBoundingClientRect().height;
-    return { top: 50, bottom: Math.min(h, innerHeight * 0.6) + 20, left: 24, right: 24 };
+    return { top: 50, bottom: Math.min(HOEHE[st || zustand()](), innerHeight * 0.6) + 20, left: 24, right: 24 };
+  }
+  function sichtbarMachen(px, st) {   // angetippten Punkt über die künftige Panelkante schieben
+    if (!SCHMAL()) return;
+    const oben = innerHeight - HOEHE[st]();
+    if (px.y > oben - 30) map.panBy([0, px.y - oben / 2], { duration: 400 });
   }
 
   // ---------- Darstellung: Hintergrund, Farbe, Favoriten, Parzellen
@@ -118,25 +138,25 @@
     const [a, b] = SEL ? (modus === 'kultur' ? [0.22, 0.3] : [0.12, 0.18]) : (modus === 'kultur' ? [0.6, 0.72] : [0.28, 0.4]);
     return ['interpolate', ['linear'], ['zoom'], 10, a, 14, b];
   }
+  function favSetzen() {
+    const an = $('#favon').checked;
+    // nach Kultur: Favoriten nur als kräftiger Rand, sonst mischen sich Favoriten- und Kulturfarben
+    for (const id of zwei('fav-fill')) map.setLayoutProperty(id, 'visibility', an && modus !== 'kultur' ? 'visible' : 'none');
+    for (const id of zwei('fav-line')) map.setLayoutProperty(id, 'visibility', an ? 'visible' : 'none');
+  }
   function farbeSetzen() {
     for (const id of zwei('f-fill')) { map.setPaintProperty(id, 'fill-color', modus === 'kultur' ? kultFarbe : NEUTRAL); map.setPaintProperty(id, 'fill-opacity', grundOpazitaet()); }
     $$('#farbe button').forEach(b => b.classList.toggle('on', b.dataset.m === modus));
-    legende();
+    favSetzen(); legende();
   }
-  $$('#bg button').forEach(b => b.onclick = () => {
-    for (const k of ['grau', 'farbe', 'luft']) map.setLayoutProperty('bg-' + k, 'visibility', k === b.dataset.bg ? 'visible' : 'none');
-    $$('#bg button').forEach(x => x.classList.toggle('on', x === b)); merke('fk-bg', b.dataset.bg);
-  });
-  $$('#farbe button').forEach(b => b.onclick = () => { modus = b.dataset.m; merke('fk-modus', modus); farbeSetzen(); });
-  $('#favon').onchange = e => { for (const id of zwei('fav-fill')) map.setLayoutProperty(id, 'visibility', e.target.checked ? 'visible' : 'none'); merke('fk-fav', e.target.checked ? '1' : null); };
-  $('#parz').onchange = e => { map.setLayoutProperty('parz', 'visibility', e.target.checked ? 'visible' : 'none'); if (e.target.checked && map.getZoom() < 17) toast('Parzellen erscheinen ab Zoom 17 (nur Kanton Zürich).'); };
 
   function legende() {
     const L = $('#legende');
+    const zeile = (farbe, text) => `<div class="row" style="cursor:default;padding:3px 0"><span class="farbe" style="background:${farbe};width:14px;border-radius:3px"></span><span class="txt">${esc(text)}</span></div>`;
     let h = '';
-    if (modus === 'kultur') h += '<h3>Kulturen</h3>' + GR.map(x => `<div class="row" style="cursor:default;padding:3px 0"><span class="farbe" style="background:${x[1]};width:14px;border-radius:3px"></span><span class="txt">${esc(x[0])}</span></div>`).join('');
-    h += '<h3>Favoriten</h3>' + META.favoriten.map(f => `<div class="row" style="cursor:default;padding:3px 0"><span class="farbe" style="background:${f.color};width:14px;border-radius:3px"></span><span class="txt">${esc(f.name)}</span></div>`).join('');
-    if (INTERN && INTERN.adr && adrAn()) h += '<h3>Regionen (intern)</h3>' + INTERN.adr.regionen.map((r, j) => `<div class="row" style="cursor:default;padding:3px 0"><span class="farbe" style="background:${ADR_FARBEN[j % ADR_FARBEN.length]};width:14px;border-radius:3px"></span><span class="txt">${esc(r)}</span></div>`).join('');
+    if (modus === 'kultur') h += '<h3>Kulturen</h3>' + GR.map(x => zeile(x[1], x[0])).join('');
+    h += '<h3>Favoriten</h3>' + META.favoriten.map(f => zeile(f.color, f.name)).join('');
+    if (INTERN && INTERN.adr && adrAn()) h += '<h3>Regionen (intern)</h3>' + INTERN.adr.regionen.map((r, j) => zeile(ADR_FARBEN[j % ADR_FARBEN.length], r)).join('');
     L.innerHTML = h;
   }
 
@@ -152,12 +172,17 @@
     for (const id of zwei('sel-fill')) map.setPaintProperty(id, 'fill-color', farbeVon(SEL));
     for (const id of zwei('sel-line')) map.setPaintProperty(id, 'line-color', farbeVon(SEL));
     for (const id of zwei('f-fill')) map.setPaintProperty(id, 'fill-opacity', grundOpazitaet());
-    map.getSource('klick').setData({ type: 'FeatureCollection', features: SEL && SEL.parzelle && SEL.parzelle.geom ? [{ type: 'Feature', geometry: SEL.parzelle.geom, properties: {} }] : [] });
+    const p = SEL && SEL.parzelle ? SEL.parzelle.p : -1;
+    for (const id of [...zwei('klick-line'), ...zwei('klick-strich')]) map.setFilter(id, ['==', ['get', 'p'], p ?? -1]);
     hofMarker.forEach(m => m.remove()); hofMarker = [];
     for (const i of is) {
       const b = B[i], el = document.createElement('div');
-      el.className = 'hof'; el.style.background = farbeVon(SEL); el.title = 'Hof: ' + (b.adresse || b.nr);
-      hofMarker.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -4] }).setLngLat([b.lon, b.lat]).addTo(map));
+      el.className = 'hof' + (b.sq >= 2 ? ' geschaetzt' : '');
+      el.innerHTML = '<div class="pin"></div>';
+      el.firstChild.style.background = farbeVon(SEL);
+      el.title = (b.sq === 3 ? 'Lage geschätzt (Standort fehlt in den Kantonsdaten)' : 'Hof') + (b.adresse ? ': ' + b.adresse : '');
+      el.addEventListener('click', ev => { ev.stopPropagation(); toast(el.title, 4000); });
+      hofMarker.push(new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([b.lon, b.lat]).addTo(map));
     }
   }
 
@@ -166,7 +191,7 @@
     for (const i of is) { const b = B[i].bbox; w = Math.min(w, b[0], B[i].lon); s = Math.min(s, b[1], B[i].lat); e = Math.max(e, b[2], B[i].lon); n = Math.max(n, b[3], B[i].lat); }
     return [[w, s], [e, n]];
   }
-  function zeigeAlle() { if (SEL) map.fitBounds(bboxVon(SEL.is), { padding: polster(), maxZoom: 16, duration: 700 }); }
+  function zeigeAlle(st) { if (SEL) map.fitBounds(bboxVon(SEL.is), { padding: polster(st), maxZoom: 16, duration: 700 }); }
 
   function waehle(is, opt = {}) {
     const offen = !!SEL;
@@ -177,8 +202,10 @@
     detail();
     $('#side').classList.add('detail');
     zeigePanel('detail');
-    if (SCHMAL() && $('#side').dataset.state === 'peek') blatt('half');
-    if (opt.zoom) zeigeAlle();
+    const ziel = SCHMAL() && zustand() === 'peek' ? 'half' : zustand();
+    if (SCHMAL()) blatt(ziel);
+    if (opt.zoom) zeigeAlle(ziel);
+    else if (opt.px) sichtbarMachen(opt.px, ziel);
     const h = '#b=' + encodeURIComponent(SEL.fav ? SEL.fav : B[is[0]].nr);
     if (location.hash !== h) {
       if (opt.ersetzen || offen) history.replaceState(history.state, '', h); else history.pushState({ fk: 1 }, '', h);
@@ -205,9 +232,8 @@
   function namenBlock(is) {
     if (is.some(i => B[i].favorit)) return '';
     if (!INTERN) {
-      const b = B[is[0]];
-      const hinweis = internDa ? 'Namen sind geschützt – im Tab <a href="#" data-tab-link="info">Info</a> mit Passwort entsperren.'
-        : 'Bewirtschafter nicht angegeben (die Kantonsdaten enthalten keine Namen).';
+      const hinweis = internDa === false ? 'Bewirtschafter nicht angegeben (die Kantonsdaten enthalten keine Namen).'
+        : 'Namen sind geschützt – im Tab <a href="#" data-tab-link="info">Info</a> mit Passwort entsperren.';
       return `<h3>Bewirtschafter</h3><p class="unbekannt">${hinweis}</p>`;
     }
     let h = '<h3>Bewirtschafter</h3>';
@@ -227,12 +253,14 @@
     const tot = is.reduce((a, i) => a + B[i].ha, 0);
     const summe = {};
     for (const i of is) for (const [r, ha] of (INTERN.adr.anteile[i] || [])) summe[r] = (summe[r] || 0) + ha;
-    const zeilen = Object.entries(summe).sort((a, b) => b[1] - a[1])
-      .map(([r, ha]) => `<tr><td><span class="q" style="background:${ADR_FARBEN[r % ADR_FARBEN.length]}"></span>${esc(INTERN.adr.regionen[r])}</td><td class="z">${zahl(ha, 1)} ha</td><td class="z"><b>${Math.round(100 * ha / tot)} %</b></td></tr>`).join('');
-    const drin = Object.values(summe).reduce((a, b) => a + b, 0);
-    return `<h3>Regionen (intern)</h3>${zeilen ? `<table class="t">${zeilen}</table>` : '<p class="unbekannt">Keine Fläche in einer Region.</p>'}
-      <p class="hint">Anteil an ${zahl(tot, 1)} ha. Regionen überschneiden sich zum Teil, die Summe kann über 100 % liegen${drin < tot * 0.995 ? '; ein Teil liegt in keiner Region (z. B. Ausland)' : ''}.</p>`;
+    const zeilen = Object.entries(summe).map(([r, ha]) => [+r, ha]).sort((a, b) => (a[0] < 0) - (b[0] < 0) || b[1] - a[1])
+      .map(([r, ha]) => r < 0
+        ? `<tr><td class="unbekannt"><span class="q" style="background:var(--line)"></span>in keiner Region</td><td class="z">${zahl(ha, 1)} ha</td><td class="z">${Math.round(100 * ha / tot)} %</td></tr>`
+        : `<tr><td><span class="q" style="background:${ADR_FARBEN[r % ADR_FARBEN.length]}"></span>${esc(INTERN.adr.regionen[r])}</td><td class="z">${zahl(ha, 1)} ha</td><td class="z"><b>${Math.round(100 * ha / tot)} %</b></td></tr>`).join('');
+    return `<h3>Regionen (intern)</h3>${zeilen ? `<table class="t">${zeilen}</table>` : '<p class="unbekannt">Keine Angaben.</p>'}
+      <p class="hint">Anteil an ${zahl(tot, 1)} ha. Regionen können sich überschneiden – dann liegt eine Fläche in mehreren und die Summe über 100 %.</p>`;
   }
+  const STANDORT = { 2: 'Standort in den Kantonsdaten ungültig – Lage aus der Adresse', 3: 'Standort fehlt in den Kantonsdaten – Lage der grössten Fläche' };
   function detail() {
     const P = $('#p-detail');
     const is = SEL.is, f = SEL.favKey ? FAV[SEL.favKey] : null, b = B[is[0]];
@@ -246,7 +274,7 @@
       <div class="bs">${esc(f ? f.sub : (anzeigeName(b) ? b.adresse : b.gemeinde))}</div>
       <div class="bnr">${is.map(i => esc(B[i].nr)).join('\n')}</div></div>
       <div class="knopfe"><button class="knopf" id="d-alle">Alle Flächen</button>
-      <a class="knopf" id="d-route" target="_blank" rel="noopener">Route zum Hof</a>
+      ${b.sq === 3 ? '' : '<a class="knopf" id="d-route" target="_blank" rel="noopener">Route zum Hof</a>'}
       <button class="knopf" id="d-link">Link</button><button class="knopf" id="d-zu" aria-label="Schliessen">✕</button></div>
       ${f && is.length < f.i.length ? `<div class="knopfe"><button class="knopf" id="d-ganz">Ganzer Betrieb ${esc(f.name)} (${f.i.length} Betriebsnummern)</button></div>` : ''}`;
     if (SEL.parzelle && SEL.parzelle.grob) {
@@ -261,11 +289,12 @@
       h += '<h3>Firmen</h3>' + f.teile.map(t => `<div class="row" style="cursor:default"><span class="farbe" style="background:${t.color}"></span><span class="txt"><div class="n">${esc(t.name)}</div><div class="s">${esc(t.bio)}</div></span></div>`).join('');
     }
     h += namenBlock(is);
-    h += '<h3>Hof (amtlicher Betriebsstandort)</h3>' + is.map(i => {
+    h += '<h3>Hof (Betriebsstandort)</h3>' + is.map(i => {
       const x = B[i];
       const weit = x.dist_flaeche_m > 3000 ? `<br><span class="tag warn">Standort ${zahl(x.dist_flaeche_m / 1000, 1)} km von den eigenen Flächen entfernt</span>` : '';
       const quelle = x.aq === 1 ? `<br><span class="hint">nächste amtliche Gebäudeadresse, ${x.ad} m vom Standort</span>` : '';
-      return `<div style="margin:4px 0">${x.adresse ? esc(x.adresse) : `<span class="unbekannt">keine Adresse am Standort (Gemeinde ${esc(x.gemeinde)})</span>`}${is.length > 1 ? ` <span class="nr">${esc(x.nr)}</span>` : ''}${quelle}${weit}</div>`;
+      const lage = STANDORT[x.sq] ? `<br><span class="tag warn">${STANDORT[x.sq]}</span>` : '';
+      return `<div style="margin:4px 0">${x.adresse ? esc(x.adresse) : `<span class="unbekannt">keine Adresse am Standort (Gemeinde ${esc(x.gemeinde)})</span>`}${is.length > 1 ? ` <span class="nr">${esc(x.nr)}</span>` : ''}${quelle}${lage}${weit}</div>`;
     }).join('');
     h += `<div class="zahlen"><div><b>${n}</b><span>Flächen</span></div><div><b>${zahl(ha, 1)}</b><span>ha total</span></div><div><b>${bio > 0.05 ? zahl(bio, 1) : '–'}</b><span>ha Bio gemeldet</span></div></div>`;
     h += '<h3>Kulturen</h3>' + kulturBlock(haG);
@@ -276,11 +305,11 @@
     h += `<p class="hint">Kantonsdaten ${esc([...new Set(is.map(i => B[i].kt))].join(', '))}, Bezugsjahr ${esc([...new Set(is.map(i => B[i].jahr))].join(', '))}. Flächen ohne überlagernde Elemente.</p>`;
     P.innerHTML = h;
     P.scrollTop = 0; $('#panels').scrollTop = 0;
-    $('#d-alle').onclick = zeigeAlle;
+    $('#d-alle').onclick = () => zeigeAlle();
     if ($('#d-ganz')) $('#d-ganz').onclick = () => waehle(f.i, { fav: f.key, zoom: true });
     $('#d-zu').onclick = () => schliessen();
     const apple = /iPhone|iPad|Macintosh/.test(navigator.userAgent);
-    $('#d-route').href = apple ? `https://maps.apple.com/?daddr=${b.lat},${b.lon}` : `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}`;
+    if ($('#d-route')) $('#d-route').href = apple ? `https://maps.apple.com/?daddr=${b.lat},${b.lon}` : `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}`;
     $('#d-link').onclick = async () => {
       const url = location.href;
       try { if (navigator.share && SCHMAL()) await navigator.share({ title: f ? f.name : titel(b), url }); else { await navigator.clipboard.writeText(url); toast('Link kopiert'); } }
@@ -326,14 +355,16 @@
     $$('#liste .row').forEach(r => r.onclick = () => waehle([+r.dataset.i], { zoom: true }));
   }
   let lt; const listeSpaeter = () => { clearTimeout(lt); lt = setTimeout(liste, 150); };
-  $('#q').addEventListener('input', () => { if ($('#side').classList.contains('detail')) schliessen(); tab('liste'); listeSpaeter(); });
+  const sucheGross = () => { if (SCHMAL() && zustand() === 'peek') blatt('full'); };
+  $('#q').addEventListener('focus', sucheGross);
+  $('#q').addEventListener('input', () => { if ($('#side').classList.contains('detail')) schliessen(); tab('liste'); sucheGross(); listeSpaeter(); });
   $$('#filter button').forEach(b => b.onclick = () => { filter = b.dataset.f; $$('#filter button').forEach(x => x.classList.toggle('on', x === b)); liste(); });
 
   // ---------- Tabs, Panel (Handy)
   let aktiverTab = 'liste';
   function zeigePanel(name) { $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + name)); }
   function tab(name) { aktiverTab = name; $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name)); if (!SEL) zeigePanel(name); }
-  $$('.tabs button').forEach(b => b.onclick = () => { tab(b.dataset.tab); if (SCHMAL() && $('#side').dataset.state === 'peek') blatt('half'); });
+  $$('.tabs button').forEach(b => b.onclick = () => { tab(b.dataset.tab); if (SCHMAL() && zustand() === 'peek') blatt('half'); });
   function blatt(st) { $('#side').dataset.state = st; }
   (function ziehen() {
     const side = $('#side');
@@ -343,24 +374,33 @@
     const ende = () => {
       if (y0 === null) return; y0 = null; side.classList.remove('ziehen');
       const h = side.getBoundingClientRect().height; side.style.height = '';
-      if (!bewegt) { blatt(side.dataset.state === 'full' ? 'half' : side.dataset.state === 'half' ? 'full' : 'half'); return; }
-      const st = [['peek', 112], ['half', innerHeight * 0.52], ['full', innerHeight - 56]].sort((a, b) => Math.abs(a[1] - h) - Math.abs(b[1] - h))[0][0];
-      blatt(st);
+      if (!bewegt) { blatt(zustand() === 'full' ? 'half' : zustand() === 'half' ? 'full' : 'half'); return; }
+      blatt(Object.keys(HOEHE).sort((a, b) => Math.abs(HOEHE[a]() - h) - Math.abs(HOEHE[b]() - h))[0]);
     };
     for (const el of [$('#grip'), $('header.top')]) el.addEventListener('pointerdown', start);
     addEventListener('pointermove', zug); addEventListener('pointerup', ende); addEventListener('pointercancel', ende);
   })();
+  if (SCHMAL()) blatt('peek');
+  favListe();
 
-  // ---------- Karte: Klick, Maus
+  // ---------- Karte: Bedienung (wartet nur auf den Stil, nicht auf die Kacheln)
+  await stilBereit;
+  $$('#bg button').forEach(b => b.onclick = () => {
+    for (const k of ['grau', 'farbe', 'luft']) map.setLayoutProperty('bg-' + k, 'visibility', k === b.dataset.bg ? 'visible' : 'none');
+    $$('#bg button').forEach(x => x.classList.toggle('on', x === b)); merke('fk-bg', b.dataset.bg);
+  });
+  $$('#farbe button').forEach(b => b.onclick = () => { modus = b.dataset.m; merke('fk-modus', modus); farbeSetzen(); });
+  $('#favon').onchange = e => { favSetzen(); merke('fk-fav', e.target.checked ? '1' : null); };
+  $('#parz').onchange = e => { map.setLayoutProperty('parz', 'visibility', e.target.checked ? 'visible' : 'none'); if (e.target.checked && map.getZoom() < 17) toast('Parzellen erscheinen ab Zoom 17 (nur Kanton Zürich).'); };
   const tip = document.createElement('div');
   tip.style.cssText = 'position:fixed;z-index:20;pointer-events:none;background:rgba(20,28,24,.9);color:#fff;padding:4px 8px;border-radius:6px;font-size:13px;display:none';
   document.body.appendChild(tip);
-  await bereit;
   map.on('click', e => {
+    if (e.originalEvent && e.originalEvent.target.closest && e.originalEvent.target.closest('.maplibregl-marker')) return;
     const fs = map.queryRenderedFeatures(e.point, { layers: zwei('f-fill') });
     if (!fs.length) { if (SEL) schliessen(); return; }
     const p = fs[0].properties;
-    waehle([p.i], { parzelle: { k: p.k, m: p.m, gm: p.gm, g: p.g, b: p.b, geom: fs[0].geometry, grob: p.k === undefined } });
+    waehle([p.i], { px: e.point, parzelle: { p: p.p, k: p.k, m: p.m, gm: p.gm, g: p.g, b: p.b, grob: p.k === undefined } });
   });
   const MAUS = matchMedia('(hover: hover) and (pointer: fine)').matches;
   map.on('mousemove', zwei('f-fill'), e => {
@@ -376,22 +416,54 @@
 
   // gespeicherte Einstellungen
   const bg = lies('fk-bg'); if (bg) { const b = $(`#bg button[data-bg="${bg}"]`); if (b) b.click(); }
-  if (lies('fk-fav')) { $('#favon').checked = true; $('#favon').onchange({ target: $('#favon') }); }
-  farbeSetzen(); favListe(); liste();
-  if (SCHMAL()) blatt('peek');
+  if (lies('fk-fav')) $('#favon').checked = true;
+  farbeSetzen(); liste();
 
-  // ---------- Interner Teil (verschlüsselt)
+  // ---------- Link #b=… (vor dem internen Teil, damit geteilte Links sofort öffnen)
+  function ausHash(ersetzen) {
+    const m = location.hash.match(/^#b=(.+)$/);
+    if (!m) { if (SEL) schliessen(true); return; }
+    const k = decodeURIComponent(m[1]);
+    if (FAV[k]) { waehle(FAV[k].i, { fav: k, zoom: true, ersetzen }); return; }
+    const b = B.find(x => x.nr === k || nrKurz(x.nr) === nrKurz(k));
+    if (b) waehle([b.i], { zoom: true, ersetzen }); else toast('Betrieb nicht gefunden: ' + k);
+  }
+  addEventListener('popstate', () => ausHash(true));
+  ausHash(true);
+  window.feldkarte = { map, waehle, B };   // für Tests und die Konsole
+
+  // ---------- Info
+  const nFl = B.reduce((a, b) => a + b.n, 0), haG = B.reduce((a, b) => a + b.ha_gebiet, 0);
+  $('#info-text').innerHTML = `<h3>Was die Karte zeigt</h3>
+    <p>Alle landwirtschaftlichen Nutzungsflächen der ${B.length.toLocaleString('de-CH')} Betriebe, die im Gebiet Flächen bewirtschaften (${nFl.toLocaleString('de-CH')} Flächen, davon ${zahl(haG, 0)} ha im Gebiet). Eine Fläche antippen: Alle Flächen desselben Betriebs leuchten auf, auch ausserhalb des Gebiets und in anderen Kantonen.</p>
+    <p><b>Gebiet:</b> konvexe Hülle aller Flächen der Favoriten plus ${META.puffer_km} km, nur Schweiz. Betriebe aus ${META.kantone.length} Kantonen (${esc(META.kantone.join(', '))}).</p>
+    <h3>Daten</h3>
+    <p>Landwirtschaftliche Kulturflächen der Kantone (geodienste.ch), Bezugsjahr ${META.jahr} (GL, GR: 2026). Ohne überlagernde Elemente. Nicht frei erhältlich und deshalb nicht enthalten: Flächen von Betrieben aus NE, TI, NW, OW, VD.</p>
+    <p><b>Hof:</b> Betriebsstandort der Kantonsdaten (fehlt er oder liegt er ausserhalb der Schweiz: Lage aus der Adresse bzw. der grössten Fläche). Adresse aus den Kantonsdaten (ohne Personenangaben), sonst die nächste amtliche Gebäudeadresse höchstens 60 m vom Standort (swisstopo). Ohne Passwort zeigt die Karte keine Namen. Die Adresse ist die des Betriebsstandorts und kann auch eine Wohnadresse sein. Wem eine Fläche gehört, zeigt nur die Eigentumsauskunft des Kantons.</p>
+    <p><b>Bewirtschafter:</b> Namen (nur mit Passwort) sind abgeleitet (Handelsregister, Hofnamen, Bezeichnungen der Kantonsdaten) und je mit Quelle und Sicherheit angegeben.</p>
+    <p>Karten © swisstopo · Parzellen © Kanton Zürich · Kartenbibliothek MapLibre, PMTiles · ${esc(META.stand)}</p>
+    <p><a href="betriebe.html">Detailansicht der Favoriten</a> (Teilbetriebe, Bio, Kulturen)</p>`;
+
+  // ---------- Interner Teil (verschlüsselt). Beim Start nur den Kopf der Datei lesen.
   const MERKEN_TAGE = 30;
-  async function internLaden() {
-    if (internDa !== null) return internDa;
-    try { const r = await fetch('intern.bin'); internDa = r.ok ? new Uint8Array(await r.arrayBuffer()) : false; }
-    catch (e) { internDa = false; }
-    if (internDa && String.fromCharCode(...internDa.slice(0, 4)) !== 'FKv2') internDa = false;
-    return internDa;
+  let blobVoll = null;
+  async function internKopf() {
+    try {
+      const r = await fetch(mitV('intern.bin'), { headers: { Range: 'bytes=0-35' } });
+      if (!r.ok) return false;
+      const u = new Uint8Array(await r.arrayBuffer());
+      if (r.status === 200) blobVoll = u;          // Server ohne Range: ganze Datei erhalten
+      return u.length >= 36 && String.fromCharCode(...u.slice(0, 4)) === 'FKv2';
+    } catch (e) { return false; }
+  }
+  async function internGanz() {
+    if (!blobVoll) { const r = await fetch(mitV('intern.bin')); blobVoll = new Uint8Array(await r.arrayBuffer()); }
+    return blobVoll;
   }
   const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
   const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   async function oeffnen(schluessel, blob) {
+    if (!('DecompressionStream' in window)) throw new Error('alt');
     const klar = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: blob.slice(24, 36), additionalData: blob.slice(0, 8) }, schluessel, blob.slice(36));
     const text = await new Response(new Blob([klar]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
     INTERN = JSON.parse(text);
@@ -401,14 +473,14 @@
   const sitzung = { lies: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
     merke: (k, v) => { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) { /* privat */ } } };
   async function mitPasswort(pw, geraet) {
-    const blob = await internLaden();
-    if (!blob) { toast('Kein interner Teil vorhanden.'); return; }
+    let blob;
+    try { blob = await internGanz(); } catch (e) { toast('Interner Teil konnte nicht geladen werden.'); return; }
     const runden = new DataView(blob.buffer, blob.byteOffset + 4, 4).getUint32(0);
     const salz = blob.slice(8, 24);
     const basis = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
     const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salz, iterations: runden, hash: 'SHA-256' }, basis, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
     try { await oeffnen(key, blob); }
-    catch (e) { toast('Passwort falsch.'); return; }
+    catch (e) { toast(e && e.name === 'OperationError' ? 'Passwort falsch.' : 'Entschlüsseln ist in diesem Browser nicht möglich.'); return; }
     const wert = JSON.stringify({ salz: b64(salz), key: b64(await crypto.subtle.exportKey('raw', key)), bis: Date.now() + MERKEN_TAGE * 864e5 });
     sitzung.merke('fk-schluessel', wert);
     if (geraet) merke('fk-schluessel', wert);
@@ -416,12 +488,14 @@
   }
   async function automatisch() {
     const s = sitzung.lies('fk-schluessel') || lies('fk-schluessel'); if (!s) return;
-    const blob = await internLaden(); if (!blob) return;
+    let gespeichert;
+    try { gespeichert = JSON.parse(s); } catch (e) { sperrenOhneNeuladen(); return; }
+    if (!(gespeichert.bis > Date.now())) { sperrenOhneNeuladen(); return; }
     try {
-      const { salz, key, bis } = JSON.parse(s);
-      if (b64(blob.slice(8, 24)) !== salz || !(bis > Date.now())) { sperrenOhneNeuladen(); return; }   // neue Datei oder abgelaufen
-      await oeffnen(await crypto.subtle.importKey('raw', unb64(key), 'AES-GCM', false, ['decrypt']), blob);
-    } catch (e) { sperrenOhneNeuladen(); }
+      const blob = await internGanz();
+      if (b64(blob.slice(8, 24)) !== gespeichert.salz) { sperrenOhneNeuladen(); return; }   // neue Datei: Passwort neu eingeben
+      await oeffnen(await crypto.subtle.importKey('raw', unb64(gespeichert.key), 'AES-GCM', false, ['decrypt']), blob);
+    } catch (e) { if (e && e.name === 'OperationError') sperrenOhneNeuladen(); }
   }
   function sperrenOhneNeuladen() { merke('fk-schluessel', null); sitzung.merke('fk-schluessel', null); }
   function sperren() { sperrenOhneNeuladen(); location.reload(); }
@@ -460,31 +534,8 @@
     }
   }
   $('#lock').onclick = () => { if (SEL) schliessen(); tab('info'); if (SCHMAL()) blatt('half'); };
-  internAnzeigen();
-  if (await internLaden()) { automatisch(); } else { $('#lock').style.display = 'none'; $('#intern-box').style.display = 'none'; }
-
-  // ---------- Info
-  const nFl = B.reduce((a, b) => a + b.n, 0), haG = B.reduce((a, b) => a + b.ha_gebiet, 0);
-  $('#info-text').innerHTML = `<h3>Was die Karte zeigt</h3>
-    <p>Alle landwirtschaftlichen Nutzungsflächen der ${B.length.toLocaleString('de-CH')} Betriebe, die im Gebiet Flächen bewirtschaften (${nFl.toLocaleString('de-CH')} Flächen, davon ${zahl(haG, 0)} ha im Gebiet). Eine Fläche antippen: Alle Flächen desselben Betriebs leuchten auf, auch ausserhalb des Gebiets und in anderen Kantonen.</p>
-    <p><b>Gebiet:</b> konvexe Hülle aller Flächen der Favoriten plus ${META.puffer_km} km, nur Schweiz. Betriebe aus ${META.kantone.length} Kantonen (${esc(META.kantone.join(', '))}).</p>
-    <h3>Daten</h3>
-    <p>Landwirtschaftliche Kulturflächen der Kantone (geodienste.ch), Bezugsjahr ${META.jahr} (GL, GR: 2026). Ohne überlagernde Elemente. Nicht frei erhältlich und deshalb nicht enthalten: Flächen von Betrieben aus NE, TI, NW, OW, VD.</p>
-    <p><b>Hof:</b> amtlicher Betriebsstandort der Kantonsdaten. Adresse aus den Kantonsdaten (ohne Personenangaben), sonst die nächste amtliche Gebäudeadresse höchstens 60 m vom Standort (swisstopo). Ohne Passwort zeigt die Karte keine Namen. Die Adresse ist die des Betriebsstandorts und kann auch eine Wohnadresse sein. Wem eine Fläche gehört, zeigt nur die Eigentumsauskunft des Kantons.</p>
-    <p><b>Bewirtschafter:</b> Namen (nur mit Passwort) sind abgeleitet (Handelsregister, Hofnamen, Bezeichnungen der Kantonsdaten) und je mit Quelle und Sicherheit angegeben.</p>
-    <p>Karten © swisstopo · Parzellen © Kanton Zürich · Kartenbibliothek MapLibre, PMTiles · ${esc(META.stand)}</p>
-    <p><a href="betriebe.html">Detailansicht der Favoriten</a> (Teilbetriebe, Bio, Kulturen)</p>`;
-
-  // ---------- Link #b=…
-  function ausHash(ersetzen) {
-    const m = location.hash.match(/^#b=(.+)$/);
-    if (!m) { if (SEL) schliessen(true); return; }
-    const k = decodeURIComponent(m[1]);
-    if (FAV[k]) { waehle(FAV[k].i, { fav: k, zoom: true, ersetzen }); return; }
-    const b = B.find(x => x.nr === k || nrKurz(x.nr) === nrKurz(k));
-    if (b) waehle([b.i], { zoom: true, ersetzen }); else toast('Betrieb nicht gefunden: ' + k);
-  }
-  addEventListener('popstate', () => ausHash(true));
-  ausHash(true);
-  window.feldkarte = { map, waehle, B };   // für Tests und die Konsole
+  internDa = await internKopf();
+  if (internDa) { internAnzeigen(); automatisch(); }
+  else { $('#lock').style.display = 'none'; $('#intern-box').style.display = 'none'; }
+  if (SEL) detail();
 })();
